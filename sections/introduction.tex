@@ -1,12 +1,243 @@
-\documentclass[class=article, crop=false]{standalone}
+\documentclass[class=article,crop=false,11pt]{standalone}
+
 \usepackage[subpreambles=true]{standalone}
 \usepackage{import}
 
-\begin{document}
-\section{A history of computational effects}
-\section{The language Eff}
-\section{Existing solutions}
+\usepackage{cite}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{tipa}
+\usepackage{stmaryrd}
+\usepackage{hyperref}
 
-\subimport{../}{figures/diagram.tex}
+% [[ ]] brackets for interpretations in envs
+\newcommand{\interp}[1]{\llbracket #1 \rrbracket}
+\newcommand{\msf}[1]{\mathsf{#1}}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{definition}{Definition}[section]
+
+\begin{document}
+
+\section{Introduction}
+
+This section of the dissertation is concerned with giving a reader a quick introduction into
+algebraic effects and handlers, answers a few commonly asked questions about them, such as:
+what are algebraic effects, what are their handlers, what makes them algebraic and why are they useful.
+
+I also give a brief survey of the theory behind effect handlers and try to explain their benefits in practice.
+
+\subsection{Computational effects}
+
+
+There are two types of programs: pure and effectful (or impure). Pure programs are ones that are independent from the environment and effectful programs are the ones that \emph{do} something in the
+sense that they interact with their environment. Another way of defining pure functions is: given the definition of the function and its arguments, its result is uniquely determined.
+
+Programs invoking computational effects such as nondeterminism, probabilistic nondeterminism, exceptions, interactive input/output or side effects all constitute as effectful. This is obvious for
+interactive input/output, nondeterminism and side-effects as these obviously interact with the environment. Exceptions are a bit awkward in the sense that throwing them is pure but catching them is
+not (consider catching an exception that is thrown due to an out-of-memory error; catching this exception would mean that we interact with the environment in an implicit way).
+
+Reasoning about pure programs is easy, as pure computations (partial functions) are well understood. However, most programs must \emph{do} something with the real world (write to a file, 
+read from a network socket, handle errors, generate random numbers, etc.) and perform effects to be useful.
+Hence, to be able to reason about our programs we must properly understand the properties of these effects, how they work, how they interact and what rules apply to them. To do this, we try to model
+them in a framework that was always know to work: mathematics.
+
+\subsection{From mathematics to the programming language Eff}
+
+In 1989, E. Moggi \cite{moggi1989computational,moggi1990abstract} described requirements an effect
+model must meet for us to be able to give a unified category-theoretic semantics for computational effects in the $\lambda_c$ calculus. However, the $\lambda_c$ calculus didn't have any constructors for computational effects.
+
+In 2003, Plotkin and Power \cite{plotkin2003algebraic} used the idea that many of the computational effects mentioned above can be naturally described by algebraic theories\footnote{Algebraic theories are mathematical constructs defining operations together with a list of equations describing their properties. See the Appendix for definitions.}
+to extend the $\lambda_c$ calculus with \emph{effect constructors}. Each algebraic operation from an algebraic theory is then associated with an effect constructor. 
+
+A computational effect is algebraic when it can be described by an algebraic theory.
+The work also points out the non-algebraic nature of the \textbf{handle} operation, the operation used to handle exceptions in some functional languages. Intuitively, \textbf{handle} is an \emph{effect destructor} of the ``exception effect''.
+
+In 2009, Plotkin and Pretnar \cite{plotkin2009handlers} generalised the notion of exception handlers and introduced the idea of handlers for other computational
+effects representable by an algebraic theory. With this they established a duality between algebraic effects and their handlers. 
+They also list a few surprising examples of algebraic effect handlers such as stream redirection, timeout or rollback.
+
+In 2015, Bauer and Pretnar \cite{bauer2015programming} create the programming language Eff, one of the first programming languages supporting algebraic effects and
+handlers on the language-level.
+
+\subsection{Eff}
+
+This subsection gives a short introduction to Eff with some code examples. The precise syntax and semantics of the language will be defined later, we aim for an intuitive introduction here.
+
+\subsubsection{Effects}
+
+There is an important distinction between syntactic and semantic elements in the language. Effect declarations belong to syntax.
+
+An effect in Eff is declared using the \verb|effect| keyword together with a type signature which forms the effect signature. One would define a \verb|Print| effect for printing strings as follows:
+
+\begin{verbatim}
+effect Print : string -> unit
+\end{verbatim}
+
+This tells us two things. To invoke the \verb|Print| effect we must provide a string as an argument and what we get back is something of type \verb|unit| after the effect is performed. We get to know no extra information about \verb|Print|.
+
+Now that we have a \verb|Print| effect we can write down the mandatory Hello World example:
+\begin{verbatim}
+perform (Print "Hello World!")
+\end{verbatim}
+
+The \verb|perform| keyword is used to perform already declared effects. However, if we think about it, this piece of code still does
+not make any sense as we don't know how to interpret \verb|Print "Hello World!"|.
+
+\subsubsection{Handlers}
+
+Handlers are used to assign meaning to effects. A handler is just a list of rules. A rule can be of three different types: a value rule, an effect rule or a finally rule.
+
+\textbf{Value and effect rules}
+
+The following handler provides an interpretation for the \verb|Print| effect. This handler converts the result of a computation to a 2-tuple where the first element is the original result and the second
+element is a concatenation of the strings from all the \verb|Print| effects from the computation.
+
+We use the value rule \verb|v -> (v, "")| to say what happens ``by default''. If the computation didn't print anything then we simply say that it printed the empty string.
+
+\begin{verbatim}
+let collect = handler
+| v -> (v, "")
+| effect (Print str) k ->
+    (* Find out what the rest of the computation would print out *)
+    let (result, s) = continue k () in
+    (* Prefix the string printed by the rest of the computation 
+       with `str` from this effect *)
+    (result, str ^ s)
+\end{verbatim}
+
+The effect rule is a bit more involved. Effect rules have the form \verb|effect E(args) k| where \verb|k| is always bound to the ``rest of the computation'' which we call a continuation (and by convention
+usually use the letter $k$ or $\kappa$ to denote it). The arguments of the effect \verb|E| are bound to \verb|args| via pattern matching. In the example above we first resume the computation by resuming the
+computation via \verb|continue|. After we find out what the rest of the computation would print out, we prepend our current string to it.
+
+Note that when we handle an effect of type $\alpha \to \beta$ we get a continuation of type $\beta \to \gamma$ where $\gamma$ is the type of the computation being enclosed in a \verb|with ... handle| block.
+
+Value rules can be omitted in handler definitions, in which case they are assumed to be identities.
+
+\textbf{Finally rules}
+
+Finally rules are just syntactic sugar for \verb|let| wrappers around \verb|with ... handle| statements that act on the result of a handled computation, i.e.,
+\begin{verbatim}
+let h = handler
+    | finally x -> x + x
+in 
+    with h handle c
+\end{verbatim}
+would be syntactic sugar for
+\begin{verbatim}
+let x = with h handle c in x + x.
+\end{verbatim}
+
+I would like to point out that this syntax is added only for convenience as it happens many times that the same transformations must be performed after a \verb|with ... handle| block \cite{bauer2015programming}. Hence \verb|finally| here does not provide the Java-like semantics where the computation in a finally block is ``guaranteed'' to be executed.
+
+Finally rules can be omitted in handler definitions, in which case they are assumed to be identities.
+
+\textbf{Handler types}
+
+Handlers handling a computation of type $\alpha$ and giving a result of type $\beta$ are given the type $\alpha \Rightarrow \beta$.
+
+\subsection{Advantages}
+
+Now that we introduced Eff, let's switch focus and think about the programming paradigms handlers introduce.
+
+\subsubsection{OOP and functional style}
+
+We can think about effect signatures as interfaces and handlers as implementations of these interfaces.
+A \verb|with h handle c| block is then an ``instantiation'' of effect implementations.
+
+We see that programming with effect handlers puts us between the object-oriented and functional styles and gives us more opportunities to re-use existing pieces of code (see next code example).
+
+\subsubsection{Direct style}
+
+The following example shows an implementation of the state monad (borrowed from the official Eff website \cite{eff-website}):
+\begin{verbatim}
+effect Get: int
+effect Set: int -> unit
+
+let monad_state initial = handler
+  | y -> (fun s -> (y, s))
+  | effect Get k -> (fun s -> (continue k s) s)
+  | effect (Set s') k -> (fun _ -> (continue k ()) s')
+  | finally f -> f initial
+;;
+
+let double_and_add_ten () =
+  let x = perform Get in
+  perform (Set (2 * x));
+  perform Get + 10
+;;
+
+with monad_state 30 handle
+  double_and_add_ten ()
+;;
+\end{verbatim}
+
+Note how the function \verb|double_and_add_ten| is written in a direct style. As mentioned above, the programmer does not have to 
+be aware of the implementations of the effects (indeed, we see that the ``internal'' representation of state uses functions). 
+This function illustrates how handlers increase the modularity of our programs (we could use the function in the context of other handlers 
+and perhaps get some other result).
+
+\subsubsection{Composition}
+
+Monads are frequently used as a way to simulate effectful computations in programming languages like Haskell. 
+However, combining different kinds of effects in these languages can be non-trivial and 
+tiresome sometimes. Haskell uses monad stacks and monad transformers to get around this. [TODO: someone might not know what this is]
+
+In Eff, combining effects and their handlers arises naturally. Handlers can be written for any set of effects and handlers can be combined 
+with nesting \verb|with ... handle| blocks.
+
+[TODO: I need two code examples here to justify the claims above and show that \verb|with ... handle| is more convenient. One in Haskell with monad transformers and one in Eff with two nested handlers.]
+
+\subsection{Limitations}
+
+Although there are many attractive properties of effect handlers, one that is frequently quoted to be ``annoying'' is that it is very easy to write incomprehensible code via continuations.
+Continuations are not a novel concept but it is one that perhaps isn't widely known by the wider software engineering community. Hence providing the concrete implementation of effects
+can impose some extra burden on a programmer's brain.
+
+
+\subsection{Effect handlers in the real world}
+
+The power of algebraic effect handlers is getting recognised in the programming language community. 
+Notably, a branch of OCaml (Multicore OCaml) is being built around
+continuations and effect handlers.
+
+S. Dolan et al. \cite{dolan2017concurrent} explored the application space of effect handlers and 
+demonstrated how they can ease concurrent system programming with implementing an asynchronous I/O 
+library that can be used in a similar direct-style that was explained above.
+
+Effect handlers can also ease the design of runtime systems. By exposing continuations one
+can implement concurrency models in the user level as libraries. This gives us the opportunity
+to design more efficient and simpler runtime systems. Programmers benefit from this by
+being able to swap between concurrency models by (they only have to provide another implementation with the same interface).
+
+\subsection{What this dissertation is about}
+
+Algebraic effects and their handlers lie in the heart of the Eff language.
+This dissertation is concerned with building and assessing the performance of an Eff compiler.
+I describe a CEK-like abstract machine in the implementation section and how that can be turned
+into a more efficient Multicore OCaml-like virtual machine built on top of fibers.
+
+This dissertation fits in the broader area of work as I hope to show that algebraic effect handlers
+are not just an exciting esoteric research programming language construct with a nice theoretic background, but programming with them comes with benefits and it is possible to compile them efficiently (or at least that the cost of compilation is not too great compared to the benefits they provide).
+
+\subsection{TODOs}
+\begin{itemize}
+\item I haven't said anything about continuations yet
+\item I haven't said anything about shallow and deep handlers
+\item Comparing to haskell monads/monad transformers is risky -- need to explain these
+\end{itemize}
+
+\section{Papers}
+\begin{itemize}
+\item Delimited control \cite{kiselyov2010delimited}
+\item Eff Directly in OCaml \cite{Kiselyov_2018}
+\item Very good article about CPS compilation \cite{flanagan1993essence}
+\item Bauer tutorial \cite{bauer2018algebraic}
+\end{itemize}
+
+\ifstandalone
+\bibliography{../bibliography}{}
+\bibliographystyle{plain}
+\fi
 
 \end{document}
