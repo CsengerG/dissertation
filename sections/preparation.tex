@@ -6,11 +6,169 @@
 \usepackage{hyperref}
 
 \begin{document}
-[Summary of preparation]
 
-\subsection{Computational effects}
+This chapter of my dissertation describes the work that was undertaken
+before any code was written, contains the starting point of my project
+and the development methodology I used to carry out the work as well as
+it contains a brief survey of the background knowledge I needed to
+acquire to be able to start working on the project.
+
+\section{The programming language Eff}
+
+Eff is a programming language based on algebraic effect handlers.
+Essentially, it is a pure subset of OCaml \cite{ocaml-website} extended with a few extra
+keywords which implement effects and effect handlers: \verb|effect|,
+\verb|perform|, \verb|handler|, \verb|continue|, \verb|with-handle| and \verb|finally|.
+What follows is a brief introduction of these features by using the
+unmissable Hello World example.
+
+\subsection{Effects}
+
+Effects lie in the heart of Eff (hence the name). A programmer can define
+effects using the \verb|effect| keyword, the effect's name (effect names must
+be capitalized just like OCaml variant tags) and its type. An effect definition
+can be seen on \autoref{fig:effect-perform-keywords}. Effects always have a type of the
+form $\alpha \to \beta$ for some types $\alpha$ and $\beta$.
+
+\begin{figure}[hbt!]
+  \begin{verbatim}
+    effect Print : string -> unit;;
+    ...
+    let () = perform (Print "Hello World");;
+  \end{verbatim}
+  \caption{Printing can be thought of as an effect with an argument of type
+  string and a result of type unit.}
+  \label{fig:effect-perform-keywords}
+\end{figure}
+
+\subsection{Performing effects}
+
+Effects behave a bit like functions as we could see from their types above.
+Once an effect of type $\alpha \to \beta$ is defined we can invoke it
+using the \verb|perform| keyword and with an argument of type $\alpha$.
+The type of the result is $\beta$.\footnote{Too childish? How to say more concisely?}
+
+The \verb|perform| keyword is similar to \verb|raise| in OCaml or to \verb|throw|
+in Java in that when we perform an effect the control will go to an effect
+handler (this would be an exception handler in OCaml or Java) or the program
+will terminate with an exception if no handler can handle the effect.
+
+\subsection{Handlers}
+
+Handlers give meaning to effects: this is what programmers can use to specify
+what they mean by \verb|Print|. Without a handler an effect can be declared, but when
+performed, can only cause a program to terminate with an exception.
+
+Handlers are first-class citizens (i.e., values) in Eff. One can define them with the
+\verb|handler| keyword by specifying \emph{rules}.
+An example can be seen on \autoref{fig:handler-keyword}.
+
+\begin{figure}
+  \begin{verbatim}
+    let prepending_print_handler = handler
+      | result -> (result, "")
+      | effect (Print message) k ->
+        let (cont_result, cont_output) = continue k () in
+        (cont_result, message ^ cont_output)
+      | finally x -> x
+  \end{verbatim}
+  \caption{A handler definition consisting of 2 rules (a value rule and an effect rule).
+  The effect rule first resumes the rest of the program to obtain its result and its output.
+  Printing out \texttt{message} is implemented as prepending
+  it to the output of the rest of the program.}
+  \label{fig:handler-keyword}
+\end{figure}
+
+To complete our Hello World example we must be able to use this handler. This is done
+using a \emph{with-handle block} as illustrated on \autoref{fig:hello-world}.
+
+\begin{figure}
+  \begin{verbatim}
+    with prepending_print_handler handle
+      perform (Print "Hello ");
+      perform (Print "World!")
+  \end{verbatim}
+  \caption{The Hello World example in Eff. The code above evaluates to the pair \texttt{("Hello World!", ())}.}
+  \label{fig:hello-world}
+\end{figure}
+
+As handlers are values, they have their own type. This is discussed later in [TODO: ref to Type and Effect System section].
+
+There are a few aspects of the code that can be strange on the first sight. The first
+is the rules involved in the declaration.
+
+\subsubsection{Handler rules}
+
+One can use three types of rules in a handler: a \emph{value rule}, an \emph{effect rule} or
+a \emph{finally rule}.
+
+A value rule has the form $x \to c$.
+It takes the result of a computation enclosed by a with-handle block, binds it to the
+identifier $x$ and performs the computation $c$. This is a rule that describes how to handle the result of a computation.
+In \autoref{fig:handler-keyword} we are simply saying that if the computation handled by this
+handler has finished computing without invoking any effects, then we are returning a pair containing
+the result of the computation and the empty string (this reflects that nothing was printed).
+
+An effect rule is a generalisation of SML's \cite{milner1997definition} \verb|handle|. It differs from it in
+that it also captures the \emph{continuation} (\verb|k| above) of the computation enclosed
+by the with-handle block handling the effect. Such a continuation can be \emph{resumed} with
+the \verb|continue| keyword. Note that when an effect of type $\alpha \to \beta$ is handled,
+we get access to its argument of type $\alpha$ and we can resume its continuation if we provide
+the continuation with a value of type $\beta$ it expects (this is why we resume the continuation
+by giving it \verb|()| in \autoref{fig:handler-keyword}---\verb|Print| is of type $string \to unit$).
+
+Finally rules are just syntactic sugar for let wrappers around with-handle blocks.
+That is, $\textbf{finally } r \to f$ does the same as $\textbf{let } r \leftarrow \textbf{with } v \textbf{ handle } c \textbf{ in } f$.
+Finally rules were introduced to avoid having to use such inconvenient let wrappers \cite{bauer2015programming}.
+
+A handler can have any number of effect rules (even zero) but only at most one finally rule and at most one value rule.
+Value rules and finally rules are optional. When they are avoided they are assumed to be identities (i.e.,
+\verb|x -> x| or \verb|finally x -> x| respectively).
+
+\section{Continuations and control operators}
+
+Although continuations came up briefly in the previous section I didn't explain what they are in detail.
+This section is devoted to this because continuations are playing a crucial role in Eff and in what follows
+in this dissertation.
+
+Continuations were first discovered in 1964 by van Wijngaarden \cite{reynolds1993discoveries}.
+
+\subsection{Delimited continuations}
+
+Delimited continuations 
+
+% check this out
+% https://en.wikipedia.org/wiki/Delimited_continuation
+
+\subsection{Landin's J operator}
+
+The mechanical evaluation of expressions \cite{landin1964mechanical}.
+
+\section{Type and effect systems}
+
+\section{Virtual machines}
+
+\subsection{The CEK machine}
+
+\subsection{The SECD machine}
+
+\section{Choice of tools}
+
+\section{Licensing}
+
+\section{Requirements analysis}
+
+\section{Starting point}
+
+\section{Development methodology}
+
+\section{Timeline}
+
+\section{Summary}
 
 % kell motivacio section
+
+\section{Computational effects}
 
 There are two types of programs: pure and effectful (or impure). Pure programs are ones that are independent from the environment and effectful programs are the ones that \emph{do} something in the
 sense that they interact with their environment. Another way of defining pure functions is: given the definition of the function and its arguments, its result is uniquely determined.
@@ -28,7 +186,9 @@ them in a framework that was always know to work: mathematics.
 
 \subsection{Eff}
 
-This subsection gives a short introduction to Eff with some code examples. The precise syntax and semantics of the language will be defined later, we aim for an intuitive introduction here.
+This subsection gives a short introduction to Eff with some code examples.
+The precise syntax and semantics of the language will be defined later,
+we aim for an intuitive introduction here.
 
 \subsubsection{Effects}
 
@@ -36,9 +196,7 @@ There is an important distinction between syntactic and semantic elements in the
 
 An effect in Eff is declared using the \verb|effect| keyword together with a type signature which forms the effect signature. One would define a \verb|Print| effect for printing strings as follows:
 
-\begin{verbatim}
-effect Print : string -> unit
-\end{verbatim}
+
 
 This tells us two things. To invoke the \verb|Print| effect we must provide a string as an argument and what we get back is something of type \verb|unit| after the effect is performed. We get to know no extra information about \verb|Print|.
 
@@ -154,7 +312,7 @@ with nesting \verb|with ... handle| blocks.
 
 [TODO: I need two code examples here to justify the claims above and show that \verb|with ... handle| is more convenient. One in Haskell with monad transformers and one in Eff with two nested handlers.]
 
-\subsection{Limitations}
+\subsection{Criticism}
 
 Although there are many attractive properties of effect handlers, one that is frequently quoted to be ``annoying'' is that it is very easy to write incomprehensible code via continuations.
 Continuations are not a novel concept but it is one that perhaps isn't widely known by the wider software engineering community. Hence providing the concrete implementation of effects
@@ -187,15 +345,17 @@ are not just an exciting esoteric research programming language construct with a
 \end{itemize}
 
 \section{Tikz}
+\subsection{Project structure}
+
 \begin{figure}
 \begin{tikzpicture}
-  \node[draw] (LEX) at (0,5) {Lexer};
-  \node[draw] (PAR) at (0,4) {Parser};
-  \node[draw] (TYPE) at (0,2) {Type and effect checking};
-  \node[draw] (MID) at (5, 2) {Middle-end};
-  \node[draw] (COMP) at (9,2) {Compiler};
-  \node[draw] (CEK) at (0,0) {CEK machine};
-  \node[draw] (YOYO) at (9,0) {YoYo machine};
+  \node[draw,inner sep=10pt] (LEX) at (0,6) {Lexer};
+  \node[draw,inner sep=10pt] (PAR) at (0,4) {Parser};
+  \node[draw,inner sep=10pt] (TYPE) at (0,2) {Type and effect checking};
+  \node[draw,inner sep=10pt] (MID) at (5, 2) {Middle-end};
+  \node[draw,inner sep=10pt] (COMP) at (9,2) {Compiler};
+  \node[draw,inner sep=10pt] (CEK) at (0,0) {CEK machine};
+  \node[draw,inner sep=10pt] (YOYO) at (9,0) {YoYo machine};
   
   \draw[->] (LEX) -- (PAR);
   \draw[->] (PAR) -- (TYPE) node[midway, right] {Parse trees};
@@ -209,5 +369,31 @@ are not just an exciting esoteric research programming language construct with a
 \end{figure}
 
 The project structure can be seen on \autoref{fig:project-structure}.
+
+\subsection{Repository structure}
+
+\subsection{CEK machines}
+
+\begin{itemize}
+  \item K stands for kontinuation
+  \item 
+\end{itemize}
+
+
+\subsection{SECD machines}
+
+\begin{itemize}
+  \item Landin' machine
+  \item Lower level than CEK machine
+  \item Can implement continuations with it
+  \item Dump is important
+  \item Cite \cite{landin-secd}
+\end{itemize}
+
+
+\ifstandalone
+\bibliography{../bibliography}{}
+\bibliographystyle{plain}
+\fi
 
 \end{document}
