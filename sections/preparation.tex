@@ -2,40 +2,55 @@
 \usepackage[subpreambles=true]{standalone}
 \usepackage{import}
 \usepackage{ebproof}
-
+\usepackage[utf8]{inputenc}
 \usepackage{tikz}
 \usepackage{hyperref}
 \usepackage{amsmath}
 \usepackage{amssymb}
+\usepackage{listings}
+\usepackage{verbatim}
 
 \renewcommand{\leadsto}{\rightsquigarrow}
 
 \newcommand{\effFalse}{\mathbf{false}}
 \newcommand{\effTrue}{\mathbf{true}}
-\newcommand{\effSucc}{\mathbf{succ}}
-\newcommand{\effFun}{\mathbf{fun}}
+\newcommand{\effSucc}{\mathbf{succ}\ }
+\newcommand{\effFun}{\mathbf{fun}\ }
 \newcommand{\effZero}{\mathbf{0}}
-\newcommand{\effHandler}{\mathbf{handler}}
-\newcommand{\effVal}{\mathbf{val}}
+\newcommand{\effHandler}{\mathbf{handler}\ }
+\newcommand{\effVal}{\mathbf{val}\ }
 \newcommand{\effBar}{\ \textbf{\textbar}\ }
-\newcommand{\effWith}{\mathbf{with}}
-\newcommand{\effHandle}{\mathbf{handle}}
+\newcommand{\effWith}{\ \mathbf{with}\ }
+\newcommand{\effHandle}{\ \mathbf{handle}\ }
 \newcommand{\effIf}{\mathbf{if}\ }
 \newcommand{\effThen}{\ \mathbf{then}\ }
 \newcommand{\effElse}{\ \mathbf{else}\ }
-\newcommand{\effAbsurd}{\mathbf{absurd}}
-\newcommand{\effMatch}{\mathbf{match}}
+\newcommand{\effAbsurd}{\mathbf{absurd}\ }
+\newcommand{\effMatch}{\mathbf{match}\ }
 \newcommand{\effLet}{\mathbf{let}\ }
 \newcommand{\effIn}{\ \mathbf{in}\ }
 \newcommand{\effRec}{\mathbf{rec}\ }
 
 \begin{document}
 
-This chapter of my dissertation describes the work that was undertaken
-before any code was written, contains the starting point of my project
-and the development methodology I used to carry out the work as well as
-it contains a brief survey of the background knowledge I needed to
-acquire to be able to start working on the project.
+This chapter of my dissertation contains a brief survey of the background knowledge I needed to
+acquire to be able to start working on the project. It also describes other work which had to be
+undertaken before I wrote any code, contains the starting point of my project
+and the development methodology I used to carry out the work.
+
+% \section{Computational effects}
+
+% There are two types of programs: pure and effectful (or impure). Pure programs are ones that are independent from the environment and effectful programs are the ones that \emph{do} something in the
+% sense that they interact with their environment. Another way of defining pure functions is: given the definition of the function and its arguments, its result is uniquely determined.
+
+% Programs invoking computational effects such as nondeterminism, probabilistic nondeterminism, exceptions, interactive input/output or side effects all constitute as effectful. This is obvious for
+% interactive input/output, nondeterminism and side-effects as these obviously interact with the environment. Exceptions are a bit awkward in the sense that throwing them is pure but catching them is
+% not (consider catching an exception that is thrown due to an out-of-memory error; catching this exception would mean that we interact with the environment in an implicit way).
+
+% Reasoning about pure programs is easy, as pure computations (partial functions) are well understood. However, most programs must \emph{do} something with the real world (write to a file, 
+% read from a network socket, handle errors, generate random numbers, etc.) and perform effects to be useful.
+% Hence, to be able to reason about our programs we must properly understand the properties of these effects, how they work, how they interact and what rules apply to them. To do this, we try to model
+% them in a framework that was always know to work: mathematics.
 
 \section{The programming language Eff}
 
@@ -54,6 +69,7 @@ be capitalized just like OCaml variant tags) and its type. An effect definition
 can be seen on \autoref{fig:effect-perform-keywords}. Effects always have a type of the
 form $\alpha \to \beta$ for some types $\alpha$ and $\beta$.
 
+
 \begin{figure}[hbt!]
   \begin{verbatim}
     effect Print : string -> unit;;
@@ -69,19 +85,20 @@ form $\alpha \to \beta$ for some types $\alpha$ and $\beta$.
 
 Effects behave a bit like functions as we could see from their types above.
 Once an effect of type $\alpha \to \beta$ is defined we can invoke it
-using the \verb|perform| keyword and with an argument of type $\alpha$.
-The type of the result is $\beta$.\footnote{Too childish? How to say more concisely?}
+using the \verb|perform| keyword and by providing an argument of type $\alpha$.
+The type of the resulting expression is $\beta$.
 
 The \verb|perform| keyword is similar to \verb|raise| in OCaml or to \verb|throw|
-in Java in that when we perform an effect the control will go to an effect
+in Java in that when we perform an effect the control will be given to an effect
 handler (this would be an exception handler in OCaml or Java) or the program
 will terminate with an exception if no handler can handle the effect.
 
 \subsection{Handlers}
 
 Handlers give meaning to effects: this is what programmers can use to specify
-what they mean by \verb|Print|. Without a handler an effect can be declared, but when
-performed, can only cause a program to terminate with an exception.
+what they mean by an effect, such as \verb|Print| in \autoref{fig:effect-perform-keywords}.
+An effect can be declared without a handler, but when performed, can only cause a program 
+to terminate with an exception.
 
 Handlers are first-class citizens (i.e., values) in Eff. One can define them with the
 \verb|handler| keyword by specifying \emph{rules}.
@@ -96,14 +113,14 @@ An example can be seen on \autoref{fig:handler-keyword}.
         (cont_result, message ^ cont_output)
       | finally x -> x
   \end{verbatim}
-  \caption{A handler definition consisting of 2 rules (a value rule and an effect rule).
+  \caption{A handler definition consisting of 3 rules: a value rule, an effect rule and a finally rule.
   The effect rule first resumes the rest of the program to obtain its result and its output.
-  Printing out \texttt{message} is implemented as prepending
-  it to the output of the rest of the program.}
+  ``Printing'' out \texttt{message} is simulated by string concatenation; we prepend \texttt{message}
+  to the output of the rest of the program.}
   \label{fig:handler-keyword}
 \end{figure}
 
-To complete our Hello World example we must be able to use this handler. This is done
+To complete our Hello World example we must be able to \emph{apply} this handler. This is done
 using a \emph{with-handle block} as illustrated on \autoref{fig:hello-world}.
 
 \begin{figure}
@@ -115,7 +132,6 @@ using a \emph{with-handle block} as illustrated on \autoref{fig:hello-world}.
   \caption{The Hello World example in Eff. The code above evaluates to the pair \texttt{("Hello World!", ())}.}
   \label{fig:hello-world}
 \end{figure}
-
 As handlers are values, they have their own type. This is discussed later in [TODO: ref to Type and Effect System section].
 
 There are a few aspects of the code that can be strange on the first sight. The first
@@ -123,12 +139,14 @@ is the rules involved in the declaration.
 
 \subsubsection{Handler rules}
 
-One can use three types of rules in a handler: a \emph{value rule}, an \emph{effect rule} or
-a \emph{finally rule}.
+One can use three kinds of rules in a handler: a \emph{value rule}, an \emph{effect rule} or
+a \emph{finally rule}.\footnote{TODO: I should say \emph{case} rather than \emph{rule}. The authors use case and I noticed it
+only when I re-read parts of the publication. Later I use case to mean rule. They are the same.}
 
-A value rule has the form $x \to c$.
-It takes the result of a computation enclosed by a with-handle block, binds it to the
-identifier $x$ and performs the computation $c$. This is a rule that describes how to handle the result of a computation.
+A value rule has the form $x \to c$. This is a rule that describes how to handle the
+\emph{return value} of a computation.
+It takes the return value of a computation enclosed by a with-handle block, binds it to the
+identifier $x$ and performs the computation $c$.
 In \autoref{fig:handler-keyword} we are simply saying that if the computation handled by this
 handler has finished computing without invoking any effects, then we are returning a pair containing
 the result of the computation and the empty string (this reflects that nothing was printed).
@@ -137,9 +155,9 @@ An effect rule is a generalisation of SML's \cite{milner1997definition} \verb|ha
 that it also captures the \emph{continuation} (\verb|k| above) of the computation enclosed
 by the with-handle block handling the effect. Such a continuation can be \emph{resumed} with
 the \verb|continue| keyword. Note that when an effect of type $\alpha \to \beta$ is handled,
-we get access to its argument of type $\alpha$ and we can resume its continuation if we provide
+we get \emph{read access} to its argument of type $\alpha$ and we can resume its continuation if we provide
 the continuation with a value of type $\beta$ it expects (this is why we resume the continuation
-by giving it \verb|()| in \autoref{fig:handler-keyword}---\verb|Print| is of type $string \to unit$).
+by giving it a \verb|()| value in \autoref{fig:handler-keyword}---\verb|Print| is of type $string \to unit$).
 
 Finally rules are just syntactic sugar for let wrappers around with-handle blocks.
 That is, $\textbf{finally } r \to f$ does the same as $\textbf{let } r \leftarrow \textbf{with } v \textbf{ handle } c \textbf{ in } f$.
@@ -149,80 +167,254 @@ A handler can have any number of effect rules (even zero) but only at most one f
 Value rules and finally rules are optional. When they are avoided they are assumed to be identities (i.e.,
 \verb|x -> x| or \verb|finally x -> x| respectively).
 
-\section{The Eff core formally}
+% \subsection{Advantages}
 
-\emph{Core Eff} is described in \cite{bauer2013effect}. This section is largely based on that paper.
+% \subsubsection{OOP and functional style}
 
-\subsection{Syntax}
+% We can think about effect signatures as interfaces and handlers as implementations of these interfaces.
+% A \verb|with h handle c| block is then an ``instantiation'' of effect implementations.
 
-Here I state the syntax of core Eff:
+% We see that programming with effect handlers puts us between the object-oriented and functional styles and gives us more opportunities to re-use existing pieces of code (see next code example).
 
-\begin{figure}
-Expressions
-$$ e ::= x \mid \effTrue \mid \effFalse \mid \effZero \mid \effSucc\ e \mid () \mid \effFun\ x\ :\ A \mapsto c \mid \iota \mid h $$
-Handlers
-$$ h ::= \effHandler\ \effVal\ x : A \mapsto c_v  \effBar ocs $$
-Operation cases
-$$ ocs ::= nil \mid (e\#op\ x\ k \mapsto c \effBar ocs)$$
-Computations
-\begin{align*}
-  c ::= \ &\effVal\ e \mid e_1\#op\ e_2 (y.c) \mid \effWith\ e\ \effHandle\ c \mid \effIf e \effThen c_1 \effElse c_2 \mid\\
-        & \effAbsurd\ e \mid e_1\ e_2 \mid \effMatch\ e\ \effWith\ \effZero \mapsto c_1 \effBar \effSucc\ x \mapsto c_2 \mid \\
-        & \effLet x = c_1 \effIn c_2 \mid \effLet \effRec f\ x : A \to C = c_1 \effIn c_2
-\end{align*}
+% \subsubsection{Direct style}
 
-\caption{Abstract syntax of core Eff}
-\label{fig:core-eff-syntax}
-\end{figure}
+% The following example shows an implementation of the state monad (borrowed from the official Eff website \cite{eff-website}):
+% \begin{verbatim}
+% effect Get: int
+% effect Set: int -> unit
 
-\subsection{Semantics}
+% let monad_state initial = handler
+%   | y -> (fun s -> (y, s))
+%   | effect Get k -> (fun s -> (continue k s) s)
+%   | effect (Set s') k -> (fun _ -> (continue k ()) s')
+%   | finally f -> f initial
+% ;;
 
-The operational semantics of core Eff:
-\begin{figure}
-$$
-\begin{prooftree}
-\Hypo{}
-\Infer1{\effIf \effTrue \effThen c_1 \effElse c_2 \leadsto c_1}
-\end{prooftree}
-$$
+% let double_and_add_ten () =
+%   let x = perform Get in
+%   perform (Set (2 * x));
+%   perform Get + 10
+% ;;
 
-\caption{Small step operational semantics of core Eff}
-\end{figure}
-The denotational semantics of core Eff:
-\begin{figure}
-\caption{Denotational semantics of core Eff}
-\end{figure}
+% with monad_state 30 handle
+%   double_and_add_ten ()
+% ;;
+% \end{verbatim}
 
-\subsection{Type and effect system}
+% Note how the function \verb|double_and_add_ten| is written in a direct style. As mentioned above, the programmer does not have to 
+% be aware of the implementations of the effects (indeed, we see that the ``internal'' representation of state uses functions). 
+% This function illustrates how handlers increase the modularity of our programs (we could use the function in the context of other handlers 
+% and perhaps get some other result).
+
+% \subsubsection{Composition}
+
+% Monads are frequently used as a way to simulate effectful computations in programming languages like Haskell. 
+% However, combining different kinds of effects in these languages can be non-trivial and 
+% tiresome sometimes. Haskell uses monad stacks and monad transformers to get around this. [TODO: someone might not know what this is]
+
+% In Eff, combining effects and their handlers arises naturally. Handlers can be written for any set of effects and handlers can be combined 
+% with nesting \verb|with ... handle| blocks.
+
+% [TODO: I need two code examples here to justify the claims above and show that \verb|with ... handle| is more convenient. One in Haskell with monad transformers and one in Eff with two nested handlers.]
+
+% \subsubsection{Criticism}
+
+% Although there are many attractive properties of effect handlers, one that is frequently quoted to be ``annoying'' is that it is very easy to write incomprehensible code via continuations.
+% Continuations are not a novel concept but it is one that perhaps isn't widely known by the wider software engineering community. Hence providing the concrete implementation of effects
+% can impose some extra burden on a programmer's brain.
+
 
 \section{Continuations and control operators}
 
-Although continuations came up briefly in the previous section I didn't explain what they are in detail.
-This section is devoted to this because continuations are playing a crucial role in Eff and in what follows
+Although continuations came up briefly in the previous section I did not explain what they are in detail.
+This section is devoted to this because continuations are playing a crucial rôle in Eff and in what follows
 in this dissertation.
 
-Continuations were first discovered in 1964 by van Wijngaarden \cite{reynolds1993discoveries}.
+% Continuations were first discovered in 1964 by van Wijngaarden \cite{reynolds1993discoveries}.
 
 \subsection{Delimited continuations}
 
-Delimited continuations 
+TODO: Delimited continuations
 
 % check this out
 % https://en.wikipedia.org/wiki/Delimited_continuation
 
 \subsection{Landin's J operator}
 
-The mechanical evaluation of expressions \cite{landin1964mechanical}.
+TODO: Landin's J operator.\\
+The mechanical evaluation of expressions \cite{landin-secd}.
+
+\section{The Eff core formally}
+
+\emph{Core Eff} is described in \cite{bauer2013effect}. This section is largely based on that paper.
+
+\subsection{Syntax}
+
+% syntactic difference between pure expressions and possibly effectful computations
+% iota?
+% implementations can avoid the syntactic difference
+% talk about monads here
+
+In core Eff there is a syntactic distinction between expressions and computations.
+
+\textbf{Note to Alan:} Here I will/want to talk about:
+\begin{itemize}
+  \item The syntactic difference between pure expressions and possibly effectful computations
+  \item $\effVal$ is \emph{return}
+  \item Haskell monads (but maybe that should go to the Type and effect system?); I have trouble introducing these; I don't have a grip on them; I need a ``story''.
+  \item $\iota\#op$ -- the authors use this notation; I think it is very annoying, I don't see any reason why $\#op$ is a ``thing''; I think some better notation can
+    make a huge difference here and can lead to a less scary more intuitive introduction; I am thinking about just using $\iota$. Any inputs here or any conventions/notations
+    I should know about? Ideas?
+\end{itemize}
+
+\begin{figure}
+Expressions
+$$ e ::= x \mid \effTrue \mid \effFalse \mid \effZero \mid \effSucc\ e \mid () \mid \effFun\ x\ :\ A \mapsto c \mid \iota \mid h $$
+Handlers
+$$ h ::= \effHandler \effVal x : A \mapsto c_v  \effBar ocs $$
+Operation cases
+$$ ocs ::= nil \mid (e\#op\ x\ k \mapsto c \effBar ocs)$$
+Computations
+\begin{align*}
+  c ::= \ &\effVal e \mid e_1\#op\ e_2 (y.c) \mid \effWith e \effHandle c \mid \effIf e \effThen c_1 \effElse c_2 \mid\\
+        & \effAbsurd e \mid e_1\ e_2 \mid \effMatch e \effWith \effZero \mapsto c_1 \effBar \effSucc x \mapsto c_2 \mid \\
+        & \effLet x = c_1 \effIn c_2 \mid \effLet \effRec f\ x : A \to C = c_1 \effIn c_2
+\end{align*}
+\caption{Abstract syntax of core Eff}
+\label{fig:core-eff-syntax}
+\end{figure}
+
+\subsection{Semantics}
+
+This section presents the small step operational semantics of core Eff (see \autoref{fig:small-step-semantics}). As
+expressions are pure I avoid giving reduction rules for them. The spotlight is on possibly effectful computations and
+on their reduction rules given by the relation $\leadsto$.
+
+\begin{figure}
+$$
+\begin{prooftree}
+\hypo{}
+\infer1[(\textsc{If-True})]{\effIf \effTrue \effThen c_1 \effElse c_2 \leadsto c_1}
+\end{prooftree}
+\quad
+\begin{prooftree}
+  \hypo{}
+  \infer1[(\textsc{If-False})]{\effIf \effFalse \effThen c_1 \effElse c_2 \leadsto c_2}
+\end{prooftree}
+$$
+
+$$
+\begin{prooftree}
+  \hypo{}
+  \infer1[(\textsc{Fun-App})]{(\effFun x \mapsto c)\ e \leadsto c[e/x]}
+\end{prooftree}
+\quad
+\begin{prooftree}
+  \hypo{}
+  \infer1[(\textsc{Match-Zero})]{\effMatch \effZero \effWith \effZero \mapsto c_1 \effBar \effSucc x \mapsto c_2  \leadsto c_1}
+\end{prooftree}
+$$
+
+$$
+\begin{prooftree}
+  \hypo{}
+  \infer1[(\textsc{Match-Succ})]{\effMatch (\effSucc e) \effWith \effZero \mapsto c_1 \effBar \effSucc x \mapsto c_2  \leadsto c_2[e/x]}
+\end{prooftree}
+$$
+
+$$
+\begin{prooftree}
+  \hypo{c_1 \leadsto c_1'}
+  \infer1[(\textsc{Let-Step})]{\effLet x = c_1 \effIn c_2 \leadsto \effLet x = c_1' \effIn c_2}
+\end{prooftree}
+\quad
+\begin{prooftree}
+  \hypo{}
+  \infer1[(\textsc{Let-Val})]{\effLet x = (\effVal e) \effIn c \leadsto c[e/x]}
+\end{prooftree}
+$$
+
+$$
+\begin{prooftree}
+  \hypo{}
+  \infer1[(\textsc{Let-Effect})]{\effLet x = (\iota\#op\ e\ (y.c_1)) \effIn c_2 \leadsto \iota\#op\ e\ (y.\effLet x = c_1 \effIn c_2)}
+\end{prooftree}
+$$
+
+$$
+\begin{prooftree}
+  \hypo{}
+  \infer1[(\textsc{Let-Rec})]{\effLet \effRec f\ x = c_1 \effIn c_2 \leadsto c_2[(\effFun x \mapsto \effLet \effRec f\ x = c_1 \effIn c_1)/f]}
+\end{prooftree}
+$$
+
+$$
+\begin{prooftree}
+  \hypo{c \leadsto c'}
+  \infer1[(\textsc{Handle-Step})]{\effWith e \effHandle c \leadsto \effWith e \effHandle c'}
+\end{prooftree}
+$$
+
+$$
+\begin{prooftree}
+  \hypo{c \leadsto c'}
+  \infer1[(\textsc{Handle-Val})]{\effWith (\effHandler \effVal x \mapsto c_v \effBar ocs) \effHandle (\effVal e) \leadsto c_v[e/x]}
+\end{prooftree}
+$$
+
+$$
+\begin{prooftree}
+  \hypo{h \stackrel{\text{def}}{=} (\effHandler \effVal x \mapsto c_v \effBar ocs) \quad (\text{op}: A^\text{op} \to B^\text{op}) \in \Sigma_E}
+  \infer1[(\textsc{Handle-Effect})]{\effWith h \effHandle (\iota\#op\ e (y.c)) \leadsto ocs_{\iota\#op} (e, (\effFun y : B^\text{op} \mapsto \effWith h \effHandle c))}
+\end{prooftree}
+$$
+
+\caption{Small step operational semantics of core Eff}
+\label{fig:small-step-semantics}
+\end{figure}
+
+The rules for if statements, function application, match statements and the rules \textsc{Handle-Step}, \textsc{Let-Step} and \textsc{Let-Rec}
+are standard. The other \textsc{Let-*} and \textsc{Handle-*} rules need more explanation:
+\begin{table}
+  \begin{tabular}{l|p{10cm}}
+  Rule & Comment \\
+  \hline \hline
+  \textsc{Let-Val} & If a computation \emph{returns} an expression $e$, it is bound to the identifier $x$ in the computation $c$. \\ \hline
+  \textsc{Let-Effect} & A computation $c$ can also reduce to an effect $\iota\#op\ e\ (y.c_1)$, where $e$ is the argument of the effect
+    constructor and $(y.\ c_1)$ is a delimited continuation representing the program point $c$'s execution was stopped at. This delimited continuation can be
+    used later to resume $c$. \\ \hline
+  \textsc{Handle-Val} & If a computation in a with-handle block with handler $h$ reduces to $\effVal e$, then the
+    \emph{value case} of $h$ (i.e., $\effVal x \mapsto c_v$) is invoked by substituting $e$ for $x$ in $c_v$. \\ \hline
+  \textsc{Handle-Effect} & This rule tells us how to look up the \emph{closest matching handler} if a computation reduces to an effect.
+    If no such handler exists then the program terminates with an exception. The recursive definition of $ocs_{\iota\#op}$ describes how
+    to look up a \emph{matching case} in a handler. Note how a \emph{new} continuation $(y.\kappa\ y)$ is created from $\kappa$ when we reach $nil$, i.e.,
+    when no case matches the effect in question.
+  \end{tabular}
+  \caption{Explanation of the Eff specific rules of the small step semantics}
+  \label{tab:rule-explanation}
+\end{table}
+The definition of $ocs_{\iota\#op}$ is as follows:
+\begin{align}
+  nil_{\iota\#op} (e, \kappa) = \iota\#op\ e\ (y.\kappa\ y) \\
+  (\iota'\#op'\ x\ k \mapsto c \effBar ocs)_{\iota\#op}(e, \kappa) = \begin{cases}
+    c[e/x, \kappa/k] & \text{if }\iota\#op = \iota'\#op' \\
+    ocs_{\iota\#op(e,\kappa)} & \text{otherwise}
+  \end{cases}
+\end{align}
+
+\subsection{Type and effect system}
+
+TODO: typeset type checking rules
 
 \section{Virtual machines}
 
-\subsection{The CEK machine}
+\subsection{CEK machines}
 
-\begin{itemize}
-  \item K stands for kontinuation
-\end{itemize}
+TODO: CEK machines
 
 \subsection{The SECD machine}
+
+TODO: SECD machines
 
 \begin{itemize}
   \item Landin' machine
@@ -251,14 +443,17 @@ The starting point of my project didn't change since the writing of the project 
 \begin{itemize}
   % knowledge backround
   \item I read briefly about Eff and algebraic effect handlers before starting my project. This was necessary
-    because the Tripos does not cover this topic.
-  \item I used SML and OCaml before to implement simple interpreters for toy programming languages.
+    because the Tripos does not cover these topics.
+  \item I used SML and OCaml before to implement simple interpreters for toy programming languages
+    and to experiment with functional programming. This is my first big project where I use functional programming.
   \item I also had a look at the OCaml ecosystem to check if it has a stable build system, if testing frameworks are available
     and whether lexer and parser generators exist.
   \item I had basic familiarity with utility tools such as version control, various IDEs and Unix-like command line interfaces.
 \end{itemize}
 
 \section{Requirements analysis}
+
+TODO
 
 % a lot of knowledge needed to be acquired
 % CEK interpreter has 2 goals: one to test my understanding and the other to give a baseline
@@ -268,7 +463,7 @@ The starting point of my project didn't change since the writing of the project 
 I chose \emph{test-driven development} (TDD) \cite{beck2003test} as my project's software development methodology.
 The essence of TDD is that programmers work in quick iterative cycles whereby they write failing tests first and then
 implement the next feature that makes the failing test cases pass.
-Always having an \emph{automated} test suite at hand avoids trial and error testing which is both error prone and
+Always having an \emph{automated} test suite at hand avoids trial and error testing which would be both error prone and
 time consuming.
 The reasons for choosing this methodology was three-fold.
 
@@ -282,13 +477,13 @@ because every module of my project (apart from the front end) depends on a previ
 \autoref{fig:project-structure}) and hence on its
 correctness. As TDD is also known as 
 ``a way of managing fear during programming'' it came handy that I could write code with confidence knowing
-that the code I have written so far is correct. Other advantages were the ability to notice
+that the code I have written before is correct. Other advantages were the ability to notice
 quickly if a code change broke some already implemented feature and the ability to refactor
-code with confidence (which I had to do frequently---from internships I knew that my coding style
+code with confidence (which I had to do frequently---from summer internships I knew that my coding style
 is such that this will be unavoidable if I want to work with a maintainable codebase).
 
-Third, my success criterion was a correct working implementation of a compiler so tests were crucial for the
-success of my project as well.
+Third, my success criterion was a correct working implementation of a compiler so tests were
+crucial to demonstrate that success criteria were fulfilled.
 
 \begin{figure}[htb]
   \centering
@@ -321,7 +516,7 @@ ambitious (see \autoref{tab:timeline}).
 \begin{table}
 \centering
 \begin{tabular}{c}
-  TODO
+  TODO: copy from proposal + add comments
 \end{tabular}
 \caption{TODO}
 \label{tab:timeline}
@@ -332,43 +527,29 @@ This section summed up the theory background which was needed to complete this d
 It also shows the preparation I undertook in the software engineering aspects of the project.
 
 \begin{itemize}
-  \item I briefly introduced the programming language Eff and talked about its characteristic features.
-  \item I talked about the operational and denotational semantics of core Eff as well as a type and effect
-    system one can use with it. We saw that with-handle blocks compose naturally as opposed to monads in Haskell
-    where the use of monad transformers is unnatural.
+  \item I briefly introduced the programming language Eff and talked about its characteristic features. I showed
+    code examples demonstrating how handlers can be used in a direct style and how they support modularity and
+    code reuse in functional programs.
   \item I explained the idea of a continuation, how it represents an arbitrary program point in the
     execution of a program and how it allows advanced control flow to be implemented.
   \item I gave an overview of control operators (including Landin's J operator), why they were studied in the 
     early days of programming languages and their rôle in the development of different virtual machines.
-  \item I showed two examples of virtual machines which can implement the structured non-local
-    flow of control continuations make possible. The key challenge these machines solve is that
-    they can save and restore execution contexts in an appropriate way whenever non-local control flow occurs.
+  \item I talked about the small-step operational semantics of core Eff as well as a type and effect
+    system one can use with it. We saw that with-handle blocks compose naturally as opposed to monads in Haskell
+    where the use of monad transformers is unnatural.
+  \item I showed two examples of virtual machines which can implement the structured \emph{non-local
+    flow of control} continuations make possible. The key challenge these machines solve is that
+    they can \emph{save and restore} execution contexts in an appropriate way whenever non-local control flow occurs.
 
     A CEK machine does this by keeping a stack of continuations (K), while the SECD machine does this by using
-    a dump (D). The importance of these machines will appear in the Implementation section where I describe the
+    a so-called dump (D). The importance of these machines will become clearer in the Implementation section where I describe the
     Yoyo virtual machine for Eff which has similarities with both of these virtual machines.
   \item I stated my starting point, the timeline of my project and discussed the development methodology used
     to write the code and the testing strategy to assess its correctness.
 \end{itemize}
 
-% kell motivacio section
 
-\section{Computational effects}
-
-There are two types of programs: pure and effectful (or impure). Pure programs are ones that are independent from the environment and effectful programs are the ones that \emph{do} something in the
-sense that they interact with their environment. Another way of defining pure functions is: given the definition of the function and its arguments, its result is uniquely determined.
-
-Programs invoking computational effects such as nondeterminism, probabilistic nondeterminism, exceptions, interactive input/output or side effects all constitute as effectful. This is obvious for
-interactive input/output, nondeterminism and side-effects as these obviously interact with the environment. Exceptions are a bit awkward in the sense that throwing them is pure but catching them is
-not (consider catching an exception that is thrown due to an out-of-memory error; catching this exception would mean that we interact with the environment in an implicit way).
-
-Reasoning about pure programs is easy, as pure computations (partial functions) are well understood. However, most programs must \emph{do} something with the real world (write to a file, 
-read from a network socket, handle errors, generate random numbers, etc.) and perform effects to be useful.
-Hence, to be able to reason about our programs we must properly understand the properties of these effects, how they work, how they interact and what rules apply to them. To do this, we try to model
-them in a framework that was always know to work: mathematics.
-
-
-
+\begin{comment}
 \subsection{Eff}
 
 This subsection gives a short introduction to Eff with some code examples.
@@ -444,66 +625,9 @@ Finally rules can be omitted in handler definitions, in which case they are assu
 \textbf{Handler types}
 
 Handlers handling a computation of type $\alpha$ and giving a result of type $\beta$ are given the type $\alpha \Rightarrow \beta$.
+\end{comment}
 
-\subsection{Advantages}
-
-Now that we introduced Eff, let's switch focus and think about the programming paradigms handlers introduce.
-
-\subsubsection{OOP and functional style}
-
-We can think about effect signatures as interfaces and handlers as implementations of these interfaces.
-A \verb|with h handle c| block is then an ``instantiation'' of effect implementations.
-
-We see that programming with effect handlers puts us between the object-oriented and functional styles and gives us more opportunities to re-use existing pieces of code (see next code example).
-
-\subsubsection{Direct style}
-
-The following example shows an implementation of the state monad (borrowed from the official Eff website \cite{eff-website}):
-\begin{verbatim}
-effect Get: int
-effect Set: int -> unit
-
-let monad_state initial = handler
-  | y -> (fun s -> (y, s))
-  | effect Get k -> (fun s -> (continue k s) s)
-  | effect (Set s') k -> (fun _ -> (continue k ()) s')
-  | finally f -> f initial
-;;
-
-let double_and_add_ten () =
-  let x = perform Get in
-  perform (Set (2 * x));
-  perform Get + 10
-;;
-
-with monad_state 30 handle
-  double_and_add_ten ()
-;;
-\end{verbatim}
-
-Note how the function \verb|double_and_add_ten| is written in a direct style. As mentioned above, the programmer does not have to 
-be aware of the implementations of the effects (indeed, we see that the ``internal'' representation of state uses functions). 
-This function illustrates how handlers increase the modularity of our programs (we could use the function in the context of other handlers 
-and perhaps get some other result).
-
-\subsubsection{Composition}
-
-Monads are frequently used as a way to simulate effectful computations in programming languages like Haskell. 
-However, combining different kinds of effects in these languages can be non-trivial and 
-tiresome sometimes. Haskell uses monad stacks and monad transformers to get around this. [TODO: someone might not know what this is]
-
-In Eff, combining effects and their handlers arises naturally. Handlers can be written for any set of effects and handlers can be combined 
-with nesting \verb|with ... handle| blocks.
-
-[TODO: I need two code examples here to justify the claims above and show that \verb|with ... handle| is more convenient. One in Haskell with monad transformers and one in Eff with two nested handlers.]
-
-\subsection{Criticism}
-
-Although there are many attractive properties of effect handlers, one that is frequently quoted to be ``annoying'' is that it is very easy to write incomprehensible code via continuations.
-Continuations are not a novel concept but it is one that perhaps isn't widely known by the wider software engineering community. Hence providing the concrete implementation of effects
-can impose some extra burden on a programmer's brain.
-
-
+\begin{comment}
 \subsection{TODOs}
 \begin{itemize}
 \item I haven't said anything about shallow and deep handlers
@@ -517,7 +641,7 @@ can impose some extra burden on a programmer's brain.
 \item Very good article about CPS compilation \cite{flanagan1993essence}
 \item Bauer tutorial \cite{bauer2018algebraic}
 \end{itemize}
-
+\end{comment}
 
 \ifstandalone
 \bibliography{../bibliography}{}
