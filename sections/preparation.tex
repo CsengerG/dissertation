@@ -156,15 +156,75 @@ The mechanical evaluation of expressions \cite{landin1964mechanical}.
 
 \section{Licensing}
 
-\section{Requirements analysis}
+It is important to mention that the project fulfills licensing criteria. The dependencies of this project are
+listed below with their licenses:
+\begin{itemize}
+\item The OCaml toplevel, version 4.06.0, GNU Lesser General Public License (LGPL) version 2.1
+\item \emph{menhir} parser generator, version 20190924, GNU Library General Public License version 2
+\item \emph{Alcotest}, version 0.8.5, ISC license
+\item OPAM (OCaml Package Manager), version 2.0.4, GNU Lesser General Public License (LGPL) version 2.1
+\item \emph{Core} standard library by Jane Street, v0.11.3, MIT license
+\end{itemize}
+To the best of my knowledge these licenses allow the way I am using the software mentioned above.
 
 \section{Starting point}
 
+The starting point of my project didn't change since the writing of the project proposal [TODO: ref. appendix here]:
+\begin{itemize}
+  % knowledge backround
+  \item I read briefly about Eff and algebraic effect handlers before starting my project. This was necessary
+    because the Tripos does not cover this topic.
+  \item I used SML and OCaml before to implement simple interpreters for toy programming languages.
+  \item I also had a look at the OCaml ecosystem to check if it has stable build system, if testing frameworks are available
+    and whether lexer and parser generators exist.
+  \item I had basic familiarity with utility tools such as version control, various IDEs and Unix-like command line interfaces.
+\end{itemize}
+
+\section{Requirements analysis}
+
+% a lot of knowledge needed to be acquired
+% CEK interpreter has 2 goals: one to test my understanding and the other to give a baseline
+
 \section{Development methodology}
 
-\section{Timeline}
+\subsection{Structure of the project}
+
+\subsection{Timeline}
+
+\subsection{Correctness and testing}
+
+Crucial to show correctness for project success. The timeline, the testing strategy and the structure of the
+project are made so that at all stages of the project test-driven development is possible as all stages rely
+
+% risks: linear structure; dependent on previous stuff; correctness dependency
+
+planned so that it ensures 
+
+cite Software engineeering BS
 
 \section{Summary}
+This section summed up the theory background which was needed to complete this dissertation.
+It also shows the preparation I undertook in the software engineering aspects of the project.
+
+\begin{itemize}
+  \item I briefly introduced the programming language Eff and talked about its characteristic features.
+  \item I talked about the operational and denotational semantics of core Eff as well as a type and effect
+    system one can use with it. We saw that with-handle blocks compose naturally as opposed to monads in Haskell
+    where the use of monad transformers is unnatural.
+  \item I explained the idea of a continuation, how it represents an arbitrary program point in the
+    execution of a program and how it allows advanced control flow to be implemented.
+  \item I gave an overview of control operators (including Landin's J operator), why they were studied in the 
+    early days of programming languages and their rôle in the development of different virtual machines.
+  \item I showed two examples of virtual machines which can implement the structured non-local
+    flow of control continuations make possible. The key challenge these machines solve is that
+    they can save and restore execution contexts in an appropriate way whenever non-local control flow occurs.
+
+    A CEK machine does this by keeping a stack of continuations (K), while the SECD machine does this by using
+    a dump (D). The importance of these machines will appear in the Implementation section where I describe the
+    Yoyo virtual machine for Eff which has similarities with both of these virtual machines.
+  \item I stated my starting point, the timeline of my project and discussed the development methodology used
+    to write the code and the testing strategy to assess its correctness.
+\end{itemize}
 
 % kell motivacio section
 
