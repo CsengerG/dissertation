@@ -1,9 +1,33 @@
 \documentclass[class=article, crop=false]{standalone}
 \usepackage[subpreambles=true]{standalone}
 \usepackage{import}
+\usepackage{ebproof}
 
 \usepackage{tikz}
 \usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\renewcommand{\leadsto}{\rightsquigarrow}
+
+\newcommand{\effFalse}{\mathbf{false}}
+\newcommand{\effTrue}{\mathbf{true}}
+\newcommand{\effSucc}{\mathbf{succ}}
+\newcommand{\effFun}{\mathbf{fun}}
+\newcommand{\effZero}{\mathbf{0}}
+\newcommand{\effHandler}{\mathbf{handler}}
+\newcommand{\effVal}{\mathbf{val}}
+\newcommand{\effBar}{\ \textbf{\textbar}\ }
+\newcommand{\effWith}{\mathbf{with}}
+\newcommand{\effHandle}{\mathbf{handle}}
+\newcommand{\effIf}{\mathbf{if}\ }
+\newcommand{\effThen}{\ \mathbf{then}\ }
+\newcommand{\effElse}{\ \mathbf{else}\ }
+\newcommand{\effAbsurd}{\mathbf{absurd}}
+\newcommand{\effMatch}{\mathbf{match}}
+\newcommand{\effLet}{\mathbf{let}\ }
+\newcommand{\effIn}{\ \mathbf{in}\ }
+\newcommand{\effRec}{\mathbf{rec}\ }
 
 \begin{document}
 
@@ -125,6 +149,52 @@ A handler can have any number of effect rules (even zero) but only at most one f
 Value rules and finally rules are optional. When they are avoided they are assumed to be identities (i.e.,
 \verb|x -> x| or \verb|finally x -> x| respectively).
 
+\section{The Eff core formally}
+
+\emph{Core Eff} is described in \cite{bauer2013effect}. This section is largely based on that paper.
+
+\subsection{Syntax}
+
+Here I state the syntax of core Eff:
+
+\begin{figure}
+Expressions
+$$ e ::= x \mid \effTrue \mid \effFalse \mid \effZero \mid \effSucc\ e \mid () \mid \effFun\ x\ :\ A \mapsto c \mid \iota \mid h $$
+Handlers
+$$ h ::= \effHandler\ \effVal\ x : A \mapsto c_v  \effBar ocs $$
+Operation cases
+$$ ocs ::= nil \mid (e\#op\ x\ k \mapsto c \effBar ocs)$$
+Computations
+\begin{align*}
+  c ::= \ &\effVal\ e \mid e_1\#op\ e_2 (y.c) \mid \effWith\ e\ \effHandle\ c \mid \effIf e \effThen c_1 \effElse c_2 \mid\\
+        & \effAbsurd\ e \mid e_1\ e_2 \mid \effMatch\ e\ \effWith\ \effZero \mapsto c_1 \effBar \effSucc\ x \mapsto c_2 \mid \\
+        & \effLet x = c_1 \effIn c_2 \mid \effLet \effRec f\ x : A \to C = c_1 \effIn c_2
+\end{align*}
+
+\caption{Abstract syntax of core Eff}
+\label{fig:core-eff-syntax}
+\end{figure}
+
+\subsection{Semantics}
+
+The operational semantics of core Eff:
+\begin{figure}
+$$
+\begin{prooftree}
+\Hypo{}
+\Infer1{\effIf \effTrue \effThen c_1 \effElse c_2 \leadsto c_1}
+\end{prooftree}
+$$
+
+\caption{Small step operational semantics of core Eff}
+\end{figure}
+The denotational semantics of core Eff:
+\begin{figure}
+\caption{Denotational semantics of core Eff}
+\end{figure}
+
+\subsection{Type and effect system}
+
 \section{Continuations and control operators}
 
 Although continuations came up briefly in the previous section I didn't explain what they are in detail.
@@ -144,15 +214,23 @@ Delimited continuations
 
 The mechanical evaluation of expressions \cite{landin1964mechanical}.
 
-\section{Type and effect systems}
-
 \section{Virtual machines}
 
 \subsection{The CEK machine}
 
+\begin{itemize}
+  \item K stands for kontinuation
+\end{itemize}
+
 \subsection{The SECD machine}
 
-\section{Choice of tools}
+\begin{itemize}
+  \item Landin' machine
+  \item Lower level than CEK machine
+  \item Can implement continuations with it
+  \item Dump is important
+  \item Cite \cite{landin-secd}
+\end{itemize}
 
 \section{Licensing}
 
@@ -175,7 +253,7 @@ The starting point of my project didn't change since the writing of the project 
   \item I read briefly about Eff and algebraic effect handlers before starting my project. This was necessary
     because the Tripos does not cover this topic.
   \item I used SML and OCaml before to implement simple interpreters for toy programming languages.
-  \item I also had a look at the OCaml ecosystem to check if it has stable build system, if testing frameworks are available
+  \item I also had a look at the OCaml ecosystem to check if it has a stable build system, if testing frameworks are available
     and whether lexer and parser generators exist.
   \item I had basic familiarity with utility tools such as version control, various IDEs and Unix-like command line interfaces.
 \end{itemize}
@@ -187,20 +265,67 @@ The starting point of my project didn't change since the writing of the project 
 
 \section{Development methodology}
 
-\subsection{Structure of the project}
+I chose \emph{test-driven development} (TDD) \cite{beck2003test} as my project's software development methodology.
+The essence of TDD is that programmers work in quick iterative cycles whereby they write failing tests first and then
+implement the next feature that makes the failing test cases pass.
+Always having an \emph{automated} test suite at hand avoids trial and error testing which is both error prone and
+time consuming.
+The reasons for choosing this methodology was three-fold.
+
+Firstly, the nature of my project is such that the
+correctness of any code written is very well-defined as I can take the semantics of Eff
+as a baseline and given a piece of code it is always possible to tell whether it is
+interpreted correctly or not. This makes it possible to write tests upfront.
+
+Second, the structure of my project imposed an order on the parts to be delivered. This is
+because every module of my project (apart from the front end) depends on a previous one (see
+\autoref{fig:project-structure}) and hence on its
+correctness. As TDD is also known as 
+``a way of managing fear during programming'' it came handy that I could write code with confidence knowing
+that the code I have written so far is correct. Other advantages were the ability to notice
+quickly if a code change broke some already implemented feature and the ability to refactor
+code with confidence (which I had to do frequently---from internships I knew that my coding style
+is such that this will be unavoidable if I want to work with a maintainable codebase).
+
+Third, my success criterion was a correct working implementation of a compiler so tests were crucial for the
+success of my project as well.
+
+\begin{figure}[htb]
+  \centering
+  \resizebox{0.85\textwidth}{!}{
+  \begin{tikzpicture}
+    \node[draw,inner sep=10pt] (LEX) at (0,6) {Lexer};
+    \node[draw,inner sep=10pt] (PAR) at (0,4) {Parser};
+    \node[draw,inner sep=10pt] (TYPE) at (0,2) {Type and effect checking};
+    \node[draw,inner sep=10pt] (MID) at (5, 2) {Middle-end};
+    \node[draw,inner sep=10pt] (COMP) at (9,2) {Compiler};
+    \node[draw,inner sep=10pt] (CEK) at (0,0) {CEK interpreter};
+    \node[draw,inner sep=10pt] (YOYO) at (9,0) {YoYo machine};
+    
+    \draw[->] (LEX) -- (PAR);
+    \draw[->] (PAR) -- (TYPE) node[midway, right] {Parse trees};
+    \draw[->] (TYPE) -- (CEK) node[midway, right] {ASTs};
+    \draw[->] (TYPE) -- (MID) node[midway, above] {ASTs};
+    \draw[->] (MID) -- (COMP) node[midway, above] {IR};
+    \draw[->] (COMP) -- (YOYO) node[midway, right] {byte code};
+  \end{tikzpicture}}
+  \caption{Structure of the project}
+  \label{fig:project-structure}
+\end{figure}
 
 \subsection{Timeline}
 
-\subsection{Correctness and testing}
+The timeline did not change since the project proposal although it turned out to be very
+ambitious (see \autoref{tab:timeline}).
 
-Crucial to show correctness for project success. The timeline, the testing strategy and the structure of the
-project are made so that at all stages of the project test-driven development is possible as all stages rely
-
-% risks: linear structure; dependent on previous stuff; correctness dependency
-
-planned so that it ensures 
-
-cite Software engineeering BS
+\begin{table}
+\centering
+\begin{tabular}{c}
+  TODO
+\end{tabular}
+\caption{TODO}
+\label{tab:timeline}
+\end{table}
 
 \section{Summary}
 This section summed up the theory background which was needed to complete this dissertation.
@@ -379,19 +504,8 @@ Continuations are not a novel concept but it is one that perhaps isn't widely kn
 can impose some extra burden on a programmer's brain.
 
 
-\subsection{What this dissertation is about}
-
-Algebraic effects and their handlers lie in the heart of the Eff language.
-This dissertation is concerned with building and assessing the performance of an Eff compiler.
-I describe a CEK-like abstract machine in the implementation section and how that can be turned
-into a more efficient Multicore OCaml-like virtual machine built on top of fibers.
-
-This dissertation fits in the broader area of work as I hope to show that algebraic effect handlers
-are not just an exciting esoteric research programming language construct with a nice theoretic background, but programming with them comes with benefits and it is possible to compile them efficiently (or at least that the cost of compilation is not too great compared to the benefits they provide).
-
 \subsection{TODOs}
 \begin{itemize}
-\item I haven't said anything about continuations yet
 \item I haven't said anything about shallow and deep handlers
 \item Comparing to haskell monads/monad transformers is risky -- need to explain these
 \end{itemize}
@@ -402,52 +516,6 @@ are not just an exciting esoteric research programming language construct with a
 \item Eff Directly in OCaml \cite{Kiselyov_2018}
 \item Very good article about CPS compilation \cite{flanagan1993essence}
 \item Bauer tutorial \cite{bauer2018algebraic}
-\end{itemize}
-
-\section{Tikz}
-\subsection{Project structure}
-
-\begin{figure}
-\begin{tikzpicture}
-  \node[draw,inner sep=10pt] (LEX) at (0,6) {Lexer};
-  \node[draw,inner sep=10pt] (PAR) at (0,4) {Parser};
-  \node[draw,inner sep=10pt] (TYPE) at (0,2) {Type and effect checking};
-  \node[draw,inner sep=10pt] (MID) at (5, 2) {Middle-end};
-  \node[draw,inner sep=10pt] (COMP) at (9,2) {Compiler};
-  \node[draw,inner sep=10pt] (CEK) at (0,0) {CEK machine};
-  \node[draw,inner sep=10pt] (YOYO) at (9,0) {YoYo machine};
-  
-  \draw[->] (LEX) -- (PAR);
-  \draw[->] (PAR) -- (TYPE) node[midway, right] {Parse trees};
-  \draw[->] (TYPE) -- (CEK) node[midway, right] {ASTs};
-  \draw[->] (TYPE) -- (MID) node[midway, above] {ASTs};
-  \draw[->] (MID) -- (COMP) node[midway, above] {IR};
-  \draw[->] (COMP) -- (YOYO) node[midway, right] {byte code};
-\end{tikzpicture}
-\caption{Project structure}
-\label{fig:project-structure}
-\end{figure}
-
-The project structure can be seen on \autoref{fig:project-structure}.
-
-\subsection{Repository structure}
-
-\subsection{CEK machines}
-
-\begin{itemize}
-  \item K stands for kontinuation
-  \item 
-\end{itemize}
-
-
-\subsection{SECD machines}
-
-\begin{itemize}
-  \item Landin' machine
-  \item Lower level than CEK machine
-  \item Can implement continuations with it
-  \item Dump is important
-  \item Cite \cite{landin-secd}
 \end{itemize}
 
 
