@@ -1,0 +1,5 @@
+let prepending_print_handler = handler
+| val res -> (res, "")
+| effect (Print msg) k ->
+    let (res, out) = continue k () in
+    (res, msg ^ out)

@@ -1,0 +1,4 @@
+with prepending_print_handler handle
+    perform (Print "Hello ");
+    perform (Print "World!");
+    ()

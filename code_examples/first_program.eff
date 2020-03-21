@@ -1,0 +1,3 @@
+effect Print : string ->> unit;;
+...
+let () = perform (Print "Hello World");;

@@ -9,6 +9,11 @@
 \usepackage{amssymb}
 \usepackage{listings}
 \usepackage{verbatim}
+\usepackage{a4wide}
+\usepackage{float}
+\usepackage[justification=centering]{caption}
+
+\input{../src/efflang.tex}
 
 \renewcommand{\leadsto}{\rightsquigarrow}
 
@@ -30,11 +35,12 @@
 \newcommand{\effLet}{\mathbf{let}\ }
 \newcommand{\effIn}{\ \mathbf{in}\ }
 \newcommand{\effRec}{\mathbf{rec}\ }
+\newcommand{\tto}{\twoheadrightarrow}
 
 \begin{document}
 
-This chapter of my dissertation contains a brief survey of the background knowledge I needed to
-acquire to be able to start working on the project. It also describes other work which had to be
+This chapter of my dissertation contains a discussion on the theoretical background
+of the project. It also describes other work which had to be
 undertaken before I wrote any code, contains the starting point of my project
 and the development methodology I used to carry out the work.
 
@@ -52,7 +58,7 @@ and the development methodology I used to carry out the work.
 % Hence, to be able to reason about our programs we must properly understand the properties of these effects, how they work, how they interact and what rules apply to them. To do this, we try to model
 % them in a framework that was always know to work: mathematics.
 
-\section{The programming language Eff}
+\section{Eff by example}
 
 Eff is a programming language based on algebraic effect handlers.
 Essentially, it is a pure subset of OCaml \cite{ocaml-website} extended with a few extra
@@ -66,75 +72,57 @@ unmissable Hello World example.
 Effects lie in the heart of Eff (hence the name). A programmer can define
 effects using the \verb|effect| keyword, the effect's name (effect names must
 be capitalized just like OCaml variant tags) and its type. An effect definition
-can be seen on \autoref{fig:effect-perform-keywords}. Effects always have a type of the
-form $\alpha \to \beta$ for some types $\alpha$ and $\beta$.
-
+can be seen on \autoref{effect-perform-keywords}. Effects always have a type
+of $A \tto B$ for some types $A$ and $B$.
 
 \begin{figure}[hbt!]
-  \begin{verbatim}
-    effect Print : string -> unit;;
-    ...
-    let () = perform (Print "Hello World");;
-  \end{verbatim}
-  \caption{Printing can be thought of as an effect with an argument of type
-  string and a result of type unit.}
-  \label{fig:effect-perform-keywords}
+  \lstinputlisting[caption={Printing can be thought of as an effect with an argument of type
+  string and a result of type unit.}, label=effect-perform-keywords]{../code_examples/first_program.eff}
 \end{figure}
 
 \subsection{Performing effects}
 
 Effects behave a bit like functions as we could see from their types above.
-Once an effect of type $\alpha \to \beta$ is defined we can invoke it
-using the \verb|perform| keyword and by providing an argument of type $\alpha$.
-The type of the resulting expression is $\beta$.
+Once an effect of type $A \to B$ is defined we can invoke it
+using the \verb|perform| keyword and by providing an argument of type $A$.
+The type of the resulting expression is $B$.
 
 The \verb|perform| keyword is similar to \verb|raise| in OCaml or to \verb|throw|
 in Java in that when we perform an effect the control will be given to an effect
 handler (this would be an exception handler in OCaml or Java) or the program
 will terminate with an exception if no handler can handle the effect.
 
+Don't be confused by how an effect is constructed. Effects are not values in
+the Eff language. That is, \verb|Print "Hello World"| would be meaningless in
+itself, just like the exception \verb|Failure "hd"| would be meaningless in OCaml
+if we did not raise it. The situation is similar here but effects are \emph{performed} and not raised.
+
 \subsection{Handlers}
 
 Handlers give meaning to effects: this is what programmers can use to specify
-what they mean by an effect, such as \verb|Print| in \autoref{fig:effect-perform-keywords}.
+what they mean by an effect, such as \verb|Print| in \autoref{effect-perform-keywords}.
 An effect can be declared without a handler, but when performed, can only cause a program 
 to terminate with an exception.
 
 Handlers are first-class citizens (i.e., values) in Eff. One can define them with the
 \verb|handler| keyword by specifying \emph{rules}.
-An example can be seen on \autoref{fig:handler-keyword}.
+An example can be seen on \autoref{handler-keyword}.
 
-\begin{figure}
-  \begin{verbatim}
-    let prepending_print_handler = handler
-      | result -> (result, "")
-      | effect (Print message) k ->
-        let (cont_result, cont_output) = continue k () in
-        (cont_result, message ^ cont_output)
-      | finally x -> x
-  \end{verbatim}
-  \caption{A handler definition consisting of 3 rules: a value rule, an effect rule and a finally rule.
-  The effect rule first resumes the rest of the program to obtain its result and its output.
-  ``Printing'' out \texttt{message} is simulated by string concatenation; we prepend \texttt{message}
-  to the output of the rest of the program.}
-  \label{fig:handler-keyword}
-\end{figure}
+
+\lstinputlisting[caption={A handler definition consisting of 2 cases: a value case and an effect case.}, label=handler-keyword]{../code_examples/print_handler.eff}
+
+% TODO:  and a finally rule. The effect rule first resumes the rest of the program to obtain its result and its output. ``Printing'' out \texttt{message} is simulated by string concatenation; we prepend \texttt{message} to the output of the rest of the program.
 
 To complete our Hello World example we must be able to \emph{apply} this handler. This is done
-using a \emph{with-handle block} as illustrated on \autoref{fig:hello-world}.
+using a \emph{with-handle block} as illustrated on \autoref{hello-world}.
 
-\begin{figure}
-  \begin{verbatim}
-    with prepending_print_handler handle
-      perform (Print "Hello ");
-      perform (Print "World!")
-  \end{verbatim}
-  \caption{The Hello World example in Eff. The code above evaluates to the pair \texttt{("Hello World!", ())}.}
-  \label{fig:hello-world}
-\end{figure}
-As handlers are values, they have their own type. This is discussed later in [TODO: ref to Type and Effect System section].
+\lstinputlisting[caption={The Hello World example in Eff. The code above evaluates to the pair \texttt{((), "Hello World!")}.}, label=hello-world]{../code_examples/hello_world.eff}
+As handlers are values, they have their own type of the form $A \Rightarrow B$.
+Handler types are similar to the $\to$ function types but they work on computations
+rather than on values. The handler on \autoref{hello-world} is of type \verb|unit => unit * string|
+as it transforms a computation of type \verb|unit| to one of type \verb|unit * string|. 
 
-There are a few aspects of the code that can be strange on the first sight. The first
+There are various aspects of the code that can be strange on the first sight. The first
 is the rules involved in the declaration.
 
 \subsubsection{Handler rules}
@@ -147,17 +135,17 @@ A value rule has the form $x \to c$. This is a rule that describes how to handle
 \emph{return value} of a computation.
 It takes the return value of a computation enclosed by a with-handle block, binds it to the
 identifier $x$ and performs the computation $c$.
-In \autoref{fig:handler-keyword} we are simply saying that if the computation handled by this
+In \autoref{handler-keyword} we are simply saying that if the computation handled by this
 handler has finished computing without invoking any effects, then we are returning a pair containing
 the result of the computation and the empty string (this reflects that nothing was printed).
 
 An effect rule is a generalisation of SML's \cite{milner1997definition} \verb|handle|. It differs from it in
-that it also captures the \emph{continuation} (\verb|k| above) of the computation enclosed
+that it also receives the \emph{continuation} (\verb|k| above) of the computation enclosed
 by the with-handle block handling the effect. Such a continuation can be \emph{resumed} with
 the \verb|continue| keyword. Note that when an effect of type $\alpha \to \beta$ is handled,
 we get \emph{read access} to its argument of type $\alpha$ and we can resume its continuation if we provide
 the continuation with a value of type $\beta$ it expects (this is why we resume the continuation
-by giving it a \verb|()| value in \autoref{fig:handler-keyword}---\verb|Print| is of type $string \to unit$).
+by giving it a \verb|()| value in \autoref{handler-keyword}---\verb|Print| is of type $string \to unit$).
 
 Finally rules are just syntactic sugar for let wrappers around with-handle blocks.
 That is, $\textbf{finally } r \to f$ does the same as $\textbf{let } r \leftarrow \textbf{with } v \textbf{ handle } c \textbf{ in } f$.
@@ -232,6 +220,11 @@ in this dissertation.
 
 % Continuations were first discovered in 1964 by van Wijngaarden \cite{reynolds1993discoveries}.
 
+\subsection{Landin's J operator and call/cc in Scheme}
+
+TODO: Landin's J operator.\\
+The mechanical evaluation of expressions \cite{landin-secd}.
+
 \subsection{Delimited continuations}
 
 TODO: Delimited continuations
@@ -239,10 +232,9 @@ TODO: Delimited continuations
 % check this out
 % https://en.wikipedia.org/wiki/Delimited_continuation
 
-\subsection{Landin's J operator}
 
-TODO: Landin's J operator.\\
-The mechanical evaluation of expressions \cite{landin-secd}.
+
+\section{Monads}
 
 \section{The Eff core formally}
 
@@ -376,6 +368,8 @@ $$
 The rules for if statements, function application, match statements and the rules \textsc{Handle-Step}, \textsc{Let-Step} and \textsc{Let-Rec}
 are standard. The other \textsc{Let-*} and \textsc{Handle-*} rules need more explanation:
 \begin{table}
+  \setlength{\tabcolsep}{0.5em}
+  \renewcommand{\arraystretch}{1.4}
   \begin{tabular}{l|p{10cm}}
   Rule & Comment \\
   \hline \hline
@@ -402,9 +396,30 @@ The definition of $ocs_{\iota\#op}$ is as follows:
   \end{cases}
 \end{align}
 
-\subsection{Type and effect system}
+\subsection{Type checking}
 
-TODO: typeset type checking rules
+\begin{figure}
+  $$
+  \begin{prooftree}
+    \hypo{x : A \in \Gamma}
+    \infer1[T-Var]{\Gamma \vdash_e x : A}
+  \end{prooftree}
+  $$
+  $$
+  \begin{prooftree}
+    \hypo{\Gamma \vdash_e e_1 : A}
+    \hypo{\Gamma \vdash_e e_2 : B}
+    \infer2[T-Pair]{\Gamma \vdash_e (e_1, e_2) : A * B}
+  \end{prooftree}
+  $$
+  \caption{Type checking rules for Eff expressions}
+  \label{fig:type-checking-expressions}
+\end{figure}
+
+\begin{figure}
+  \caption{Type checking rules for Eff computations}
+  \label{fig:type-checking-computations}
+\end{figure}
 
 \section{Virtual machines}
 
@@ -424,7 +439,9 @@ TODO: SECD machines
   \item Cite \cite{landin-secd}
 \end{itemize}
 
-\section{Licensing}
+\section{Software engineering}
+
+\subsection{Licensing}
 
 It is important to mention that the project fulfills licensing criteria. The dependencies of this project are
 listed below with their licenses:
@@ -437,13 +454,12 @@ listed below with their licenses:
 \end{itemize}
 To the best of my knowledge these licenses allow the way I am using the software mentioned above.
 
-\section{Starting point}
+\subsection{Starting point}
 
 The starting point of my project didn't change since the writing of the project proposal [TODO: ref. appendix here]:
 \begin{itemize}
   % knowledge backround
-  \item I read briefly about Eff and algebraic effect handlers before starting my project. This was necessary
-    because the Tripos does not cover these topics.
+  \item I read briefly about Eff and algebraic effect handlers before starting my project.
   \item I used SML and OCaml before to implement simple interpreters for toy programming languages
     and to experiment with functional programming. This is my first big project where I use functional programming.
   \item I also had a look at the OCaml ecosystem to check if it has a stable build system, if testing frameworks are available
@@ -451,14 +467,14 @@ The starting point of my project didn't change since the writing of the project 
   \item I had basic familiarity with utility tools such as version control, various IDEs and Unix-like command line interfaces.
 \end{itemize}
 
-\section{Requirements analysis}
+\subsection{Requirements analysis}
 
 TODO
 
 % a lot of knowledge needed to be acquired
 % CEK interpreter has 2 goals: one to test my understanding and the other to give a baseline
 
-\section{Development methodology}
+\subsection{Development methodology}
 
 I chose \emph{test-driven development} (TDD) \cite{beck2003test} as my project's software development methodology.
 The essence of TDD is that programmers work in quick iterative cycles whereby they write failing tests first and then
@@ -477,7 +493,7 @@ because every module of my project (apart from the front end) depends on a previ
 \autoref{fig:project-structure}) and hence on its
 correctness. As TDD is also known as 
 ``a way of managing fear during programming'' it came handy that I could write code with confidence knowing
-that the code I have written before is correct. Other advantages were the ability to notice
+that the code I have written before is tested. Other advantages were the ability to notice
 quickly if a code change broke some already implemented feature and the ability to refactor
 code with confidence (which I had to do frequently---from summer internships I knew that my coding style
 is such that this will be unavoidable if I want to work with a maintainable codebase).
@@ -507,20 +523,6 @@ crucial to demonstrate that success criteria were fulfilled.
   \caption{Structure of the project}
   \label{fig:project-structure}
 \end{figure}
-
-\subsection{Timeline}
-
-The timeline did not change since the project proposal although it turned out to be very
-ambitious (see \autoref{tab:timeline}).
-
-\begin{table}
-\centering
-\begin{tabular}{c}
-  TODO: copy from proposal + add comments
-\end{tabular}
-\caption{TODO}
-\label{tab:timeline}
-\end{table}
 
 \section{Summary}
 This section summed up the theory background which was needed to complete this dissertation.
