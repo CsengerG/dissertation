@@ -10,10 +10,20 @@
 \usepackage{listings}
 \usepackage{verbatim}
 \usepackage{a4wide}
-\usepackage{float}
-\usepackage[justification=centering]{caption}
 
+\usepackage{subcaption}
+
+\ifstandalone
 \input{../src/efflang.tex}
+\else
+\input{./src/efflang.tex}
+\fi
+
+\ifstandalone
+\input{../src/scheme.tex}
+\else
+\input{./src/scheme.tex}
+\fi
 
 \renewcommand{\leadsto}{\rightsquigarrow}
 
@@ -77,7 +87,7 @@ of $A \tto B$ for some types $A$ and $B$.
 
 \begin{figure}[hbt!]
   \lstinputlisting[caption={Printing can be thought of as an effect with an argument of type
-  string and a result of type unit.}, label=effect-perform-keywords]{../code_examples/first_program.eff}
+  string and a result of type unit.}, label=effect-perform-keywords, language=efflang]{../code_examples/first_program.eff}
 \end{figure}
 
 \subsection{Performing effects}
@@ -109,14 +119,14 @@ Handlers are first-class citizens (i.e., values) in Eff. One can define them wit
 An example can be seen on \autoref{handler-keyword}.
 
 
-\lstinputlisting[caption={A handler definition consisting of 2 cases: a value case and an effect case.}, label=handler-keyword]{../code_examples/print_handler.eff}
+\lstinputlisting[caption={A handler definition consisting of 2 cases: a value case and an effect case.}, label=handler-keyword, language=efflang]{../code_examples/print_handler.eff}
 
 % TODO:  and a finally rule. The effect rule first resumes the rest of the program to obtain its result and its output. ``Printing'' out \texttt{message} is simulated by string concatenation; we prepend \texttt{message} to the output of the rest of the program.
 
 To complete our Hello World example we must be able to \emph{apply} this handler. This is done
 using a \emph{with-handle block} as illustrated on \autoref{hello-world}.
 
-\lstinputlisting[caption={The Hello World example in Eff. The code above evaluates to the pair \texttt{((), "Hello World!")}.}, label=hello-world]{../code_examples/hello_world.eff}
+\lstinputlisting[caption={The Hello World example in Eff. The code above evaluates to the pair \texttt{((), "Hello World!")}.}, label=hello-world, language=efflang]{../code_examples/hello_world.eff}
 As handlers are values, they have their own type of the form $A \Rightarrow B$.
 Handler types are similar to the $\to$ function types but they work on computations
 rather than on values. The handler on \autoref{hello-world} is of type \verb|unit => unit * string|
@@ -139,7 +149,7 @@ In \autoref{handler-keyword} we are simply saying that if the computation handle
 handler has finished computing without invoking any effects, then we are returning a pair containing
 the result of the computation and the empty string (this reflects that nothing was printed).
 
-An effect rule is a generalisation of SML's \cite{milner1997definition} \verb|handle|. It differs from it in
+An effect rule is a generalisation of SML's \cite{milner1997definition} \verb|handle| or Java's \verb|catch|. It differs from it in
 that it also receives the \emph{continuation} (\verb|k| above) of the computation enclosed
 by the with-handle block handling the effect. Such a continuation can be \emph{resumed} with
 the \verb|continue| keyword. Note that when an effect of type $\alpha \to \beta$ is handled,
@@ -155,62 +165,24 @@ A handler can have any number of effect rules (even zero) but only at most one f
 Value rules and finally rules are optional. When they are avoided they are assumed to be identities (i.e.,
 \verb|x -> x| or \verb|finally x -> x| respectively).
 
-% \subsection{Advantages}
-
-% \subsubsection{OOP and functional style}
-
-% We can think about effect signatures as interfaces and handlers as implementations of these interfaces.
-% A \verb|with h handle c| block is then an ``instantiation'' of effect implementations.
-
-% We see that programming with effect handlers puts us between the object-oriented and functional styles and gives us more opportunities to re-use existing pieces of code (see next code example).
-
-% \subsubsection{Direct style}
-
-% The following example shows an implementation of the state monad (borrowed from the official Eff website \cite{eff-website}):
-% \begin{verbatim}
-% effect Get: int
-% effect Set: int -> unit
-
-% let monad_state initial = handler
-%   | y -> (fun s -> (y, s))
-%   | effect Get k -> (fun s -> (continue k s) s)
-%   | effect (Set s') k -> (fun _ -> (continue k ()) s')
-%   | finally f -> f initial
-% ;;
-
-% let double_and_add_ten () =
-%   let x = perform Get in
-%   perform (Set (2 * x));
-%   perform Get + 10
-% ;;
-
-% with monad_state 30 handle
-%   double_and_add_ten ()
-% ;;
-% \end{verbatim}
-
-% Note how the function \verb|double_and_add_ten| is written in a direct style. As mentioned above, the programmer does not have to 
-% be aware of the implementations of the effects (indeed, we see that the ``internal'' representation of state uses functions). 
-% This function illustrates how handlers increase the modularity of our programs (we could use the function in the context of other handlers 
-% and perhaps get some other result).
-
-% \subsubsection{Composition}
-
-% Monads are frequently used as a way to simulate effectful computations in programming languages like Haskell. 
-% However, combining different kinds of effects in these languages can be non-trivial and 
-% tiresome sometimes. Haskell uses monad stacks and monad transformers to get around this. [TODO: someone might not know what this is]
-
-% In Eff, combining effects and their handlers arises naturally. Handlers can be written for any set of effects and handlers can be combined 
-% with nesting \verb|with ... handle| blocks.
-
-% [TODO: I need two code examples here to justify the claims above and show that \verb|with ... handle| is more convenient. One in Haskell with monad transformers and one in Eff with two nested handlers.]
-
-% \subsubsection{Criticism}
-
-% Although there are many attractive properties of effect handlers, one that is frequently quoted to be ``annoying'' is that it is very easy to write incomprehensible code via continuations.
-% Continuations are not a novel concept but it is one that perhaps isn't widely known by the wider software engineering community. Hence providing the concrete implementation of effects
-% can impose some extra burden on a programmer's brain.
-
+\begin{figure}[ht]
+\begin{subfigure}{.25\textwidth}
+  \centering
+  \resizebox{1\textwidth}{!}{
+    \subimport{../figures/}{exception_control_flow.tex}
+  }
+  \caption{Without a handler an effect behaves like an exception. Here it is raised to the toplevel and causes the program to crash.}
+  \label{fig:exception}
+\end{subfigure}
+\begin{subfigure}{.72\textwidth}
+  \centering
+  \resizebox{1\textwidth}{!}{
+    \subimport{../figures/}{handler_hello_world.tex}
+  }
+  \caption{Effect handlers generalise exceptions. In contrast to (a) we see that here we resume the computation twice and enter the same handler twice.}
+  \label{fig:exception}
+\end{subfigure}
+\end{figure}
 
 \section{Continuations and control operators}
 
@@ -220,14 +192,54 @@ in this dissertation.
 
 % Continuations were first discovered in 1964 by van Wijngaarden \cite{reynolds1993discoveries}.
 
-\subsection{Landin's J operator and call/cc in Scheme}
+\subsection{CPS and Scheme's call/cc}
 
-TODO: Landin's J operator.\\
-The mechanical evaluation of expressions \cite{landin-secd}.
+Continuations are everywhere, consider the following code:
+\begin{lstlisting}[language=scheme]
+(define return (lambda x x))
+
+(define (+k a b k) (k (+ a b))) 
+(define (*k a b k) (k (* a b)))
+
+#| Compute (1 + 2) * (3 + 4) |#
+(+k 1 2 (lambda (sum1)
+  (+k 3 4 (lambda (sum2)
+    (*k sum1 sum2 return)))))
+\end{lstlisting}
+
+A similar piece of code can be written with call/cc:
+\begin{lstlisting}[language=scheme]
+(define call/cc call-with-current-continuation)
+
+#| Compute (1 + 2) * (3 + 4) |#
+(* (+ 3 4) (call/cc (lambda (k) (k (+ 1 2)))))
+
+#| The following line evaluates to 12 too|#
+(* (+ 3 4) (call/cc (lambda (k) (+ 100 (k (+ 1 2))))))
+\end{lstlisting}
+But looking at line 7 we see that the continuation
+here returns to the toplevel. Call/cc captures the continuation
+of the \emph{whole} program and \emph{does not} return to the program
+point the continuation was called from. This is different from
+how this is done in Eff.
 
 \subsection{Delimited continuations}
 
-TODO: Delimited continuations
+Eff uses delimited continuations. These continuations do not represent the rest of
+the program. They represent the continuation of the computation enclosed by a
+with-handle block.
+\begin{lstlisting}[language=efflang]
+let (r, s) =
+	with prepending_handler handle
+		perform (Print "Hello");
+		perform (Print "World");
+		()
+in 42;;
+\end{lstlisting}
+In the code above \verb|(r,s)| takes the values \verb|((), "Hello World")| rather than
+\verb|(42, "Hello World")| one would expect with Scheme's call/cc. The fact that continuations
+are delimited also makes it possible to return to the program point a continuation was called
+from. Hence we can think about delimited continuations simply as functions.
 
 % check this out
 % https://en.wikipedia.org/wiki/Delimited_continuation
@@ -430,6 +442,7 @@ TODO: CEK machines
 \subsection{The SECD machine}
 
 TODO: SECD machines
+The mechanical evaluation of expressions \cite{landin-secd}.
 
 \begin{itemize}
   \item Landin' machine
