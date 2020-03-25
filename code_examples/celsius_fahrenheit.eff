@@ -1,0 +1,5 @@
+let temp_in_fahrenheit =
+    let t = with h handle
+        (* compute the temperature 
+           of something in Kelvin *)
+    in t * 1.8 - 459.67

@@ -49,53 +49,54 @@
 
 \begin{document}
 
-This chapter of my dissertation contains a discussion on the theoretical background
-of the project. It also describes other work which had to be
-undertaken before I wrote any code, contains the starting point of my project
-and the development methodology I used to carry out the work.
+This chapter of my dissertation contains a tutorial introduction to the programming language
+Eff. It also discusses continuations and their relationships with two abstract machines, and
+talks about some of the software engineer aspects of the project.
 
-% \section{Computational effects}
-
-% There are two types of programs: pure and effectful (or impure). Pure programs are ones that are independent from the environment and effectful programs are the ones that \emph{do} something in the
-% sense that they interact with their environment. Another way of defining pure functions is: given the definition of the function and its arguments, its result is uniquely determined.
-
-% Programs invoking computational effects such as nondeterminism, probabilistic nondeterminism, exceptions, interactive input/output or side effects all constitute as effectful. This is obvious for
-% interactive input/output, nondeterminism and side-effects as these obviously interact with the environment. Exceptions are a bit awkward in the sense that throwing them is pure but catching them is
-% not (consider catching an exception that is thrown due to an out-of-memory error; catching this exception would mean that we interact with the environment in an implicit way).
-
-% Reasoning about pure programs is easy, as pure computations (partial functions) are well understood. However, most programs must \emph{do} something with the real world (write to a file, 
-% read from a network socket, handle errors, generate random numbers, etc.) and perform effects to be useful.
-% Hence, to be able to reason about our programs we must properly understand the properties of these effects, how they work, how they interact and what rules apply to them. To do this, we try to model
-% them in a framework that was always know to work: mathematics.
-
-\section{Eff by example}
+\section{A quick Eff tutorial}
 
 Eff is a programming language based on algebraic effect handlers.
-Essentially, it is a pure subset of OCaml \cite{ocaml-website} extended with a few extra
-keywords which implement effects and effect handlers: \verb|effect|,
-\verb|perform|, \verb|handler|, \verb|continue|, \verb|with-handle| and \verb|finally|.
+Eff resembles OCaml in that if we removed OCaml's \cite{ocaml-website} side-effecting operations and
+re-created them by \emph{simulating} them with a more general notion of exception
+(specifically, resumable exceptions)
+then we would get Eff as the result. In Eff, \emph{effect} is used to mean
+resumable exception. This tutorial will show how printing and non-determinism
+can be realised as effects in this context.
+
+To implement effects and effect handlers Eff uses the following keywords which are
+not part of OCaml at the time of writing\footnote{Although a branch of OCaml, namely Multicore OCaml
+is just getting merged in the main OCaml branch so we might see some of these keywords in OCaml in the future.}: 
+\verb|effect|, \verb|perform|, \verb|handler|, \verb|continue|, \verb|with-handle| and \verb|finally|.
 What follows is a brief introduction of these features by using the
 unmissable Hello World example.
 
 \subsection{Effects}
 
 Effects lie in the heart of Eff (hence the name). A programmer can define
-effects using the \verb|effect| keyword, the effect's name (effect names must
-be capitalized just like OCaml variant tags) and its type. An effect definition
-can be seen on \autoref{effect-perform-keywords}. Effects always have a type
+effects using the \verb|effect| keyword, by specifying the effect's name
+(which must be capitalized just like OCaml variant tags) and the type of the effect.
+An effect definition can be seen on line 1 of \autoref{first-example}. Effects always have a type
 of $A \tto B$ for some types $A$ and $B$.
 
-\begin{figure}[hbt!]
-  \lstinputlisting[caption={Printing can be thought of as an effect with an argument of type
-  string and a result of type unit.}, label=effect-perform-keywords, language=efflang]{../code_examples/first_program.eff}
-\end{figure}
+In the introduction of this tutorial I said that effects are resumable exceptions. The careful
+reader might notice that the type $A \tto B$ is similar to the function type $A \to B$ but
+it is quite different from usual types of exceptions. For instance, in SML \cite{milner1997definition}
+one would expect to see declarations representing errors like \verb|exception Error of string| (an error which
+can carry an error message with itself could be declared like this) but would not expect to talk about the \emph{return type} of
+an exception, as these can never return in SML. However, in Eff, due to the resumable nature of effects
+this makes sense.
 
 \subsection{Performing effects}
 
 Effects behave a bit like functions as we could see from their types above.
-Once an effect of type $A \to B$ is defined we can invoke it
+Once an effect of type $A \tto B$ is declared we can invoke it
 using the \verb|perform| keyword and by providing an argument of type $A$.
 The type of the resulting expression is $B$.
+
+\begin{figure}[hbt!]
+  \lstinputlisting[caption={Printing is an effect taking a string as its argument and returning unit as a result.},
+  label=first-example, language=efflang]{../code_examples/first_program.eff}
+\end{figure}
 
 The \verb|perform| keyword is similar to \verb|raise| in OCaml or to \verb|throw|
 in Java in that when we perform an effect the control will be given to an effect
@@ -107,41 +108,42 @@ the Eff language. That is, \verb|Print "Hello World"| would be meaningless in
 itself, just like the exception \verb|Failure "hd"| would be meaningless in OCaml
 if we did not raise it. The situation is similar here but effects are \emph{performed} and not raised.
 
+In Java, if we throw an exception without introducing a \verb|try-catch| block handling
+it, the exception will rise to the toplevel and will cause our program to crash.
+This is exactly the result \autoref{first-example} would produce
+as we didn't surround line 3 with the \verb|try-catch| block equivalent
+of Eff, which is a \verb|with-handle| block. However, to do this, we need to be
+able to declare \emph{effect handlers} first.
+
 \subsection{Handlers}
 
 Handlers give meaning to effects: this is what programmers can use to specify
-what they mean by an effect, such as \verb|Print| in \autoref{effect-perform-keywords}.
-An effect can be declared without a handler, but when performed, can only cause a program 
-to terminate with an exception.
+what they mean by an effect, such as \verb|Print| in \autoref{first-example}.
+Using handlers we can make the code evaluate properly. Right now it always
+crashes on line 3 and does not continue executing the rest of the program.
+This is hardly what we desire from \verb|Print|.
 
-Handlers are first-class citizens (i.e., values) in Eff. One can define them with the
-\verb|handler| keyword by specifying \emph{rules}.
-An example can be seen on \autoref{handler-keyword}.
+Before we do this, we must think about how we would \emph{simulate printing} in a pure functional
+language. One way of doing it would be to implement all functions of type $A \to B$ to
+return something of type $B \times \mathtt{string}$ instead, i.e., the result the function would return in
+its original form \emph{together} with a message it prints. Such a transformation would be
+a tedious manual task to do for \emph{all} our functions, not to mention how we would need to
+unbox the actual result of a function from a tuple every time we wished to access it. Fortunately,
+handlers happen to alleviate this problem.
 
+Handlers are first-class citizens (i.e., values) in Eff and they show some similarities
+with SML's \verb|case| statement. A handler can be declared with the \verb|handler| keyword
+and by specifying so-called \emph{cases}:
 
 \lstinputlisting[caption={A handler definition consisting of 2 cases: a value case and an effect case.}, label=handler-keyword, language=efflang]{../code_examples/print_handler.eff}
-
-% TODO:  and a finally rule. The effect rule first resumes the rest of the program to obtain its result and its output. ``Printing'' out \texttt{message} is simulated by string concatenation; we prepend \texttt{message} to the output of the rest of the program.
-
 To complete our Hello World example we must be able to \emph{apply} this handler. This is done
 using a \emph{with-handle block} as illustrated on \autoref{hello-world}.
 
 \lstinputlisting[caption={The Hello World example in Eff. The code above evaluates to the pair \texttt{((), "Hello World!")}.}, label=hello-world, language=efflang]{../code_examples/hello_world.eff}
-As handlers are values, they have their own type of the form $A \Rightarrow B$.
-Handler types are similar to the $\to$ function types but they work on computations
-rather than on values. The handler on \autoref{hello-world} is of type \verb|unit => unit * string|
-as it transforms a computation of type \verb|unit| to one of type \verb|unit * string|. 
 
-There are various aspects of the code that can be strange on the first sight. The first
-is the rules involved in the declaration.
+The handler on \autoref{handler-keyword} implements printing. It uses two types of cases as described below.
 
-\subsubsection{Handler rules}
-
-One can use three kinds of rules in a handler: a \emph{value rule}, an \emph{effect rule} or
-a \emph{finally rule}.\footnote{TODO: I should say \emph{case} rather than \emph{rule}. The authors use case and I noticed it
-only when I re-read parts of the publication. Later I use case to mean rule. They are the same.}
-
-A value rule has the form $x \to c$. This is a rule that describes how to handle the
+A \emph{value case} has the form $\mathtt{val}\ x \to c$. This is a rule that describes how to handle the
 \emph{return value} of a computation.
 It takes the return value of a computation enclosed by a with-handle block, binds it to the
 identifier $x$ and performs the computation $c$.
@@ -149,22 +151,58 @@ In \autoref{handler-keyword} we are simply saying that if the computation handle
 handler has finished computing without invoking any effects, then we are returning a pair containing
 the result of the computation and the empty string (this reflects that nothing was printed).
 
-An effect rule is a generalisation of SML's \cite{milner1997definition} \verb|handle| or Java's \verb|catch|. It differs from it in
-that it also receives the \emph{continuation} (\verb|k| above) of the computation enclosed
-by the with-handle block handling the effect. Such a continuation can be \emph{resumed} with
-the \verb|continue| keyword. Note that when an effect of type $\alpha \to \beta$ is handled,
-we get \emph{read access} to its argument of type $\alpha$ and we can resume its continuation if we provide
-the continuation with a value of type $\beta$ it expects (this is why we resume the continuation
-by giving it a \verb|()| value in \autoref{handler-keyword}---\verb|Print| is of type $string \to unit$).
+An \emph{effect case} is a generalisation of SML's \verb|handle| or Java's \verb|catch|. 
+It has the form $\mathtt{effect}\ \mathtt{op}\ e\ k \to c$, where the \verb|effect| keyword
+plays the rôle of Java's catch, \verb|op| is an effect name, $e$ is an expression, $k$ is
+an identifier to be used as the name for the continuation and $c$ is a computation.
+The continuation $k$ is then possible to \emph{resume} with the \verb|continue| keyword
+and an argument to the continuation.
+Note that when an effect of type $A \tto B$ is handled,
+we get \emph{read access} to its argument $e$ of type $A$ and we can resume its continuation $k$ if we provide
+$k$ a value of type $B$ (this is why we resume the continuation by giving it a
+\verb|()| value in \autoref{handler-keyword}---\verb|Print| is of type $\mathtt{string} \tto \mathtt{unit}$).
 
-Finally rules are just syntactic sugar for let wrappers around with-handle blocks.
+% TODO:  and a finally rule. The effect rule first resumes the rest of the program to obtain its result and its output. ``Printing'' out \texttt{message} is simulated by string concatenation; we prepend \texttt{message} to the output of the rest of the program.
+As handlers are values, they have their own type of the form $A \Rightarrow B$.
+Handler types are similar to the $\to$ function types but they work on computations
+rather than on values. We can see why this is so if we think about what \verb|prepending_print_handler|
+is doing in our example. Used with a \verb|with-handle| block it transforms any computation
+of type $A$ to one of the type $A \times \mathtt{string}$. One might think of handlers
+as transformations on computations. The handler on \autoref{hello-world} is of
+type $\mathtt{unit} \Rightarrow \mathtt{unit} \times \mathtt{string}$.
+
+\subsubsection{The finally case}
+
+There is an extra case we did not mention, that of the \emph{finally case}. A finally case is
+invoked after the computation in a with-handle block finished evaluating and after all other
+handler cases finished evaluating.
+
+Finally cases are just syntactic sugar for let wrappers around with-handle blocks.
 That is, $\textbf{finally } r \to f$ does the same as $\textbf{let } r \leftarrow \textbf{with } v \textbf{ handle } c \textbf{ in } f$.
 Finally rules were introduced to avoid having to use such inconvenient let wrappers \cite{bauer2015programming}.
+To illustrate a use-case of this feature consider the following code snippet where the result of a physics simulation is returned in
+Kelvin but we need this in Fahrenheit to display it on a user interface:
+\lstinputlisting[
+  caption={},
+  label=handler-keyword, 
+  language=efflang]
+  {../code_examples/celsius_fahrenheit.eff}
+Instead of using a let-wrapper every time to convert to Fahrenheit we could use the same handler $h$ but extend it with a finally rule
+that does this conversion and hence avoids code duplication:
+\lstinputlisting[
+  caption={},
+  label=handler-keyword, 
+  language=efflang]
+  {../code_examples/celsius_fahrenheit2.eff}
 
-A handler can have any number of effect rules (even zero) but only at most one finally rule and at most one value rule.
-Value rules and finally rules are optional. When they are avoided they are assumed to be identities (i.e.,
-\verb|x -> x| or \verb|finally x -> x| respectively).
+A handler can have any number of effect cases (even zero) but at most one finally case and at most one value case.
+Value cases and finally cases are optional. When they are avoided they are assumed to be identities (i.e.,
+\verb|val x -> x| or \verb|finally x -> x| respectively).
 
+\subsection{The tutorial illustrated}
+
+Imagining how the execution happens in the Hello World example is not trivial. The aim of the following illustration
+is to help with this.
 \begin{figure}[ht]
 \begin{subfigure}{.25\textwidth}
   \centering
@@ -190,6 +228,8 @@ Although continuations came up briefly in the previous section I did not explain
 This section is devoted to this because continuations are playing a crucial rôle in Eff and in what follows
 in this dissertation.
 
+Continuations are also sometimes thought about as expression with holes in them.
+
 % Continuations were first discovered in 1964 by van Wijngaarden \cite{reynolds1993discoveries}.
 
 \subsection{CPS and Scheme's call/cc}
@@ -207,7 +247,7 @@ Continuations are everywhere, consider the following code:
     (*k sum1 sum2 return)))))
 \end{lstlisting}
 
-A similar piece of code can be written with call/cc:
+A similar piece of code can be written with call/cc \footnote{A similarly obscure control operator is Peter Landin's J operator which predates call/cc by almost a decade.}:
 \begin{lstlisting}[language=scheme]
 (define call/cc call-with-current-continuation)
 
@@ -244,11 +284,7 @@ from. Hence we can think about delimited continuations simply as functions.
 % check this out
 % https://en.wikipedia.org/wiki/Delimited_continuation
 
-
-
-\section{Monads}
-
-\section{The Eff core formally}
+\section{Eff formally}
 
 \emph{Core Eff} is described in \cite{bauer2013effect}. This section is largely based on that paper.
 
@@ -433,16 +469,30 @@ The definition of $ocs_{\iota\#op}$ is as follows:
   \label{fig:type-checking-computations}
 \end{figure}
 
-\section{Virtual machines}
+\section{Abstract machines by example}
+
+Two machines which naturally ... the continuation of a program at any point in the execution are CEK machines and SECD machines.
+As we saw already, this is a property we are interested in when talking about Eff.
+
+They both interpret source terms directly and this makes it easy to write interpreters for them (discussed in the Implementation chaper).
+
+This section discusses their transition rules with simple lambda calculus + Scheme example. The reader will be able to compare
+how a runtime representation of the CPS lambdas are present in both machines.
+
+Consider the simple language
+$$ t ::= x \bar \lambda x. t \bar t_0\ t_1 \bar n \bar t_0 + t_1 $$
+and the simple program
+$$ times (plus 1 2) (plus 3 4).$$
 
 \subsection{CEK machines}
 
-TODO: CEK machines
+\begin{itemize}
+  \item Three components \emph{control}, \emph{environment} and \emph{kontinuation}.
+\end{itemize}
 
 \subsection{The SECD machine}
 
-TODO: SECD machines
-The mechanical evaluation of expressions \cite{landin-secd}.
+Peter Landin's mechanical evaluation of expressions \cite{landin-secd}.
 
 \begin{itemize}
   \item Landin' machine
