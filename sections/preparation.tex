@@ -228,13 +228,21 @@ Although continuations came up briefly in the previous section I did not explain
 This section is devoted to this because continuations are playing a crucial rôle in Eff and in what follows
 in this dissertation.
 
-Continuations are also sometimes thought about as expression with holes in them.
+% Continuations are also sometimes thought about as expressions with holes in them.
 
 % Continuations were first discovered in 1964 by van Wijngaarden \cite{reynolds1993discoveries}.
 
-\subsection{CPS and Scheme's call/cc}
+\subsection{CPS in Scheme}
 
-Continuations are everywhere, consider the following code:
+Continuations can represent an arbitrary program point in the execution of a program and thus one can say
+that continuations are always there, whenever a program executes. But where? A programming style called
+\emph{continuation passing style} is a style of programming where every function of $n$ arguments is
+rewritten to an extended version taking $n+1$ arguments, the last of which is commonly named $k$ and
+represents a continuation.
+
+Consider the Scheme code snippet below which uses this style to redefine the built-in binary addition and
+multiplication functions of Scheme as ternary functions \verb|+k| and \verb|*k| with an extra argument \verb|k|.
+Also note how the expression \verb|(1 + 2) * (3 + 4)| is written in this style.
 \begin{lstlisting}[language=scheme]
 (define return (lambda x x))
 
@@ -246,15 +254,26 @@ Continuations are everywhere, consider the following code:
   (+k 3 4 (lambda (sum2)
     (*k sum1 sum2 return)))))
 \end{lstlisting}
+We see that continuation passing style makes the order of the operations explicit as well as it makes it
+obvious \emph{what} the continuation is. However, writing code in this style is a bit troublesome and hence
+it is mostly used as an intermediate representation of programs in compilers -- not something humans interact with.
 
-A similar piece of code can be written with call/cc \footnote{A similarly obscure control operator is Peter Landin's J operator which predates call/cc by almost a decade.}:
+\subsection{Scheme's call/cc}
+
+Scheme is interesting from the point of view of continuations because it has the
+\verb|call-with-current-continuation| built-in operation which is conventionally referred to as \verb|call/cc|
+\footnote{A similarly obscure control operator is Peter Landin's J operator which predates \texttt{call/cc} by almost a decade when
+SECD machines were first described.}.\emph{The call/cc operator takes a single argument. This argument is a function which itself takes a continuation as an argument.}
+
+If one wished to use continuations as first-class values in a Scheme program he wouldn't have to write everything in
+continuation passing style like above. A similar piece of code can be written with call/cc:
 \begin{lstlisting}[language=scheme]
 (define call/cc call-with-current-continuation)
 
 #| Compute (1 + 2) * (3 + 4) |#
 (* (+ 3 4) (call/cc (lambda (k) (k (+ 1 2)))))
 
-#| The following line evaluates to 12 too|#
+#| The following line evaluates to 12 too |#
 (* (+ 3 4) (call/cc (lambda (k) (+ 100 (k (+ 1 2))))))
 \end{lstlisting}
 But looking at line 7 we see that the continuation
@@ -266,18 +285,18 @@ how this is done in Eff.
 \subsection{Delimited continuations}
 
 Eff uses delimited continuations. These continuations do not represent the rest of
-the program. They represent the continuation of the computation enclosed by a
+the \emph{whole} program. They represent the continuation of the computation enclosed by a
 with-handle block.
 \begin{lstlisting}[language=efflang]
-let (r, s) =
+let x =
 	with prepending_handler handle
 		perform (Print "Hello");
 		perform (Print "World");
 		()
 in 42;;
 \end{lstlisting}
-In the code above \verb|(r,s)| takes the values \verb|((), "Hello World")| rather than
-\verb|(42, "Hello World")| one would expect with Scheme's call/cc. The fact that continuations
+In the code above \verb|x| takes the value \verb|((), "Hello World")| rather than
+\verb|42| which one would expect with Scheme's call/cc. The fact that continuations
 are delimited also makes it possible to return to the program point a continuation was called
 from. Hence we can think about delimited continuations simply as functions.
 
@@ -530,10 +549,6 @@ The starting point of my project didn't change since the writing of the project 
   \item I had basic familiarity with utility tools such as version control, various IDEs and Unix-like command line interfaces.
 \end{itemize}
 
-\subsection{Requirements analysis}
-
-TODO
-
 % a lot of knowledge needed to be acquired
 % CEK interpreter has 2 goals: one to test my understanding and the other to give a baseline
 
@@ -593,22 +608,19 @@ It also shows the preparation I undertook in the software engineering aspects of
 
 \begin{itemize}
   \item I briefly introduced the programming language Eff and talked about its characteristic features. I showed
-    code examples demonstrating how handlers can be used in a direct style and how they support modularity and
-    code reuse in functional programs.
+    code examples demonstrating how handlers can be used.
   \item I explained the idea of a continuation, how it represents an arbitrary program point in the
     execution of a program and how it allows advanced control flow to be implemented.
   \item I gave an overview of control operators (including Landin's J operator), why they were studied in the 
     early days of programming languages and their rôle in the development of different virtual machines.
-  \item I talked about the small-step operational semantics of core Eff as well as a type and effect
-    system one can use with it. We saw that with-handle blocks compose naturally as opposed to monads in Haskell
-    where the use of monad transformers is unnatural.
-  \item I showed two examples of virtual machines which can implement the structured \emph{non-local
+  \item I talked about the small-step operational semantics of core Eff as well as the typing of Eff terms.
+  \item I mentioned two abstract machines which can implement the structured \emph{non-local
     flow of control} continuations make possible. The key challenge these machines solve is that
     they can \emph{save and restore} execution contexts in an appropriate way whenever non-local control flow occurs.
 
     A CEK machine does this by keeping a stack of continuations (K), while the SECD machine does this by using
     a so-called dump (D). The importance of these machines will become clearer in the Implementation section where I describe the
-    Yoyo virtual machine for Eff which has similarities with both of these virtual machines.
+    Yoyo virtual machine for Eff which has similarities with both of these abstract machines.
   \item I stated my starting point, the timeline of my project and discussed the development methodology used
     to write the code and the testing strategy to assess its correctness.
 \end{itemize}
