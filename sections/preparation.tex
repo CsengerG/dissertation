@@ -10,6 +10,7 @@
 \usepackage{listings}
 \usepackage{verbatim}
 \usepackage{a4wide}
+\usepackage[super]{nth}
 
 \usepackage{subcaption}
 
@@ -26,16 +27,16 @@
 \fi
 
 \renewcommand{\leadsto}{\rightsquigarrow}
+\newcommand{\dmid}{\ \|\ }
 
 \newcommand{\effFalse}{\mathbf{false}}
 \newcommand{\effTrue}{\mathbf{true}}
-\newcommand{\effSucc}{\mathbf{succ}\ }
+\newcommand{\effLeft}{\mathbf{Left}\ }
+\newcommand{\effRight}{\mathbf{Right\ }}
 \newcommand{\effFun}{\mathbf{fun}\ }
-\newcommand{\effZero}{\mathbf{0}}
 \newcommand{\effHandler}{\mathbf{handler}\ }
 \newcommand{\effVal}{\mathbf{val}\ }
-\newcommand{\effBar}{\ \textbf{\textbar}\ }
-\newcommand{\effWith}{\ \mathbf{with}\ }
+\newcommand{\effWith}{\mathbf{with}\ }
 \newcommand{\effHandle}{\ \mathbf{handle}\ }
 \newcommand{\effIf}{\mathbf{if}\ }
 \newcommand{\effThen}{\ \mathbf{then}\ }
@@ -45,7 +46,14 @@
 \newcommand{\effLet}{\mathbf{let}\ }
 \newcommand{\effIn}{\ \mathbf{in}\ }
 \newcommand{\effRec}{\mathbf{rec}\ }
+\newcommand{\effEffect}{\mathbf{effect}\ }
+\newcommand{\effFinally}{\mathbf{finally}\ }
+\newcommand{\effOp}{\mathtt{op}}
+\newcommand{\effPerform}{\mathbf{perform}\ }
 \newcommand{\tto}{\twoheadrightarrow}
+
+\newcommand{\cek}[1]{\langle #1 \rangle}
+
 
 \begin{document}
 
@@ -223,6 +231,7 @@ is to help with this.
 \end{figure}
 
 \section{Continuations and control operators}
+\label{sec:continuations}
 
 Although continuations came up briefly in the previous section I did not explain what they are in detail.
 This section is devoted to this because continuations are playing a crucial rôle in Eff and in what follows
@@ -262,8 +271,8 @@ it is mostly used as an intermediate representation of programs in compilers -- 
 
 Scheme is interesting from the point of view of continuations because it has the
 \verb|call-with-current-continuation| built-in operation which is conventionally referred to as \verb|call/cc|
-\footnote{A similarly obscure control operator is Peter Landin's J operator which predates \texttt{call/cc} by almost a decade when
-SECD machines were first described.}.\emph{The call/cc operator takes a single argument. This argument is a function which itself takes a continuation as an argument.}
+\footnote{A similarly obscure control operator is Peter Landin's J operator which predates \texttt{call/cc} by almost a decade.
+It was discovered shortly after Peter Landin described SECD machines for the first time.}.\emph{The call/cc operator takes a single argument. This argument is a function which itself takes a continuation as an argument.}
 
 If one wished to use continuations as first-class values in a Scheme program he wouldn't have to write everything in
 continuation passing style like above. A similar piece of code can be written with call/cc:
@@ -305,7 +314,7 @@ from. Hence we can think about delimited continuations simply as functions.
 
 \section{Eff formally}
 
-\emph{Core Eff} is described in \cite{bauer2013effect}. This section is largely based on that paper.
+Eff is described in \cite{bauer2015programming}.
 
 \subsection{Syntax}
 
@@ -314,40 +323,54 @@ from. Hence we can think about delimited continuations simply as functions.
 % implementations can avoid the syntactic difference
 % talk about monads here
 
-In core Eff there is a syntactic distinction between expressions and computations.
-
-\textbf{Note to Alan:} Here I will/want to talk about:
-\begin{itemize}
-  \item The syntactic difference between pure expressions and possibly effectful computations
-  \item $\effVal$ is \emph{return}
-  \item Haskell monads (but maybe that should go to the Type and effect system?); I have trouble introducing these; I don't have a grip on them; I need a ``story''.
-  \item $\iota\#op$ -- the authors use this notation; I think it is very annoying, I don't see any reason why $\#op$ is a ``thing''; I think some better notation can
-    make a huge difference here and can lead to a less scary more intuitive introduction; I am thinking about just using $\iota$. Any inputs here or any conventions/notations
-    I should know about? Ideas?
-\end{itemize}
+In the abstract syntax of Eff there is a distinction between pure expressions and computations which are possibly effectful.
+\footnote{The reader familiar with monads can might discover some similarities between \emph{val} and \emph{return} as well
+as similarities between monadic type constructors and computations.}
 
 \begin{figure}
+Effect declarations
+$$ \effEffect E : A \tto B $$
 Expressions
-$$ e ::= x \mid \effTrue \mid \effFalse \mid \effZero \mid \effSucc\ e \mid () \mid \effFun\ x\ :\ A \mapsto c \mid \iota \mid h $$
+$$ e ::= x \mid
+  \effTrue \mid
+  \effFalse \mid
+  () \mid
+  (e_1, e_2) \mid
+  \effLeft e \mid
+  \effRight e \mid
+  \effFun x \mapsto c \mid
+  h $$
 Handlers
-$$ h ::= \effHandler \effVal x : A \mapsto c_v  \effBar ocs $$
-Operation cases
-$$ ocs ::= nil \mid (e\#op\ x\ k \mapsto c \effBar ocs)$$
+$$ h ::= \effHandler \effVal x \mapsto c_v\ \overline{\|\ \effEffect E_i\ x\ k \to c_{\effOp_i}} \dmid \effFinally x \mapsto c_f $$
 Computations
 \begin{align*}
-  c ::= \ &\effVal e \mid e_1\#op\ e_2 (y.c) \mid \effWith e \effHandle c \mid \effIf e \effThen c_1 \effElse c_2 \mid\\
-        & \effAbsurd e \mid e_1\ e_2 \mid \effMatch e \effWith \effZero \mapsto c_1 \effBar \effSucc x \mapsto c_2 \mid \\
-        & \effLet x = c_1 \effIn c_2 \mid \effLet \effRec f\ x : A \to C = c_1 \effIn c_2
+  c ::= \ &\effVal e \mid
+    \effLet x = c_1 \effIn c_2 \mid
+    \effLet \effRec f\ x = c_1 \effIn c_2 \mid e_1\ e_2 \mid \\
+    & \effIf e \effThen c_1 \effElse c_2 \mid
+    \effMatch e\ \effWith \effLeft x \mapsto c_l \dmid \effRight y \mapsto c_r \mid\\
+    & \effMatch e\ \effWith (f, s) \mapsto c \mid \effPerform (E\ e) \mid
+    \effWith e \effHandle c
 \end{align*}
-\caption{Abstract syntax of core Eff}
-\label{fig:core-eff-syntax}
+\caption{Abstract syntax of Eff}
+\label{fig:eff-syntax}
 \end{figure}
+
+Most terms should be familiar to the reader by now. However, there are some differences between the concrete and
+the abstract syntax of Eff. Notably, the use of the \emph{val} keyword is omitted many times from the concrete
+syntax because for a programmers it might be tiresome if they have to keep track whether they are writing an
+expression or a computation at the moment. The \emph{continue} keyword is missing from the abstract syntax too.
+However, our ability to resume computations did not vanish.
+As we saw in the previous section, delimited continuations are just simply functions reifying a continuation.
+Hence we can handle resumptions as function application. Anyhow, to ease the understanding of the semantic rules
+I use the notation $y.c$ for a delimited continuation which resumes the computation $c$ after receiving $y$.
 
 \subsection{Semantics}
 
-This section presents the small step operational semantics of core Eff (see \autoref{fig:small-step-semantics}). As
-expressions are pure I avoid giving reduction rules for them. The spotlight is on possibly effectful computations and
-on their reduction rules given by the relation $\leadsto$.
+This section presents the small step operational semantics of Eff (see \autoref{fig:small-step-semantics}). The spotlight is on
+possibly effectful computations and on their reduction rules given by the relation $\leadsto$. I focus on the Eff specific
+transition steps here. The other transition rules are standard and can be found in Appendix X.\footnote{Comment to Alan: I was always wondering
+how $y.e$, i.e., a delimited continuation here is very similar to blocking communication + guarded commands.}
 
 \begin{figure}
 $$
@@ -370,14 +393,21 @@ $$
 \quad
 \begin{prooftree}
   \hypo{}
-  \infer1[(\textsc{Match-Zero})]{\effMatch \effZero \effWith \effZero \mapsto c_1 \effBar \effSucc x \mapsto c_2  \leadsto c_1}
+  \infer1[(\textsc{Match-Left})]{\effMatch (\effLeft e)\ \effWith \effLeft x \mapsto c_1 \dmid \effRight x \mapsto c_2  \leadsto c_1[e/x]}
 \end{prooftree}
 $$
 
 $$
 \begin{prooftree}
   \hypo{}
-  \infer1[(\textsc{Match-Succ})]{\effMatch (\effSucc e) \effWith \effZero \mapsto c_1 \effBar \effSucc x \mapsto c_2  \leadsto c_2[e/x]}
+  \infer1[(\textsc{Match-Right})]{\effMatch (\effRight e)\ \effWith \effLeft x \mapsto c_1 \dmid \effRight x \mapsto c_2  \leadsto c_2[e/x]}
+\end{prooftree}
+$$
+
+$$
+\begin{prooftree}
+  \hypo{}
+  \infer1[(\textsc{Match-Prod})]{\effMatch (e_1, e_2)\ \effWith (f,s) \mapsto c \leadsto c[e_1/f, e_2/s]}
 \end{prooftree}
 $$
 
@@ -396,7 +426,7 @@ $$
 $$
 \begin{prooftree}
   \hypo{}
-  \infer1[(\textsc{Let-Effect})]{\effLet x = (\iota\#op\ e\ (y.c_1)) \effIn c_2 \leadsto \iota\#op\ e\ (y.\effLet x = c_1 \effIn c_2)}
+  \infer1[(\textsc{Let-Effect})]{\effLet x = E(e, y.c_1) \effIn c_2 \leadsto E(e, y.\effLet x = c_1 \effIn c_2)}
 \end{prooftree}
 $$
 
@@ -409,6 +439,13 @@ $$
 
 $$
 \begin{prooftree}
+  \hypo{\kappa \text{ is current delimited continuation}}
+  \infer1[(\textsc{Perform})]{\effPerform (E\ e) \leadsto E(e, \kappa)}
+\end{prooftree}
+$$
+
+$$
+\begin{prooftree}
   \hypo{c \leadsto c'}
   \infer1[(\textsc{Handle-Step})]{\effWith e \effHandle c \leadsto \effWith e \effHandle c'}
 \end{prooftree}
@@ -416,15 +453,24 @@ $$
 
 $$
 \begin{prooftree}
-  \hypo{c \leadsto c'}
-  \infer1[(\textsc{Handle-Val})]{\effWith (\effHandler \effVal x \mapsto c_v \effBar ocs) \effHandle (\effVal e) \leadsto c_v[e/x]}
+  \hypo{h \stackrel{\text{def}}{=} (\effHandler \effVal x \mapsto c_v \dmid \dots)}
+  \infer1[(\textsc{Handle-Val})]{\effWith h \effHandle (\effVal e) \leadsto c_v[e/x]}
 \end{prooftree}
 $$
 
 $$
 \begin{prooftree}
-  \hypo{h \stackrel{\text{def}}{=} (\effHandler \effVal x \mapsto c_v \effBar ocs) \quad (\text{op}: A^\text{op} \to B^\text{op}) \in \Sigma_E}
-  \infer1[(\textsc{Handle-Effect})]{\effWith h \effHandle (\iota\#op\ e (y.c)) \leadsto ocs_{\iota\#op} (e, (\effFun y : B^\text{op} \mapsto \effWith h \effHandle c))}
+  \hypo{h \stackrel{\text{def}}{=} (\effHandler \dots \overline{\dmid \effEffect E_i\ x\ k \mapsto c_i} \dmid \dots)}
+  \hypo{\exists i. E_i = E}
+  \infer2[(\textsc{Handle-Eff-Match})]{\effWith h \effHandle E(e, y.c) \leadsto c_i[e/x, (y.c)/k]}
+\end{prooftree}
+$$
+
+$$
+\begin{prooftree}
+  \hypo{h \stackrel{\text{def}}{=} (\effHandler \dots \overline{\dmid \effEffect E_i\ x\ k \mapsto c_i} \dmid \dots)}
+  \hypo{\forall i. E_i \neq E}
+  \infer2[(\textsc{Handle-Eff-Rise})]{\effWith h \effHandle E(e, y.c) \leadsto E( e, y. \effWith h \effHandle c)}
 \end{prooftree}
 $$
 
@@ -454,16 +500,13 @@ are standard. The other \textsc{Let-*} and \textsc{Handle-*} rules need more exp
   \caption{Explanation of the Eff specific rules of the small step semantics}
   \label{tab:rule-explanation}
 \end{table}
-The definition of $ocs_{\iota\#op}$ is as follows:
-\begin{align}
-  nil_{\iota\#op} (e, \kappa) = \iota\#op\ e\ (y.\kappa\ y) \\
-  (\iota'\#op'\ x\ k \mapsto c \effBar ocs)_{\iota\#op}(e, \kappa) = \begin{cases}
-    c[e/x, \kappa/k] & \text{if }\iota\#op = \iota'\#op' \\
-    ocs_{\iota\#op(e,\kappa)} & \text{otherwise}
-  \end{cases}
-\end{align}
 
-\subsection{Type checking}
+\subsection{Typing}
+
+The types of Eff are...
+
+Again, I omit standard typing rules and focus on the Eff specific ones.
+For the sake of completeness Appendix Y contains the other rules.
 
 \begin{figure}
   $$
@@ -490,36 +533,83 @@ The definition of $ocs_{\iota\#op}$ is as follows:
 
 \section{Abstract machines by example}
 
-Two machines which naturally ... the continuation of a program at any point in the execution are CEK machines and SECD machines.
-As we saw already, this is a property we are interested in when talking about Eff.
+A purist would look at rule \textsc{(Perform)} in \autoref{fig:small-step-semantics} and would think that the phrasing of the
+hypothesis is troublesome. I actually think that this ambiguity reflects well the challenge in this project. Consider for instance
+implementing an interpreter on the source terms of a language X. One's first instinct is that this is a trivial task: all we need
+to do is to write a recursive evaluator function, something of this sort:
+\begin{lstlisting}[language=caml]
+let rec eval = function
+| Plus(e1, e2) -> eval(e1) + eval(e2)
+| ...
+\end{lstlisting}
+Indeed, this works for most programming languages (ones that do not have control operators like continuations) and this was my first
+attempt when writing a \nth{0} prototype in the very early stages of the project. I started to struggle when I reached the point I had to
+deal with continuations, as I needed the ability to access $\kappa$ any time in the evaluation of a program. But evaluators of this kind
+do not lend themselves easily to such maneuvers.
 
-They both interpret source terms directly and this makes it easy to write interpreters for them (discussed in the Implementation chaper).
+Hence this section is concerned with two types of abstract machines which are capable of doing what is described above. I will illustrate
+how they do this on a toy language and by the end of this section we will be able discover a correspondence between the \emph{runtime representation}
+of continuations in these machines and the \emph{continuation passing style} Scheme example from \autoref{sec:continuations}.
 
-This section discusses their transition rules with simple lambda calculus + Scheme example. The reader will be able to compare
-how a runtime representation of the CPS lambdas are present in both machines.
+These two machines are CEK and SECD machines.
+They both interpret source terms directly and this makes it easy to implement them (a CEK implementation of Eff is discussed in the
+Implementation chaper).
 
-Consider the simple language
-$$ t ::= x \bar \lambda x. t \bar t_0\ t_1 \bar n \bar t_0 + t_1 $$
-and the simple program
-$$ times (plus 1 2) (plus 3 4).$$
+Consider the following Toy Language (TL), which is the lambda calculus with natural numbers as values and with built-in operations
+like addition and multiplication:
+$$ t ::= x \mid n \mid \lambda x. t \mid t_0\ t_1 \mid t_0 + t_1 \mid t_0 * t_1 $$
+together with our dummy example from \autoref{sec:continuations} in TL:
+$$ \mathtt{plus} = \lambda x. \lambda y.\ x + y $$
+$$ \mathtt{times} = \lambda x. \lambda y.\ x * y $$
+$$ \mathtt{times}\ (\mathtt{plus}\ 1\ 2)\ (\mathtt{plus}\ 3\ 4).$$
+What follows is a brief description of CEK and SECD machines for TL illustrated on this example.
 
 \subsection{CEK machines}
 
-\begin{itemize}
-  \item Three components \emph{control}, \emph{environment} and \emph{kontinuation}.
-\end{itemize}
+As the name suggests, the state of CEK machines consists of three components: \emph{control} (C), \emph{environment} (E) and \emph{kontinuation} (K).
+Control is simply the program being evaluated in its parse tree form. Environment is a mapping from variable names to values (in our case, the
+natural numbers) and kontinuation is a \emph{stack of closures} representing the rest of the program to be interpreted at any given time.
+Hence a configuration of the machine is characterised by a three-tuple $\cek{C, E, K}$.
+
+\begin{figure}
+  Initial state:
+  $$ t \to \cek{t, \{\}, nil} $$
+  Transition rules:
+  $$ \cek{x, E, (y.t, E') :: K} \to \cek{E(x), E, K} $$
+  $$ \cek{v, E, (y.t, E') :: K} \to \cek{t, E'[y \mapsto v], K} $$
+  $$ \cek{(\lambda y. t_1)\ t_2, E, K} \to \cek{t_2, E, (y.t_1, E) :: K} $$
+  $$ \cek{t_1 + t_2, E, K} \to \cek{\mathtt{add}(t_1, t_2), E, K} $$
+  $$ \cek{t_1 * t_2, E, K} \to \cek{\mathtt{mult}(t_1, t_2), E, K} $$
+  $$ \cek{\mathtt{op}(t_1, t_2), E, K} \to \cek{t_1, E, (y.\mathtt{CONT1}(y, \mathtt{op}, t_2), E) :: K} \text{ for a \emph{fresh} $y$} $$
+  $$ \cek{\mathtt{CONT1}(x, \mathtt{op}, t_2), E, K} \to \cek{t_2, E, (y.\mathtt{CONT2}(x, \mathtt{op}, y), E) :: K} \text{ for a \emph{fresh} $y$} $$
+  $$ \cek{\mathtt{CONT2}(x, \mathtt{op}, y), E, K} \to \cek{v, E, K} \text{ where } v = \mathtt{op}(x, y) $$
+  Termination:
+  $$ \cek{x, E, nil} \to E(x) $$
+  $$ \cek{v, E, nil} \to v $$
+
+  \caption{CEK machine transition rules for TL.}
+  \label{fig:cek-tl}
+\end{figure}
+
+We see that whenever we reduce a term to a value $v$, a continuation $(y.t)$ is popped off the K stack, $v$ is bound to the
+variable $y$ in $E'$ (this is the environment we need to restore to be able to interpret $t$ in the same context we stopped
+evaluating its parent expression) and then $t$ is resumed. We need to use two types of continuations for TL as it has
+binary operators $+$ and $*$. The name \texttt{CONT1} denotes that one of the operands is reduced to a value and one
+remains to be reduced before the actual operation can be performed. \texttt{CONT2} is used to represent the state when
+both of the operand are values and the operation \texttt{op} can be performed (be that the built-in \texttt{add} or \texttt{mult}).
+
+We see that a $\effPerform$ operation would be easier to implement in this representation than in the naïve way. Furthermore,
+we should notice that a CPS transformation is done on the terms ``on the fly'' during the evaluation and we benefit from this
+because this avoids us (programmers) having to make the continuations explicit in our programs by writing them in continuation passing
+style.
 
 \subsection{The SECD machine}
 
-Peter Landin's mechanical evaluation of expressions \cite{landin-secd}.
-
-\begin{itemize}
-  \item Landin' machine
-  \item Lower level than CEK machine
-  \item Can implement continuations with it
-  \item Dump is important
-  \item Cite \cite{landin-secd}
-\end{itemize}
+SECD machines originate from Landin's famous \emph{The mechanical evaluation of expressions} \cite{landin-secd}.
+Their state is characterised by four components, namely: a \emph{stack} (S), an \emph{environment} (E), a \emph{control} (C) and a \emph{dump} (D).
+The first three components are standard. Here the rôle of dump is similar to the rôle of K in the CEK machine. It is a list of
+three tuples, each three tuple consisting of the other three components, i.e it has the form $(S, E, C)$. The dump
+embodies a list of saved execution contexts we can return to if we wish.
 
 \section{Software engineering}
 
