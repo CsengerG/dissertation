@@ -27,7 +27,7 @@
 \fi
 
 \renewcommand{\leadsto}{\rightsquigarrow}
-\newcommand{\dmid}{\ \|\ }
+\newcommand{\dmid}{\ \parallel \ }
 
 \newcommand{\effFalse}{\mathbf{false}}
 \newcommand{\effTrue}{\mathbf{true}}
@@ -55,12 +55,11 @@
 \newcommand{\cek}[1]{\langle #1 \rangle}
 \newcommand{\secd}[1]{\langle #1 \rangle}
 
-
 \begin{document}
 
 This chapter of my dissertation contains a tutorial introduction to the programming language
 Eff. It also discusses continuations and their relationships with two abstract machines, and
-talks about some of the software engineer aspects of the project.
+talks about some of the software engineering aspects of the project.
 
 \section{A quick Eff tutorial}
 
@@ -342,7 +341,7 @@ $$ e ::= x \mid
   \effFun x \mapsto c \mid
   h $$
 Handlers
-$$ h ::= \effHandler \effVal x \mapsto c_v\ \overline{\|\ \effEffect E_i\ x\ k \to c_{\effOp_i}} \dmid \effFinally x \mapsto c_f $$
+$$ h ::= \effHandler \effVal x \mapsto c_v\ \overline{\|\ \effEffect E_i\ x\ k \to c_{\effOp_i} } \dmid \effFinally x \mapsto c_f $$
 Computations
 \begin{align*}
   c ::= \ &\effVal e \mid
@@ -632,6 +631,40 @@ up with a list of smaller trees and SECD instructions. With just another step we
 is what I will do in the Implementation chapter.
 
 \section{Illustration/The Big Picture?}
+
+\begin{figure}
+  \begin{subfigure}{\textwidth}
+    \centering
+    \resizebox{1\textwidth}{!}{
+      \subimport{../figures/}{naive.tex}
+    }
+    \caption{Imagine that a $\effPerform$ operation is issued at position 2 in the tree. As the naïve approach only keeps track of
+    the continuations implicitly we cannot represent the red arrow.}
+    \label{fig:naive}
+  \end{subfigure}
+  \begin{subfigure}{\textwidth}
+    \centering
+    \resizebox{1\textwidth}{!}{
+      \subimport{../figures/}{cek.tex}
+    }
+    \caption{The content of K in the CEK machine. The CEK machine represents the continuation the same way our continuations were nested in each other
+    in the Scheme example.}
+    \label{fig:naive}
+  \end{subfigure}
+  \begin{subfigure}{\textwidth}
+    \centering
+    \resizebox{1\textwidth}{!}{
+      \subimport{../figures/}{secd.tex}
+    }
+    \caption{The SECD machine does not need to pass values around between closures. The input values for all the closures will already reside on
+    the stack when the execution gets to the point where it needs to invoke the continuation. This is why the representation of a continuation here
+    looks much more like an instruction stream.}
+    \label{fig:naive}
+  \end{subfigure}
+
+  \caption{Illustration of the different approaches on the same example.}
+  \label{fig:naive-cek-secd}
+\end{figure}
 
 \section{Software engineering}
 
