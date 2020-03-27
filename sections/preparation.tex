@@ -53,6 +53,7 @@
 \newcommand{\tto}{\twoheadrightarrow}
 
 \newcommand{\cek}[1]{\langle #1 \rangle}
+\newcommand{\secd}[1]{\langle #1 \rangle}
 
 
 \begin{document}
@@ -567,12 +568,12 @@ What follows is a brief description of CEK and SECD machines for TL illustrated 
 \subsection{CEK machines}
 
 As the name suggests, the state of CEK machines consists of three components: \emph{control} (C), \emph{environment} (E) and \emph{kontinuation} (K).
-Control is simply the program being evaluated in its parse tree form. Environment is a mapping from variable names to values (in our case, the
+Control is simply the program to be evaluated in its abstract syntax tree form. Environment is a mapping from variable names to values (in our case, the
 natural numbers) and kontinuation is a \emph{stack of closures} representing the rest of the program to be interpreted at any given time.
 Hence a configuration of the machine is characterised by a three-tuple $\cek{C, E, K}$.
 
 \begin{figure}
-  Initial state:
+  Initialisation:
   $$ t \to \cek{t, \{\}, nil} $$
   Transition rules:
   $$ \cek{x, E, (y.t, E') :: K} \to \cek{E(x), E, K} $$
@@ -610,6 +611,27 @@ Their state is characterised by four components, namely: a \emph{stack} (S), an 
 The first three components are standard. Here the rôle of dump is similar to the rôle of K in the CEK machine. It is a list of
 three tuples, each three tuple consisting of the other three components, i.e it has the form $(S, E, C)$. The dump
 embodies a list of saved execution contexts we can return to if we wish.
+
+\begin{figure}
+  Initialisation:
+  $$ t \to \secd{nil, \{\}, [t], nil} $$
+  Transition rules:
+  $$ \secd{S, E, x :: C, D} \to \secd{E(x) :: S, E, C, D} $$
+  $$ \secd{v :: S, E, nil, (S', E', C') :: D} \to \secd{v :: S', E', C', D} $$
+  $$ \secd{S, E, (t_1\ \mathtt{op}\ t_2 :: C, D} \to \secd{S, E, t_1 :: t_2 :: \mathtt{op} :: C, D} $$
+  $$ \secd{S, E, (t_1\ t_2) :: C, D} \to \secd{S, E, t_2 :: t_1 :: \mathtt{ap} :: C, D} $$
+  $$ \secd{(y, E', t) :: v :: S, E, \mathtt{ap} :: C, D} \to \secd{nil, E'[y \mapsto v], [t], (S, E, C) :: D} $$
+  $$ \secd{v_2 :: v_1 :: S, E, \mathtt{op} :: C, D} \to \secd{v :: S, E, C, D} \text{ for } v = \mathtt{op}(v_1, v_2) $$
+  Termination:
+  $$ \secd{v :: S, E, nil, nil} \to v $$
+\end{figure}
+
+We see that although this machine works on abstract syntax trees, it is still a bit lower level than the CEK machine in that
+it makes a stack explicit and the way it processes (disassembles) the tree is very similar to compiling. In control, we end
+up with a list of smaller trees and SECD instructions. With just another step we can turn this into a stack machine and this
+is what I will do in the Implementation chapter.
+
+\section{Illustration/The Big Picture?}
 
 \section{Software engineering}
 
