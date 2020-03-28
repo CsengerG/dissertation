@@ -52,6 +52,13 @@
 \newcommand{\effPerform}{\mathbf{perform}\ }
 \newcommand{\tto}{\twoheadrightarrow}
 
+\newcommand{\handlerType}{\Rightarrow}
+\newcommand{\boolType}{\mathtt{bool}}
+\newcommand{\unitType}{\mathtt{unit}}
+\newcommand{\emptyType}{\mathtt{empty}}
+
+\newcommand{\defEq}{\stackrel{\text{def}}{=}}
+
 \newcommand{\cek}[1]{\langle #1 \rangle}
 \newcommand{\secd}[1]{\langle #1 \rangle}
 
@@ -501,35 +508,182 @@ are standard. The other \textsc{Let-*} and \textsc{Handle-*} rules need more exp
   \label{tab:rule-explanation}
 \end{table}
 
-\subsection{Typing}
+\subsection{Types}
 
-The types of Eff are...
+The types of Eff are as follows:
+\begin{figure}
+  $$A ::= 
+    b \mid
+    \mathtt{bool} \mid
+    \mathtt{unit} \mid
+    \mathtt{empty} \mid
+    A * B \mid
+    A + B \mid
+    A \to B \mid
+    A \tto B \mid
+    A \Rightarrow B$$
+  \caption{The types of Eff.}
+  \label{fig:eff-types}
+\end{figure}
+where $b$ stands for other built-in types (e.g., my implementation includes built-in types such as ints, reals and strings) which are not
+particularly interesting here.
 
-Again, I omit standard typing rules and focus on the Eff specific ones.
-For the sake of completeness Appendix Y contains the other rules.
+\subsubsection{Type checking}
+
+Again, I omit standard typing rules and focus on the Eff specific ones. For the sake of completeness Appendix Y contains the other rules.
+There are two separate typing relations denoted $\vdash_e$ and $\vdash_c$ for expressions and computations respectively.
+Type environments are denoted $\Gamma$ and are maps from variable names to types. We assume the existence of a set $\Sigma_E$ containing
+all effect declarations of the form $E_i : A_i \tto B_i$.
 
 \begin{figure}
   $$
   \begin{prooftree}
     \hypo{x : A \in \Gamma}
-    \infer1[T-Var]{\Gamma \vdash_e x : A}
+    \infer1[(\textsc{T-Var})]{\Gamma \vdash_e x : A}
+  \end{prooftree}
+  $$
+  $$
+  \begin{prooftree}
+    \hypo{}
+    \infer1[(\textsc{T-True})]{\Gamma \vdash_e \effTrue : \boolType}
+  \end{prooftree}
+  $$
+  $$
+  \begin{prooftree}
+    \hypo{}
+    \infer1[(\textsc{T-False})]{\Gamma \vdash_e \effFalse : \boolType}
+  \end{prooftree}
+  $$
+  $$
+  \begin{prooftree}
+    \hypo{}
+    \infer1[(\textsc{T-Unit})]{\Gamma \vdash_e () : \unitType}
   \end{prooftree}
   $$
   $$
   \begin{prooftree}
     \hypo{\Gamma \vdash_e e_1 : A}
     \hypo{\Gamma \vdash_e e_2 : B}
-    \infer2[T-Pair]{\Gamma \vdash_e (e_1, e_2) : A * B}
+    \infer2[(\textsc{T-Pair})]{\Gamma \vdash_e (e_1, e_2) : A * B}
   \end{prooftree}
   $$
+  $$
+  \begin{prooftree}
+    \hypo{\Gamma \vdash_e e : A}
+    \infer1[(\textsc{T-SumLeft})]{\Gamma \vdash_e \effLeft e : A + B}
+  \end{prooftree}
+  $$
+  $$
+  \begin{prooftree}
+    \hypo{\Gamma \vdash_e e : B}
+    \infer1[(\textsc{T-SumRight})]{\Gamma \vdash_e \effRight e : A + B}
+  \end{prooftree}
+  $$
+  $$
+  \begin{prooftree}
+    \hypo{x : A, \Gamma \vdash_c c : C}
+    \infer1[(\textsc{T-Fun})]{\Gamma \vdash_e (\effFun x \mapsto c) : A \to C}
+  \end{prooftree}
+  $$
+
+  \begin{align*}
+    {\begin{prooftree}
+      \hypo{x : A, \Gamma \vdash_c c_v : C}
+      \hypo{\forall i.\ e_i : A_i, k_i : B_i, \Gamma \vdash_c c_i : C}
+      \hypo{x : C, \Gamma \vdash_c c_f : D}
+      \infer3[(\textsc{T-Handler})]{\Gamma \vdash_e h : A \handlerType C}
+    \end{prooftree}}\\
+    \text{ where }
+    h \defEq (
+      \effHandler
+        \effVal x \mapsto c_v
+        \overline{\dmid \effEffect E_i\ e_i\ k_i \mapsto c_i} \dmid
+        \effFinally x \mapsto c_f)
+    \text{ and } \forall i.\ E_i : A_i \tto B_i \in \Sigma_E
+  \end{align*}
+  
   \caption{Type checking rules for Eff expressions}
   \label{fig:type-checking-expressions}
 \end{figure}
 
 \begin{figure}
+  $$
+  \begin{prooftree}
+    \hypo{\Gamma \vdash_e e : A}
+    \infer1[(\textsc{T-Val})]{\Gamma \vdash_c \effVal e : A}
+  \end{prooftree}
+  $$
+  $$
+  \begin{prooftree}
+    \hypo{\Gamma \vdash_c c_1 : A}
+    \hypo{x : A, \Gamma \vdash_c c_2 : B}
+    \infer2[(\textsc{T-Let})]{\Gamma \vdash_c (\effLet x = c_1 \effIn c_2) : B}
+  \end{prooftree}
+  $$
+  $$
+  \begin{prooftree}
+    \hypo{x : A, f : A \to B \Gamma \vdash_c c_1 : B}
+    \hypo{f : A \to B, \Gamma \vdash_c c_2 : C}
+    \infer2[(\textsc{T-LetRec})]{\Gamma \vdash_c (\effLet \effRec f\ x = c_1 \effIn c_2) : C}
+  \end{prooftree}
+  $$
+  $$
+  \begin{prooftree}
+    \hypo{\Gamma \vdash_e e_1 : A \to B}
+    \hypo{\Gamma \vdash_e e_2 : A}
+    \infer2[(\textsc{T-FunApp})]{\Gamma \vdash_c e_1\ e_2 : B}
+  \end{prooftree}
+  $$
+  $$
+  \begin{prooftree}
+    \hypo{\Gamma \vdash_e e : \boolType}
+    \hypo{\Gamma \vdash_c c_1 : A}
+    \hypo{\Gamma \vdash_c c_2 : A}
+    \infer3[(\textsc{T-If})]{\Gamma \vdash_c \effIf e \effThen c_1 \effElse c_2 : A}
+  \end{prooftree}
+  $$
+  $$
+  \begin{prooftree}
+    \hypo{\Gamma \vdash_e e : A + B}
+    \hypo{x : A, \Gamma \vdash_c c_l : C}
+    \hypo{x : B, \Gamma \vdash_c c_r : C}
+    \infer3[(\textsc{T-MatchSum})]{\effMatch e\ \effWith \effLeft x \mapsto c_l \dmid \effRight x \mapsto c_r : C}
+  \end{prooftree}
+  $$
+  $$
+  \begin{prooftree}
+    \hypo{\Gamma \vdash_e e : A * B}
+    \hypo{f : A, s: B, \Gamma \vdash_c c_l : C}
+    \infer2[(\textsc{T-MatchProd})]{\effMatch e\ \effWith (f,s) \mapsto c : C}
+  \end{prooftree}
+  $$
+  $$
+  \begin{prooftree}
+    \hypo{E : A \tto B \in \Sigma_E}
+    \hypo{\Gamma \vdash_e e : A}
+    \infer2[(\textsc{T-Perform})]{\effPerform (E\ e) : B}
+  \end{prooftree}
+  $$
+  $$
+  \begin{prooftree}
+    \hypo{\Gamma \vdash_e e : A \handlerType B}
+    \hypo{\Gamma \vdash_c c : A}
+    \infer2[(\textsc{T-WithHandle})]{\effWith e \effHandle c : B}
+  \end{prooftree}
+  $$
+
   \caption{Type checking rules for Eff computations}
   \label{fig:type-checking-computations}
 \end{figure}
+
+
+The distinction between pure expressions and effectful computations allows for the use of an \emph{effect system} with
+these rules. For instance, if one were to extend these rules with \emph{row-typing} one could
+keep track of what kind of side effecting computations occur in different parts of the program. This is can aid
+reasoning about programs, help us to discover more optimisations by using type and effect information and to 
+ensure that programs have certain safety properties.
+These are nice to have features and are outside of the scope of this dissertation. My implementation uses these simplified
+set of rules.
 
 \section{Abstract machines by example}
 
