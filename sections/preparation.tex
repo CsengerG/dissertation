@@ -11,7 +11,7 @@
 \usepackage{verbatim}
 \usepackage{a4wide}
 \usepackage[super]{nth}
-
+\usepackage{float}
 \usepackage{subcaption}
 
 \ifstandalone
@@ -26,41 +26,9 @@
 \input{./src/scheme.tex}
 \fi
 
-\renewcommand{\leadsto}{\rightsquigarrow}
-\newcommand{\dmid}{\ \parallel \ }
-
-\newcommand{\effFalse}{\mathbf{false}}
-\newcommand{\effTrue}{\mathbf{true}}
-\newcommand{\effLeft}{\mathbf{Left}\ }
-\newcommand{\effRight}{\mathbf{Right\ }}
-\newcommand{\effFun}{\mathbf{fun}\ }
-\newcommand{\effHandler}{\mathbf{handler}\ }
-\newcommand{\effVal}{\mathbf{val}\ }
-\newcommand{\effWith}{\mathbf{with}\ }
-\newcommand{\effHandle}{\ \mathbf{handle}\ }
-\newcommand{\effIf}{\mathbf{if}\ }
-\newcommand{\effThen}{\ \mathbf{then}\ }
-\newcommand{\effElse}{\ \mathbf{else}\ }
-\newcommand{\effAbsurd}{\mathbf{absurd}\ }
-\newcommand{\effMatch}{\mathbf{match}\ }
-\newcommand{\effLet}{\mathbf{let}\ }
-\newcommand{\effIn}{\ \mathbf{in}\ }
-\newcommand{\effRec}{\mathbf{rec}\ }
-\newcommand{\effEffect}{\mathbf{effect}\ }
-\newcommand{\effFinally}{\mathbf{finally}\ }
-\newcommand{\effOp}{\mathtt{op}}
-\newcommand{\effPerform}{\mathbf{perform}\ }
-\newcommand{\tto}{\twoheadrightarrow}
-
-\newcommand{\handlerType}{\Rightarrow}
-\newcommand{\boolType}{\mathtt{bool}}
-\newcommand{\unitType}{\mathtt{unit}}
-\newcommand{\emptyType}{\mathtt{empty}}
-
-\newcommand{\defEq}{\stackrel{\text{def}}{=}}
-
-\newcommand{\cek}[1]{\langle #1 \rangle}
-\newcommand{\secd}[1]{\langle #1 \rangle}
+\ifstandalone
+\input{../src/macros.tex}
+\fi
 
 \begin{document}
 
@@ -150,7 +118,10 @@ Handlers are first-class citizens (i.e., values) in Eff and they show some simil
 with SML's \verb|case| statement. A handler can be declared with the \verb|handler| keyword
 and by specifying so-called \emph{cases}:
 
+\begin{minipage}{\linewidth}
 \lstinputlisting[caption={A handler definition consisting of 2 cases: a value case and an effect case.}, label=handler-keyword, language=efflang]{../code_examples/print_handler.eff}
+\end{minipage}
+
 To complete our Hello World example we must be able to \emph{apply} this handler. This is done
 using a \emph{with-handle block} as illustrated on \autoref{hello-world}.
 
@@ -325,16 +296,12 @@ Eff is described in \cite{bauer2015programming}.
 
 \subsection{Syntax}
 
-% syntactic difference between pure expressions and possibly effectful computations
-% iota?
-% implementations can avoid the syntactic difference
-% talk about monads here
-
 In the abstract syntax of Eff there is a distinction between pure expressions and computations which are possibly effectful.
-\footnote{The reader familiar with monads can might discover some similarities between \emph{val} and \emph{return} as well
+\footnote{The reader familiar with monads might discover some similarities between \emph{val} and \emph{return} as well
 as similarities between monadic type constructors and computations.}
 
 \begin{figure}
+  \begin{minipage}{\linewidth}
 Effect declarations
 $$ \effEffect E : A \tto B $$
 Expressions
@@ -348,10 +315,10 @@ $$ e ::= x \mid
   \effFun x \mapsto c \mid
   h $$
 Handlers
-$$ h ::= \effHandler \effVal x \mapsto c_v\ \overline{\|\ \effEffect E_i\ x\ k \to c_{\effOp_i} } \dmid \effFinally x \mapsto c_f $$
+$$ h ::= \effHandler \effVal x \mapsto c_v\ \overline{\parallel \ \effEffect E_i\ x\ k \to c_{\effOp_i} } \dmid \effFinally x \mapsto c_f $$
 Computations
 \begin{align*}
-  c ::= \ &\effVal e \mid
+  c ::= \ &\effVal e \mid \effAbsurd e \mid
     \effLet x = c_1 \effIn c_2 \mid
     \effLet \effRec f\ x = c_1 \effIn c_2 \mid e_1\ e_2 \mid \\
     & \effIf e \effThen c_1 \effElse c_2 \mid
@@ -361,11 +328,12 @@ Computations
 \end{align*}
 \caption{Abstract syntax of Eff}
 \label{fig:eff-syntax}
+\end{minipage}
 \end{figure}
 
 Most terms should be familiar to the reader by now. However, there are some differences between the concrete and
 the abstract syntax of Eff. Notably, the use of the \emph{val} keyword is omitted many times from the concrete
-syntax because for a programmers it might be tiresome if they have to keep track whether they are writing an
+syntax because for programmers it might be tiresome if they have to keep track whether they are writing an
 expression or a computation at the moment. The \emph{continue} keyword is missing from the abstract syntax too.
 However, our ability to resume computations did not vanish.
 As we saw in the previous section, delimited continuations are just simply functions reifying a continuation.
@@ -374,138 +342,108 @@ I use the notation $y.c$ for a delimited continuation which resumes the computat
 
 \subsection{Semantics}
 
-This section presents the small step operational semantics of Eff (see \autoref{fig:small-step-semantics}). The spotlight is on
+This section presents the small step operational semantics of Eff. The spotlight is on
 possibly effectful computations and on their reduction rules given by the relation $\leadsto$. I focus on the Eff specific
-transition steps here. The other transition rules are standard and can be found in Appendix X.\footnote{Comment to Alan: I was always wondering
-how $y.e$, i.e., a delimited continuation here is very similar to blocking communication + guarded commands.}
+transition steps here (see \autoref{fig:mini-semantics}). The other transition rules are standard and can be found in
+\autoref{sec:full-semantics}.
+\footnote{Comment to Alan: I was always wondering how $y.e$, i.e., a delimited continuation here is very similar to blocking communication + guarded commands in CPS.}
 
 \begin{figure}
-$$
-\begin{prooftree}
-\hypo{}
-\infer1[(\textsc{If-True})]{\effIf \effTrue \effThen c_1 \effElse c_2 \leadsto c_1}
-\end{prooftree}
-\quad
-\begin{prooftree}
-  \hypo{}
-  \infer1[(\textsc{If-False})]{\effIf \effFalse \effThen c_1 \effElse c_2 \leadsto c_2}
-\end{prooftree}
-$$
 
-$$
-\begin{prooftree}
-  \hypo{}
-  \infer1[(\textsc{Fun-App})]{(\effFun x \mapsto c)\ e \leadsto c[e/x]}
-\end{prooftree}
-\quad
-\begin{prooftree}
-  \hypo{}
-  \infer1[(\textsc{Match-Left})]{\effMatch (\effLeft e)\ \effWith \effLeft x \mapsto c_1 \dmid \effRight x \mapsto c_2  \leadsto c_1[e/x]}
-\end{prooftree}
-$$
+  $$
+  \begin{prooftree}
+    \hypo{c_1 \leadsto c_1'}
+    \infer1[(\textsc{Let-Step})]{\effLet x = c_1 \effIn c_2 \leadsto \effLet x = c_1' \effIn c_2}
+  \end{prooftree}
+  \quad
+  \begin{prooftree}
+    \hypo{}
+    \infer1[(\textsc{Let-Val})]{\effLet x = (\effVal e) \effIn c \leadsto c[e/x]}
+  \end{prooftree}
+  $$
+  
+  $$
+  \begin{prooftree}
+    \hypo{}
+    \infer1[(\textsc{Let-Effect})]{\effLet x = E(e, y.c_1) \effIn c_2 \leadsto E(e, y.\effLet x = c_1 \effIn c_2)}
+  \end{prooftree}
+  $$
 
-$$
-\begin{prooftree}
-  \hypo{}
-  \infer1[(\textsc{Match-Right})]{\effMatch (\effRight e)\ \effWith \effLeft x \mapsto c_1 \dmid \effRight x \mapsto c_2  \leadsto c_2[e/x]}
-\end{prooftree}
-$$
+  $$
+    \begin{prooftree}
+      \hypo{\kappa \text{ is current delimited continuation}}
+      \infer1[(\textsc{Perform})]{\effPerform (E\ e) \leadsto E(e, \kappa)}
+    \end{prooftree}
+    $$
 
-$$
-\begin{prooftree}
-  \hypo{}
-  \infer1[(\textsc{Match-Prod})]{\effMatch (e_1, e_2)\ \effWith (f,s) \mapsto c \leadsto c[e_1/f, e_2/s]}
-\end{prooftree}
-$$
+    $$
+    \begin{prooftree}
+      \hypo{c \leadsto c'}
+      \infer1[(\textsc{Handle-Step})]{\effWith e \effHandle c \leadsto \effWith e \effHandle c'}
+    \end{prooftree}
+    $$
+    
+    $$
+    \begin{prooftree}
+      \hypo{h \stackrel{\text{def}}{=} (\effHandler \effVal x \mapsto c_v \dmid \dots)}
+      \infer1[(\textsc{Handle-Val})]{\effWith h \effHandle (\effVal e) \leadsto c_v[e/x]}
+    \end{prooftree}
+    $$
+    
+    $$
+    \begin{prooftree}
+      \hypo{h \stackrel{\text{def}}{=} (\effHandler \dots \overline{\dmid \effEffect E_i\ x\ k \mapsto c_i} \dmid \dots)}
+      \hypo{\exists i. E_i = E}
+      \infer2[(\textsc{Handle-Eff-Match})]{\effWith h \effHandle E(e, y.c) \leadsto c_i[e/x, (y.c)/k]}
+    \end{prooftree}
+    $$
+    
+    $$
+    \begin{prooftree}
+      \hypo{h \stackrel{\text{def}}{=} (\effHandler \dots \overline{\dmid \effEffect E_i\ x\ k \mapsto c_i} \dmid \dots)}
+      \hypo{\forall i. E_i \neq E}
+      \infer2[(\textsc{Handle-Eff-Rise})]{\effWith h \effHandle E(e, y.c) \leadsto E( e, y. \effWith h \effHandle c)}
+    \end{prooftree}
+    $$
 
-$$
-\begin{prooftree}
-  \hypo{c_1 \leadsto c_1'}
-  \infer1[(\textsc{Let-Step})]{\effLet x = c_1 \effIn c_2 \leadsto \effLet x = c_1' \effIn c_2}
-\end{prooftree}
-\quad
-\begin{prooftree}
-  \hypo{}
-  \infer1[(\textsc{Let-Val})]{\effLet x = (\effVal e) \effIn c \leadsto c[e/x]}
-\end{prooftree}
-$$
-
-$$
-\begin{prooftree}
-  \hypo{}
-  \infer1[(\textsc{Let-Effect})]{\effLet x = E(e, y.c_1) \effIn c_2 \leadsto E(e, y.\effLet x = c_1 \effIn c_2)}
-\end{prooftree}
-$$
-
-$$
-\begin{prooftree}
-  \hypo{}
-  \infer1[(\textsc{Let-Rec})]{\effLet \effRec f\ x = c_1 \effIn c_2 \leadsto c_2[(\effFun x \mapsto \effLet \effRec f\ x = c_1 \effIn c_1)/f]}
-\end{prooftree}
-$$
-
-$$
-\begin{prooftree}
-  \hypo{\kappa \text{ is current delimited continuation}}
-  \infer1[(\textsc{Perform})]{\effPerform (E\ e) \leadsto E(e, \kappa)}
-\end{prooftree}
-$$
-
-$$
-\begin{prooftree}
-  \hypo{c \leadsto c'}
-  \infer1[(\textsc{Handle-Step})]{\effWith e \effHandle c \leadsto \effWith e \effHandle c'}
-\end{prooftree}
-$$
-
-$$
-\begin{prooftree}
-  \hypo{h \stackrel{\text{def}}{=} (\effHandler \effVal x \mapsto c_v \dmid \dots)}
-  \infer1[(\textsc{Handle-Val})]{\effWith h \effHandle (\effVal e) \leadsto c_v[e/x]}
-\end{prooftree}
-$$
-
-$$
-\begin{prooftree}
-  \hypo{h \stackrel{\text{def}}{=} (\effHandler \dots \overline{\dmid \effEffect E_i\ x\ k \mapsto c_i} \dmid \dots)}
-  \hypo{\exists i. E_i = E}
-  \infer2[(\textsc{Handle-Eff-Match})]{\effWith h \effHandle E(e, y.c) \leadsto c_i[e/x, (y.c)/k]}
-\end{prooftree}
-$$
-
-$$
-\begin{prooftree}
-  \hypo{h \stackrel{\text{def}}{=} (\effHandler \dots \overline{\dmid \effEffect E_i\ x\ k \mapsto c_i} \dmid \dots)}
-  \hypo{\forall i. E_i \neq E}
-  \infer2[(\textsc{Handle-Eff-Rise})]{\effWith h \effHandle E(e, y.c) \leadsto E( e, y. \effWith h \effHandle c)}
-\end{prooftree}
-$$
-
-\caption{Small step operational semantics of core Eff}
-\label{fig:small-step-semantics}
+\caption{The interesting subset of rules of Eff's small step operational semantics}
+\label{fig:mini-semantics}
 \end{figure}
-
-The rules for if statements, function application, match statements and the rules \textsc{Handle-Step}, \textsc{Let-Step} and \textsc{Let-Rec}
-are standard. The other \textsc{Let-*} and \textsc{Handle-*} rules need more explanation:
+The explanation of these rules is given by \autoref{tab:semantics-rule-explanation} so that the reader can quickly jump
+between the comments there and the rules on \autoref{fig:mini-semantics}.
 \begin{table}
+  \centering
   \setlength{\tabcolsep}{0.5em}
   \renewcommand{\arraystretch}{1.4}
   \begin{tabular}{l|p{10cm}}
   Rule & Comment \\
   \hline \hline
-  \textsc{Let-Val} & If a computation \emph{returns} an expression $e$, it is bound to the identifier $x$ in the computation $c$. \\ \hline
-  \textsc{Let-Effect} & A computation $c$ can also reduce to an effect $\iota\#op\ e\ (y.c_1)$, where $e$ is the argument of the effect
-    constructor and $(y.\ c_1)$ is a delimited continuation representing the program point $c$'s execution was stopped at. This delimited continuation can be
+  \textsc{Let-Val} & 
+    If a computation \emph{returns} an expression $e$, it is bound to the identifier $x$ in the computation $c$. \\ \hline
+  \textsc{Let-Effect} & 
+    A computation $c$ can also reduce to a \emph{performed effect} $E(e, y.c_1)$, where $e$ is the argument of the effect
+    constructor and $(y.c_1)$ is a delimited continuation representing the program point $c$'s execution was stopped at. This delimited continuation can be
     used later to resume $c$. \\ \hline
-  \textsc{Handle-Val} & If a computation in a with-handle block with handler $h$ reduces to $\effVal e$, then the
+  \textsc{Perform} &
+    Whenever we perform an effect, a so-called \emph{effect packet}\footnote{Similar to \emph{exception packets} in SML, see \cite{paulson1996ml}.}
+    $E(e, \kappa)$ is created. Here, $e$ is the argument to the
+    effect and $\kappa$ is the captured delimited continuation which is determined by the with-handle blocks surrounding this computation.
+    Note, that because it isn't guaranteed that there are such with-handle blocks around a $\effPerform$ call, creating such an
+    effect package might not always be possible. \\ \hline
+  \textsc{Handle-Val} & 
+    If a computation in a with-handle block with handler $h$ reduces to $\effVal e$, then the
     \emph{value case} of $h$ (i.e., $\effVal x \mapsto c_v$) is invoked by substituting $e$ for $x$ in $c_v$. \\ \hline
-  \textsc{Handle-Effect} & This rule tells us how to look up the \emph{closest matching handler} if a computation reduces to an effect.
-    If no such handler exists then the program terminates with an exception. The recursive definition of $ocs_{\iota\#op}$ describes how
-    to look up a \emph{matching case} in a handler. Note how a \emph{new} continuation $(y.\kappa\ y)$ is created from $\kappa$ when we reach $nil$, i.e.,
-    when no case matches the effect in question.
+  \textsc{Handle-Eff-Match} &
+    This rule tells us what happens when there is a \emph{matching effect case} in the current handler.
+    The argument of the effect is bound to $x$ and the delimited continuation $(y.c)$ is bound to $k$. \\ \hline
+  \textsc{Handle-Eff-Rise} &
+    This rule tells us what happens when the next handler \emph{cannot} handle the effect which was performed.
+    In this case the effect packet is modified which is quite important. The \emph{body} of the delimited continuation
+    is surrounded by the current non-matching with-handle block. This achieves the effect that when the continuation 
+    is resumed we also restore all the handlers we escaped when we were ``searching'' for a matching handler.
   \end{tabular}
   \caption{Explanation of the Eff specific rules of the small step semantics}
-  \label{tab:rule-explanation}
+  \label{tab:semantics-rule-explanation}
 \end{table}
 
 \subsection{Types}
@@ -522,7 +460,7 @@ The types of Eff are as follows:
     A \to B \mid
     A \tto B \mid
     A \Rightarrow B$$
-  \caption{The types of Eff.}
+  \caption{The types of Eff}
   \label{fig:eff-types}
 \end{figure}
 where $b$ stands for other built-in types (e.g., my implementation includes built-in types such as ints, reals and strings) which are not
@@ -530,68 +468,19 @@ particularly interesting here.
 
 \subsubsection{Type checking}
 
-Again, I omit standard typing rules and focus on the Eff specific ones. For the sake of completeness Appendix Y contains the other rules.
+Again, I omit standard typing rules and focus on the Eff specific ones. For the sake of completeness \autoref{sec:full-typing} contains the other rules.
 There are two separate typing relations denoted $\vdash_e$ and $\vdash_c$ for expressions and computations respectively.
 Type environments are denoted $\Gamma$ and are maps from variable names to types. We assume the existence of a set $\Sigma_E$ containing
-all effect declarations of the form $E_i : A_i \tto B_i$.
+all \emph{effect signatures} of the form $E_i : A_i \tto B_i$.
 
 \begin{figure}
-  $$
-  \begin{prooftree}
-    \hypo{x : A \in \Gamma}
-    \infer1[(\textsc{T-Var})]{\Gamma \vdash_e x : A}
-  \end{prooftree}
-  $$
-  $$
-  \begin{prooftree}
-    \hypo{}
-    \infer1[(\textsc{T-True})]{\Gamma \vdash_e \effTrue : \boolType}
-  \end{prooftree}
-  $$
-  $$
-  \begin{prooftree}
-    \hypo{}
-    \infer1[(\textsc{T-False})]{\Gamma \vdash_e \effFalse : \boolType}
-  \end{prooftree}
-  $$
-  $$
-  \begin{prooftree}
-    \hypo{}
-    \infer1[(\textsc{T-Unit})]{\Gamma \vdash_e () : \unitType}
-  \end{prooftree}
-  $$
-  $$
-  \begin{prooftree}
-    \hypo{\Gamma \vdash_e e_1 : A}
-    \hypo{\Gamma \vdash_e e_2 : B}
-    \infer2[(\textsc{T-Pair})]{\Gamma \vdash_e (e_1, e_2) : A * B}
-  \end{prooftree}
-  $$
-  $$
-  \begin{prooftree}
-    \hypo{\Gamma \vdash_e e : A}
-    \infer1[(\textsc{T-SumLeft})]{\Gamma \vdash_e \effLeft e : A + B}
-  \end{prooftree}
-  $$
-  $$
-  \begin{prooftree}
-    \hypo{\Gamma \vdash_e e : B}
-    \infer1[(\textsc{T-SumRight})]{\Gamma \vdash_e \effRight e : A + B}
-  \end{prooftree}
-  $$
-  $$
-  \begin{prooftree}
-    \hypo{x : A, \Gamma \vdash_c c : C}
-    \infer1[(\textsc{T-Fun})]{\Gamma \vdash_e (\effFun x \mapsto c) : A \to C}
-  \end{prooftree}
-  $$
-
+ 
   \begin{align*}
     {\begin{prooftree}
       \hypo{x : A, \Gamma \vdash_c c_v : C}
       \hypo{\forall i.\ e_i : A_i, k_i : B_i, \Gamma \vdash_c c_i : C}
       \hypo{x : C, \Gamma \vdash_c c_f : D}
-      \infer3[(\textsc{T-Handler})]{\Gamma \vdash_e h : A \handlerType C}
+      \infer3[(\textsc{T-Handler})]{\Gamma \vdash_e h : A \handlerType D}
     \end{prooftree}}\\
     \text{ where }
     h \defEq (
@@ -601,81 +490,81 @@ all effect declarations of the form $E_i : A_i \tto B_i$.
         \effFinally x \mapsto c_f)
     \text{ and } \forall i.\ E_i : A_i \tto B_i \in \Sigma_E
   \end{align*}
+
+  $$
+    \begin{prooftree}
+      \hypo{\Gamma \vdash_e e : A}
+      \infer1[(\textsc{T-Val})]{\Gamma \vdash_c \effVal e : A}
+    \end{prooftree}
+    \quad
+    \begin{prooftree}
+      \hypo{\Gamma \vdash_e e : \emptyType}
+      \infer1[(\textsc{T-Absurd})]{\Gamma \vdash_c \effAbsurd e : A}
+    \end{prooftree}
+    $$
+
+    $$
+    \begin{prooftree}
+      \hypo{E : A \tto B \in \Sigma_E}
+      \hypo{\Gamma \vdash_e e : A}
+      \infer2[(\textsc{T-Perform})]{\effPerform (E\ e) : B}
+    \end{prooftree}
+    \quad
+    \begin{prooftree}
+      \hypo{\Gamma \vdash_e e : A \handlerType B}
+      \hypo{\Gamma \vdash_c c : A}
+      \infer2[(\textsc{T-WithHandle})]{\effWith e \effHandle c : B}
+    \end{prooftree}
+    $$
   
-  \caption{Type checking rules for Eff expressions}
+  \caption{The interesting subset of type checking rules for Eff expressions and computations}
   \label{fig:type-checking-expressions}
 \end{figure}
+Again, explanation of these rules is given in \autoref{tab:typing-rule-explanation} in a similar way to the semantics.
+\begin{table}
+  \centering
+  \setlength{\tabcolsep}{0.5em}
+  \renewcommand{\arraystretch}{1.4}
+  \begin{tabular}{l|p{10cm}}
+  Rule & Comment \\
+  \hline \hline
+  \textsc{T-Val} &
+    This rule is standard. The expression $e$ and the computation $\effVal e$ are given the same type.\\ \hline
+  \textsc{T-Perform} & This rule is similar to function application for effects.\\ \hline
+  \textsc{T-Handler} & The rule for typing handlers might be the scariest one. We are saying here that
+    the type of the value- and effect cases must agree (this is type $C$ in the rule) and that
+    the finally case which takes something of type $C$ and gives something of type $D$ transform a
+    value of type $C$ into something of type $D$. The resulting handler type $A \handlerType D$ reflects
+    this by saying that a computation of type $A$ will be turned into one of type $D$ by such a handler, when it
+    is applied.\\ \hline
+  \textsc{T-WithHandle} & As applying handlers happens with with-handle blocks this rule is similar to
+    the function application typing too. \\ \hline
+  \end{tabular}
+  \caption{Explanation of the Eff specific typing rules}
+  \label{tab:typing-rule-explanation}
+\end{table}
 
-\begin{figure}
-  $$
-  \begin{prooftree}
-    \hypo{\Gamma \vdash_e e : A}
-    \infer1[(\textsc{T-Val})]{\Gamma \vdash_c \effVal e : A}
-  \end{prooftree}
-  $$
-  $$
-  \begin{prooftree}
-    \hypo{\Gamma \vdash_c c_1 : A}
-    \hypo{x : A, \Gamma \vdash_c c_2 : B}
-    \infer2[(\textsc{T-Let})]{\Gamma \vdash_c (\effLet x = c_1 \effIn c_2) : B}
-  \end{prooftree}
-  $$
-  $$
-  \begin{prooftree}
-    \hypo{x : A, f : A \to B \Gamma \vdash_c c_1 : B}
-    \hypo{f : A \to B, \Gamma \vdash_c c_2 : C}
-    \infer2[(\textsc{T-LetRec})]{\Gamma \vdash_c (\effLet \effRec f\ x = c_1 \effIn c_2) : C}
-  \end{prooftree}
-  $$
-  $$
-  \begin{prooftree}
-    \hypo{\Gamma \vdash_e e_1 : A \to B}
-    \hypo{\Gamma \vdash_e e_2 : A}
-    \infer2[(\textsc{T-FunApp})]{\Gamma \vdash_c e_1\ e_2 : B}
-  \end{prooftree}
-  $$
-  $$
-  \begin{prooftree}
-    \hypo{\Gamma \vdash_e e : \boolType}
-    \hypo{\Gamma \vdash_c c_1 : A}
-    \hypo{\Gamma \vdash_c c_2 : A}
-    \infer3[(\textsc{T-If})]{\Gamma \vdash_c \effIf e \effThen c_1 \effElse c_2 : A}
-  \end{prooftree}
-  $$
-  $$
-  \begin{prooftree}
-    \hypo{\Gamma \vdash_e e : A + B}
-    \hypo{x : A, \Gamma \vdash_c c_l : C}
-    \hypo{x : B, \Gamma \vdash_c c_r : C}
-    \infer3[(\textsc{T-MatchSum})]{\effMatch e\ \effWith \effLeft x \mapsto c_l \dmid \effRight x \mapsto c_r : C}
-  \end{prooftree}
-  $$
-  $$
-  \begin{prooftree}
-    \hypo{\Gamma \vdash_e e : A * B}
-    \hypo{f : A, s: B, \Gamma \vdash_c c_l : C}
-    \infer2[(\textsc{T-MatchProd})]{\effMatch e\ \effWith (f,s) \mapsto c : C}
-  \end{prooftree}
-  $$
-  $$
-  \begin{prooftree}
-    \hypo{E : A \tto B \in \Sigma_E}
-    \hypo{\Gamma \vdash_e e : A}
-    \infer2[(\textsc{T-Perform})]{\effPerform (E\ e) : B}
-  \end{prooftree}
-  $$
-  $$
-  \begin{prooftree}
-    \hypo{\Gamma \vdash_e e : A \handlerType B}
-    \hypo{\Gamma \vdash_c c : A}
-    \infer2[(\textsc{T-WithHandle})]{\effWith e \effHandle c : B}
-  \end{prooftree}
-  $$
-
-  \caption{Type checking rules for Eff computations}
-  \label{fig:type-checking-computations}
-\end{figure}
-
+The attentive reader might have wondered what $\effAbsurd$and the $\emptyType$ type are good for. In the
+tutorial we got away with a slight lie which we will make amends for here. We said that in the absence of
+suitable handlers an effect will behave like an exception (remember \autoref{sub@fig:exception}). This is
+not quite true when typing is introduced, as a computation like
+\begin{lstlisting}[language=efflang]
+  if true then (perform (Error "Lie detected")) else 1337
+\end{lstlisting}
+won't be typeable with our rules (there is a type mismatch between $\unitType$ and $\mathtt{int}$),
+although in OCaml or SML one can write
+\begin{lstlisting}[language=caml]
+  if true then (raise (Error "Lie detected!")) else 1337
+\end{lstlisting}
+without any problems. We would like to use effects as exceptions -- it would be weird not to,
+as they are a generalisation of them. This is why we need $\effAbsurd$and the $\emptyType$ type.
+We can now say
+\begin{lstlisting}[language=efflang]
+  effect Error : string -> empty;;
+  if true then absurd (raise (Error "Lie detected!")) else 1337;;
+\end{lstlisting}
+and this will type check if we use (\textsc{T-Absurd}). Note also that the only way one can introduce
+the $\emptyType$ type is by declaring an effect that has an $\emptyType$ output.
 
 The distinction between pure expressions and effectful computations allows for the use of an \emph{effect system} with
 these rules. For instance, if one were to extend these rules with \emph{row-typing} one could
@@ -687,7 +576,7 @@ set of rules.
 
 \section{Abstract machines by example}
 
-A purist would look at rule \textsc{(Perform)} in \autoref{fig:small-step-semantics} and would think that the phrasing of the
+A purist would look at rule \textsc{(Perform)} in \autoref{fig:mini-semantics} and would think that the phrasing of the
 hypothesis is troublesome. I actually think that this ambiguity reflects well the challenge in this project. Consider for instance
 implementing an interpreter on the source terms of a language X. One's first instinct is that this is a trivial task: all we need
 to do is to write a recursive evaluator function, something of this sort:

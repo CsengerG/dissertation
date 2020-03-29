@@ -10,11 +10,305 @@
 \usepackage{listings}
 \usepackage{verbatim}
 \usepackage{a4wide}
+\usepackage{float}
 \usepackage[super]{nth}
 
-\begin{document}
-\section{Full semantics}
+\renewcommand{\leadsto}{\rightsquigarrow}
+\newcommand{\dmid}{\ \parallel \ }
 
-\section{Full typing}
+\newcommand{\effFalse}{\mathbf{false}}
+\newcommand{\effTrue}{\mathbf{true}}
+\newcommand{\effLeft}{\mathbf{Left}\ }
+\newcommand{\effRight}{\mathbf{Right\ }}
+\newcommand{\effFun}{\mathbf{fun}\ }
+\newcommand{\effHandler}{\mathbf{handler}\ }
+\newcommand{\effVal}{\mathbf{val}\ }
+\newcommand{\effWith}{\mathbf{with}\ }
+\newcommand{\effHandle}{\ \mathbf{handle}\ }
+\newcommand{\effIf}{\mathbf{if}\ }
+\newcommand{\effThen}{\ \mathbf{then}\ }
+\newcommand{\effElse}{\ \mathbf{else}\ }
+\newcommand{\effAbsurd}{\mathbf{absurd}\ }
+\newcommand{\effMatch}{\mathbf{match}\ }
+\newcommand{\effLet}{\mathbf{let}\ }
+\newcommand{\effIn}{\ \mathbf{in}\ }
+\newcommand{\effRec}{\mathbf{rec}\ }
+\newcommand{\effEffect}{\mathbf{effect}\ }
+\newcommand{\effFinally}{\mathbf{finally}\ }
+\newcommand{\effOp}{\mathtt{op}}
+\newcommand{\effPerform}{\mathbf{perform}\ }
+\newcommand{\tto}{\twoheadrightarrow}
+
+\newcommand{\handlerType}{\Rightarrow}
+\newcommand{\boolType}{\mathtt{bool}}
+\newcommand{\unitType}{\mathtt{unit}}
+\newcommand{\emptyType}{\mathtt{empty}}
+
+\newcommand{\defEq}{\stackrel{\text{def}}{=}}
+
+\newcommand{\cek}[1]{\langle #1 \rangle}
+\newcommand{\secd}[1]{\langle #1 \rangle}
+
+\begin{document}
+\section{Semantics}
+\label{sec:full-semantics}
+\begin{figure}[H]
+    $$
+    \begin{prooftree}
+    \hypo{}
+    \infer1[(\textsc{If-True})]{\left( \effIf \effTrue \effThen c_1 \effElse c_2 \right) \leadsto c_1}
+    \end{prooftree}
+    \quad
+    \begin{prooftree}
+      \hypo{}
+      \infer1[(\textsc{If-False})]{\left( \effIf \effFalse \effThen c_1 \effElse c_2 \right) \leadsto c_2}
+    \end{prooftree}
+    $$
+    
+    $$
+    \begin{prooftree}
+      \hypo{}
+      \infer1[(\textsc{Fun-App})]{(\effFun x \mapsto c)\ e \leadsto c[e/x]}
+    \end{prooftree}
+    $$
+
+    $$
+    \begin{prooftree}
+      \hypo{}
+      \infer1[(\textsc{Match-Left})]{\left( \effMatch (\effLeft e)\ \effWith \effLeft x \mapsto c_1 \dmid \effRight x \mapsto c_2 \right)  \leadsto c_1[e/x]}
+    \end{prooftree}
+    $$
+    
+    $$
+    \begin{prooftree}
+      \hypo{}
+      \infer1[(\textsc{Match-Right})]{\left( \effMatch (\effRight e)\ \effWith \effLeft x \mapsto c_1 \dmid \effRight x \mapsto c_2 \right)  \leadsto c_2[e/x]}
+    \end{prooftree}
+    $$
+    
+    $$
+    \begin{prooftree}
+      \hypo{}
+      \infer1[(\textsc{Match-Prod})]{\left( \effMatch (e_1, e_2)\ \effWith (f,s) \mapsto c \right) \leadsto c[e_1/f, e_2/s]}
+    \end{prooftree}
+    $$
+    
+    $$
+    \begin{prooftree}
+      \hypo{c_1 \leadsto c_1'}
+      \infer1[(\textsc{Let-Step})]{\effLet x = c_1 \effIn c_2 \leadsto \effLet x = c_1' \effIn c_2}
+    \end{prooftree}
+    \quad
+    \begin{prooftree}
+      \hypo{}
+      \infer1[(\textsc{Let-Val})]{\effLet x = (\effVal e) \effIn c \leadsto c[e/x]}
+    \end{prooftree}
+    $$
+    
+    $$
+    \begin{prooftree}
+      \hypo{}
+      \infer1[(\textsc{Let-Effect})]{\effLet x = E(e, y.c_1) \effIn c_2 \leadsto E(e, y.\effLet x = c_1 \effIn c_2)}
+    \end{prooftree}
+    $$
+    
+    $$
+    \begin{prooftree}
+      \hypo{}
+      \infer1[(\textsc{Let-Rec})]{\left ( \effLet \effRec f\ x = c_1 \effIn c_2\right ) \leadsto c_2[(\effFun x \mapsto \effLet \effRec f\ x = c_1 \effIn c_1)/f]}
+    \end{prooftree}
+    $$
+    
+    $$
+    \begin{prooftree}
+      \hypo{\kappa \text{ is current delimited continuation}}
+      \infer1[(\textsc{Perform})]{\effPerform (E\ e) \leadsto E(e, \kappa)}
+    \end{prooftree}
+    $$
+    
+    $$
+    \begin{prooftree}
+      \hypo{c \leadsto c'}
+      \infer1[(\textsc{Handle-Step})]{\effWith e \effHandle c \leadsto \effWith e \effHandle c'}
+    \end{prooftree}
+    $$
+    
+    $$
+    \begin{prooftree}
+      \hypo{h \stackrel{\text{def}}{=} (\effHandler \effVal x \mapsto c_v \dmid \dots)}
+      \infer1[(\textsc{Handle-Val})]{\effWith h \effHandle (\effVal e) \leadsto c_v[e/x]}
+    \end{prooftree}
+    $$
+    
+    $$
+    \begin{prooftree}
+      \hypo{h \stackrel{\text{def}}{=} (\effHandler \dots \overline{\dmid \effEffect E_i\ x\ k \mapsto c_i} \dmid \dots)}
+      \hypo{\exists i. E_i = E}
+      \infer2[(\textsc{Handle-Eff-Match})]{\effWith h \effHandle E(e, y.c) \leadsto c_i[e/x, (y.c)/k]}
+    \end{prooftree}
+    $$
+    
+    $$
+    \begin{prooftree}
+      \hypo{h \stackrel{\text{def}}{=} (\effHandler \dots \overline{\dmid \effEffect E_i\ x\ k \mapsto c_i} \dmid \dots)}
+      \hypo{\forall i. E_i \neq E}
+      \infer2[(\textsc{Handle-Eff-Rise})]{\effWith h \effHandle E(e, y.c) \leadsto E( e, y. \effWith h \effHandle c)}
+    \end{prooftree}
+    $$
+    
+    \caption{Small step operational semantics of Eff}
+    \label{fig:full-semantics}
+    \end{figure}
+
+\section{Typing}
+\label{sec:full-typing}
+
+\begin{figure}[H]
+    $$
+    \begin{prooftree}
+      \hypo{x : A \in \Gamma}
+      \infer1[(\textsc{T-Var})]{\Gamma \vdash_e x : A}
+    \end{prooftree}\quad
+    \begin{prooftree}
+      \hypo{}
+      \infer1[(\textsc{T-True})]{\Gamma \vdash_e \effTrue : \boolType}
+    \end{prooftree}\quad
+    \begin{prooftree}
+      \hypo{}
+      \infer1[(\textsc{T-False})]{\Gamma \vdash_e \effFalse : \boolType}
+    \end{prooftree}
+    $$
+    
+    $$
+    \begin{prooftree}
+      \hypo{}
+      \infer1[(\textsc{T-Unit})]{\Gamma \vdash_e () : \unitType}
+    \end{prooftree}
+    \quad
+    \begin{prooftree}
+      \hypo{\Gamma \vdash_e e_1 : A}
+      \hypo{\Gamma \vdash_e e_2 : B}
+      \infer2[(\textsc{T-Pair})]{\Gamma \vdash_e (e_1, e_2) : A * B}
+    \end{prooftree}
+    $$
+    
+    $$
+    \begin{prooftree}
+      \hypo{\Gamma \vdash_e e : A}
+      \infer1[(\textsc{T-SumLeft})]{\Gamma \vdash_e \effLeft e : A + B}
+    \end{prooftree}
+    \quad
+    \begin{prooftree}
+      \hypo{\Gamma \vdash_e e : B}
+      \infer1[(\textsc{T-SumRight})]{\Gamma \vdash_e \effRight e : A + B}
+    \end{prooftree}
+    $$
+    
+    $$
+    \begin{prooftree}
+      \hypo{x : A, \Gamma \vdash_c c : C}
+      \infer1[(\textsc{T-Fun})]{\Gamma \vdash_e (\effFun x \mapsto c) : A \to C}
+    \end{prooftree}
+    $$
+  
+    \begin{align*}
+      {\begin{prooftree}
+        \hypo{x : A, \Gamma \vdash_c c_v : C}
+        \hypo{\forall i.\ e_i : A_i, k_i : B_i, \Gamma \vdash_c c_i : C}
+        \hypo{x : C, \Gamma \vdash_c c_f : D}
+        \infer3[(\textsc{T-Handler})]{\Gamma \vdash_e h : A \handlerType D}
+      \end{prooftree}}\\
+      \text{ where }
+      h \defEq (
+        \effHandler
+          \effVal x \mapsto c_v
+          \overline{\dmid \effEffect E_i\ e_i\ k_i \mapsto c_i} \dmid
+          \effFinally x \mapsto c_f)
+      \text{ and } \forall i.\ E_i : A_i \tto B_i \in \Sigma_E
+    \end{align*}
+
+    \rule[0.4pt]{\textwidth}{0.4pt}
+
+
+
+    $$
+    \begin{prooftree}
+      \hypo{\Gamma \vdash_e e : A}
+      \infer1[(\textsc{T-Val})]{\Gamma \vdash_c \effVal e : A}
+    \end{prooftree}
+    \quad
+    \begin{prooftree}
+      \hypo{\Gamma \vdash_e e : \emptyType}
+      \infer1[(\textsc{T-Absurd})]{\Gamma \vdash_c \effAbsurd e : A}
+    \end{prooftree}
+    $$
+    
+    $$
+    \begin{prooftree}
+      \hypo{\Gamma \vdash_c c_1 : A}
+      \hypo{x : A, \Gamma \vdash_c c_2 : B}
+      \infer2[(\textsc{T-Let})]{\Gamma \vdash_c (\effLet x = c_1 \effIn c_2) : B}
+    \end{prooftree}
+    $$
+    
+    $$
+    \begin{prooftree}
+      \hypo{x : A, f : A \to B \Gamma \vdash_c c_1 : B}
+      \hypo{f : A \to B, \Gamma \vdash_c c_2 : C}
+      \infer2[(\textsc{T-LetRec})]{\Gamma \vdash_c (\effLet \effRec f\ x = c_1 \effIn c_2) : C}
+    \end{prooftree}
+    $$
+    
+    $$
+    \begin{prooftree}
+      \hypo{\Gamma \vdash_e e_1 : A \to B}
+      \hypo{\Gamma \vdash_e e_2 : A}
+      \infer2[(\textsc{T-FunApp})]{\Gamma \vdash_c e_1\ e_2 : B}
+    \end{prooftree}
+    $$
+    
+    $$
+    \begin{prooftree}
+      \hypo{\Gamma \vdash_e e : \boolType}
+      \hypo{\Gamma \vdash_c c_1 : A}
+      \hypo{\Gamma \vdash_c c_2 : A}
+      \infer3[(\textsc{T-If})]{\Gamma \vdash_c \effIf e \effThen c_1 \effElse c_2 : A}
+    \end{prooftree}
+    $$
+    
+    $$
+    \begin{prooftree}
+      \hypo{\Gamma \vdash_e e : A + B}
+      \hypo{x : A, \Gamma \vdash_c c_l : C}
+      \hypo{x : B, \Gamma \vdash_c c_r : C}
+      \infer3[(\textsc{T-MatchSum})]{\effMatch e\ \effWith \effLeft x \mapsto c_l \dmid \effRight x \mapsto c_r : C}
+    \end{prooftree}
+    $$
+    
+    $$
+    \begin{prooftree}
+      \hypo{\Gamma \vdash_e e : A * B}
+      \hypo{f : A, s: B, \Gamma \vdash_c c_l : C}
+      \infer2[(\textsc{T-MatchProd})]{\effMatch e\ \effWith (f,s) \mapsto c : C}
+    \end{prooftree}
+    $$
+
+    $$
+    \begin{prooftree}
+      \hypo{E : A \tto B \in \Sigma_E}
+      \hypo{\Gamma \vdash_e e : A}
+      \infer2[(\textsc{T-Perform})]{\effPerform (E\ e) : B}
+    \end{prooftree}
+    \quad
+    \begin{prooftree}
+      \hypo{\Gamma \vdash_e e : A \handlerType B}
+      \hypo{\Gamma \vdash_c c : A}
+      \infer2[(\textsc{T-WithHandle})]{\effWith e \effHandle c : B}
+    \end{prooftree}
+    $$
+    
+    \caption{All typing rules for Eff}
+    \label{fig:full-type-checking}
+  \end{figure}
 
 \end{document}
