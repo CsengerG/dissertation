@@ -1,0 +1,83 @@
+\documentclass[class=article, crop=false]{standalone}
+\usepackage[subpreambles=true]{standalone}
+\usepackage{import}
+\usepackage{ebproof}
+\usepackage[utf8]{inputenc}
+\usepackage{tikz}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{listings}
+\usepackage{verbatim}
+\usepackage{a4wide}
+\usepackage[super]{nth}
+\usepackage{float}
+\usepackage{subcaption}
+
+\ifstandalone
+\input{../src/efflang.tex}
+\else
+\input{./src/efflang.tex}
+\fi
+
+\ifstandalone
+\input{../src/macros.tex}
+\fi
+
+\begin{document}
+
+This chapter is concerned with the implementation of a CEK interpreter for Eff and
+a SECD-like virtual machine for Eff. As the project is a theory heavy one, the first
+half of the chapter describes the theory behind these interpreters.
+
+\section{Frontend -- Parsing and the IR}
+
+\begin{itemize}
+\item Concrete syntax differs slightly from abstract syntax
+\item De Bruijn indices
+\begin{itemize}
+    \item Local environment
+    \item Global environment
+\end{itemize}
+\item LetArgs --> Fun(Fun(...)) -- Something similar with sums and tuples and variants
+\item LetRec --> RecFun ...
+\item IR is ANF-like -- Makes the compilation ``easy''
+\end{itemize}
+
+\section{Compilation and back-ends}
+
+\subsection{CEK interpreter}
+
+\begin{itemize}
+    \item Hillerstrom Master dissertation.
+    \item Closures, hlosures, delimited continuations, concatenation of continuations
+\end{itemize}
+
+\subsection{The CEK abstract machine}
+
+\begin{itemize}
+    \item Type in rules
+\end{itemize}
+
+\subsection{The YoYo virtual machine}
+
+\begin{itemize}
+    \item Type in rules
+    \item YoYo instruction set -- appendix with diagrams?
+\end{itemize}
+
+\subsection{Compiling for the YoYo machine}
+
+\begin{itemize}
+    \item Type in compiler rules
+\end{itemize}
+
+\section{Software Engineering}
+
+\subsection{Interfaces}
+\subsection{Modularity}
+\begin{itemize}
+    \item yoyo.ml
+\end{itemize}
+
+\end{document}
