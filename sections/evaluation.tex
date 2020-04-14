@@ -1,0 +1,137 @@
+\documentclass[class=article, crop=false]{standalone}
+\usepackage[subpreambles=true]{standalone}
+\usepackage{import}
+\usepackage{ebproof}
+\usepackage[utf8]{inputenc}
+\usepackage{tikz}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{listings}
+\usepackage{verbatim}
+\usepackage{a4wide}
+\usepackage[super]{nth}
+\usepackage{float}
+\usepackage{subcaption}
+
+\ifstandalone
+\input{../src/efflang.tex}
+\else
+\input{./src/efflang.tex}
+\fi
+
+\ifstandalone
+\input{../src/macros.tex}
+\fi
+
+\begin{document}
+
+Intro here
+Eff vs CEK vs Shade VM vs Multicore Ocaml
+
+\section{Exceptions}
+
+\subsection{Results}
+
+\section{State and I/O}
+
+\subsection{Results}
+
+\section{Non-determinism -- The N queens problem}
+
+\subsection{Results}
+
+\section{Concurrency -- How palindromic is a file?}
+
+In the Introduction I talked about asynchronous APIs ...
+
+Here I will show that there really is real world benefit from playing with continuations.
+The following cooperative multithreading example schedules between many blocking tasks:
+
+Imagine we want to decide....
+We have a built-in call Compare i...
+
+\subsection{Synchronous processing}
+
+The naive approach would be something like this:
+
+\begin{verbatim}
+List.map (fun i -> perform (Compare i)) [1,2,3,...N]
+\end{verbatim}
+
+However, this will block sometimes as the bytes we need to compare are not immediately
+available. Most of the time we will need to wait for the disk to seek if N is large enough.
+
+\subsection{Asynchronous processing}
+
+\begin{verbatim}
+let create_blocking_process i =
+    let rec try () =
+        let is_same = perform (CompareAsync i) in
+            if is_same = ~1 then
+                perform (Yield ());
+                try ()
+            else
+                is_same
+    in try
+;;
+\end{verbatim}
+
+The function \verb|create_blocking_process| creates a \verb|unit -> int| function which calls
+our built-in Compare effect. This will look into a big file on the disk (I used a 1 GB file
+here). The Compare effect is responsible for comparing the i-th and the (n-i)-th byte in a file.
+If the two bytes are equal then the result of Compare is 1, else it is zero. If any of the bytes
+is not yet available then Compare returns \verb|~1|, indicating that we need to retry later.
+
+The resulting blocking process will hence return \verb|is_same| when the comparison could be done and it
+will Yield otherwise, allowing an other process to make progress.
+
+\subsubsection{Round-robin scheduler}
+
+The handlers on listing X bring concurrency and state together.
+
+\begin{verbatim}
+type process = unit -> int;;
+
+effect Spawn : process -->> int;;
+effect Yield : unit -->> unit;;
+
+effect QueueAdd : process -->> unit;;
+effect QueueGet : unit -->> process;;
+
+let spawn_process i = 
+    perform (Spawn (create_blocking_process i))
+;;
+
+let fifo_queue = handler
+| val x -> (fun _ -> x)
+| effect (QueueAdd p) k -> fun () ->
+| effect (QueueGet ()) k ->
+| finally f -> f []
+;;
+
+let round_robin_scheduler =
+    let rec round_robin () =
+        handler
+        | val x -> perform (
+        | effect (Yield ()) k ->
+            perform (QueueAdd k);
+            perform (QueueGet ()
+        | effect (Spawn p) k ->
+            perform (QueueAdd k);
+            with round_robin () handle
+                p ()
+
+
+let result =
+    with fifo_queue handle
+        with round_robin_scheduler handle
+            map spawn_process [1,2,3...N]
+;;
+
+let palindromicity = fold add result;;
+\end{verbatim}
+
+\subsection{Results}
+
+\end{document}

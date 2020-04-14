@@ -27,10 +27,25 @@
 \begin{document}
 
 This chapter is concerned with the implementation of a CEK interpreter for Eff and
-a SECD-like virtual machine for Eff. As the project is a theory heavy one, the first
-half of the chapter describes the theory behind these interpreters.
+a SECD-like virtual machine for Eff. As the project is theory heavy, the first
+half of the chapter is about the theory that had to be developed and understood
+to implement the parts described in the second half.
 
 \section{Frontend -- Parsing and the IR}
+
+<code example here where val is weird>
+
+First De Bruijn indices on syntax tree.
+Match is not supported but we have let (x,y) =
+atomic patterns
+continue k is rewritten to function application
+
+Then delete the expression/computation distinction and convert into
+an intermediate representation.
+
+The intermediate representation is in A-normal form 
+
+
 
 \begin{itemize}
 \item Concrete syntax differs slightly from abstract syntax
@@ -46,38 +61,174 @@ half of the chapter describes the theory behind these interpreters.
 
 \section{Compilation and back-ends}
 
-\subsection{CEK interpreter}
+\subsection{CEK abstract machine}
+
+Links does CEK (Hillerstrom) and it is possible to do this with Eff --
+this section presents a similar CEK machine to the one Hillerstrom describes (cite)
+
+\subsubsection{Closures and hlosures}
+
+example where handler has free variables
 
 \begin{itemize}
     \item Hillerstrom Master dissertation.
     \item Closures, hlosures, delimited continuations, concatenation of continuations
 \end{itemize}
 
-\subsection{The CEK abstract machine}
-
 \begin{itemize}
     \item Type in rules
 \end{itemize}
 
-\subsection{The YoYo virtual machine}
+\subsection{CEK implementation}
 
-\begin{itemize}
-    \item Type in rules
-    \item YoYo instruction set -- appendix with diagrams?
-\end{itemize}
+In OCaml, the implementation closely follows the transition rules of the abstract machine.
 
-\subsection{Compiling for the YoYo machine}
+We represent a CEK state with the type \verb|cek_state|:
+\begin{verbatim}
+    type cek_state = {
+        c : cek_control;
+        e : cek_environment;
+        k : cek_hlosure_frame list;
+    }
+\end{verbatim}
 
-\begin{itemize}
-    \item Type in compiler rules
-\end{itemize}
+The most interesting is the \verb|cek_hlosure_frame list|:
+\begin{verbatim}
+    type cek_hlosure_frame = {
+        hlosure : cek_hlosure;
+        kont_stack : cek_closure list;
+    }
+\end{verbatim}
+
+\subsection{The SHADE virtual machine}
+
+The SHADE virtual machine is a SECD-like virtual machine which was the goal of
+my project.
+The SHADE name is an anagram from the initials A,D,E,H,S -- the main
+components of the machine.
+It had many versions and the final version turned out to be surprisingly similar
+to the solution Multicore OCaml uses with its fibres -- the heap-allocated fibres
+of OCaml show a lot of resemblance with the shadows of the SHADE machine.
+
+The SHADE virtual machine interprets SHADE byte code which will be described
+in the next section. Here I give the description of the machine with its transition
+rules.
+
+The state of the machine at any point can be characterised with a two-tuple
+$$ \langle A, D \rangle $$
+where $A$ is the accumulator and $D$ is a list of \emph{shadows}, essentially a stack
+of continuations like the dump in SECD.
+A shadow is a five-tuple $$ \langle pc, E, H, S \rangle $$, where $pc$ is the
+program-counter of the shadow, $E$ is an environment, $H$ is a hlosure and $S$ is
+a stack.
+
+A transition of the SHADE machine is determined by program counter, the accumulator
+and the state of the \emph{top-shadow}. To avoid having to refer to the top-shadow
+using D I use the notation $\langle A, d, D \rangle$ to mean $\langle A, d :: D \rangle$.
+In the program counter field ($pc$) I will write the instruction the program counter
+points to rather than its value.
+
+The figure is only dealing with inter-shadow instructions. Intra-shadow instructions
+are standard and are described in the next section.
+
+\begin{figure}
+    Initialisation:
+    $$\text{program} \to \shade{\shUnit, (0, \{\}, H_{def}, []), []}$$
+    Termination:
+    $$ \shade{v, (\shHalt, E, H, S), D} \to v $$
+    Transition rules:
+    $$ \shade{closure(cp, e), (\shCast, E, H, h :: S), D} \to \shade{A, (cp, e, h, []), (pc+1, E, H, S) :: D} $$
+    $$ \shade{A, (\shRett, E, H, S), d :: D} \to \shade{A, d, D} $$
+    $$ \shade{A, (\shApply, E, H, closure(cp, e) :: S), D} \to \shade{A, (cp, e, H, (pc, E) :: S), D} $$
+    $$ \shade{A, (\shApply, E, H, cont (\kappa, K) :: S), D} \to \shade{A, \kappa \| K @ ((pc, E, H, S) :: D)} $$
+    $$ \shade{A, (\shHandle} $$
+    $$ \shade{A, (\shEndHandle} $$
+    $$ \shade{A, (\shFin} $$
+    $$ \shade{A, (\shThrow} $$
+
+    \caption{SHADE machine transition rules}
+    \label{shade-machine}
+\end{figure}
+
+\subsection{The SHADE instruction set}
+
+This section
+
+\begin{table}
+    \centering
+\begin{tabular}{|l|l|l|l}
+    Instruction & Description & Action \\ \hline \hline
+    \vmPush & Push the accumulator to the stack & S := A :: S \\ \hline
+    \vmPop  & Remove the top element of the stack & S := tail S \\ \hline
+    \vmAcc{n} & Copy the $n$th element of the stack in the accumulator & A := S[n] \\ \hline
+    const & & \\ \hline
+    halt & & \\ \hline
+    jump & & \\ \hline
+    branchifnot & & \\ \hline
+    apply & & \\ \hline
+    ret & & \\ \hline
+    makebox & & \\ \hline
+    getfield & & \\ \hline
+    listhead & & \\ \hline
+    listtail & & \\ \hline
+    makeclosure & & \\ \hline
+    makehlosure & & \\ \hline
+    bin. operator bop & Performs bop & A := bop result, S.pop \\
+\end{tabular}
+\caption{SHADE instruction set}
+\label{shade-bytecode}
+\end{table}
+
+\subsection{Compiling for the SHADE machine}
+
+\begin{figure}
+    $$ \interp{\irId\ x}_s^\gamma = \text{where\_is}\ (x, s, \gamma) $$
+    $$ \interp{\irConst\ c} = \vmConst\ c $$
+    $$ \interp{\irBox\ (\mathrm{tag}, v_1 \dots v_n)}_s ^ \gamma = \interp{v_n}_s^\gamma; \vmPush; \interp{v_{n-1}}_{s+1}^\gamma; \vmPush; \dots \interp{v_1}_{s+n-1}^\gamma; \vmMakeBox\ \mathrm{tag}, n $$
+    $$ \underbrace{\interp{\irFun\ (x, body)}_s ^\gamma }_f = \text{fvs-to-stack} (s, \gamma, f); \vmMakeClosure (L, \mathrm{sz}) $$
+    $$ \interp{\irHandler\ (v, es, f)} =  $$
+    $$ \interp{\irVal\ v}_s ^ \gamma =  \interp{v}_s ^ \gamma $$
+    $$ \interp{\irIf\ (v, e_1, e_2)}_s ^ \gamma = \vmBranchIfNot\ L_\text{false}; \interp{e_1}_s^\gamma; \vmJump\ L_\text{exit}; \vmLabel\ L_\text{false}; \interp{e_2}_s^\gamma; \vmLabel\ L_\text{exit} $$
+    $$ \interp{\irLetIn\ (x, e_1, e_2)} =  $$
+    $$ \interp{\irLetRecIn\ (f, x, body, e} =  $$
+    $$ \interp{\irTopLet\ (x, e)} =  $$
+    $$ \interp{\irTopLetRec\ (f, x, body)} =  $$
+    $$ \interp{\irPerform\ (id, v)} = \interp{v}_s ^ \gamma; \vmThrow\ id $$
+    $$ \interp{\irWithHandle\ (h, e)}_s ^ \gamma = \interp{h}_s ^ \gamma; \vmPush; \int$$
+    $$ \interp{\irBinOp\ (\mathtt{op}, v_1, v_2} = \interp{v_1}_s ^ \gamma; \vmPush; \interp{v_2}_{s+1}; \text{instr-of}(\mathtt{op}) $$
+    $$ \interp{\irFunApp\ (v_1, v_2)} = \interp{v_1}_s ^ \gamma; \vmPush; \interp{v_2}_{s+1} ^ \gamma $$
+    $$ \interp{\irGetField\ (n, v)}_s ^ \gamma = \interp{v}_s ^ \gamma; \vmGetField\ n $$
+    $$ \interp{\irListHead\ v}_s ^ \gamma = \interp{v}_s ^ \gamma; \vmListHead $$
+    $$ \interp{\irListTail\ v}_s ^ \gamma = \interp{v}_s ^ \gamma ; \vmListTail $$
+
+    \caption{Compilation from IR to SHADE bytecode}
+    \label{compilation}
+\end{figure}
 
 \section{Software Engineering}
 
 \subsection{Interfaces}
-\subsection{Modularity}
+\subsection{Modules}
 \begin{itemize}
     \item yoyo.ml
 \end{itemize}
+
+\subsection{Testing}
+- regression testing
+- tests
+
+\subsection{Version control}
+- via Git + Github
+- Each new feature had its own branch + quick bugfix branch
+- Refactor
+
+\subsection{OPAM}
+- The project is packaged as an OCaml package and is available under the name SHADE
+- Can be installed with opam install shade
+
+\subsection{Documentation}
+- documentation is generated by odoc
+- mli files and (** comments *)
+- used this when I refactored code and to help structure my thoughts
 
 \end{document}

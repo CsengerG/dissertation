@@ -1,3 +1,5 @@
+\usepackage{ stmaryrd }
+
 \renewcommand{\leadsto}{\rightsquigarrow}
 \newcommand{\dmid}{\ \parallel \ }
 
@@ -33,3 +35,53 @@
 
 \newcommand{\cek}[1]{\langle #1 \rangle}
 \newcommand{\secd}[1]{\langle #1 \rangle}
+\newcommand{\shade}[1]{\langle #1 \rangle}
+
+\newcommand{\irId}{\mathbf{Id}}
+\newcommand{\irConst}{\mathbf{Const}}
+\newcommand{\irBox}{\mathbf{Box}}
+\newcommand{\irFun}{\mathbf{Fun}}
+\newcommand{\irHandler}{\mathbf{Handler}}
+\newcommand{\irVal}{\mathbf{Return}}
+\newcommand{\irIf}{\mathbf{If}}
+\newcommand{\irLetIn}{\mathbf{LetIn}}
+\newcommand{\irLetRecIn}{\mathbf{LetRecIn}}
+\newcommand{\irTopLet}{\mathbf{TopLet}}
+\newcommand{\irTopLetRec}{\mathbf{TopLetRec}}
+\newcommand{\irPerform}{\mathbf{Perform}}
+\newcommand{\irWithHandle}{\mathbf{WithHandle}}
+\newcommand{\irBinOp}{\mathbf{BinOp}}
+\newcommand{\irFunApp}{\mathbf{FunApp}}
+\newcommand{\irGetField}{\mathbf{GetField}}
+\newcommand{\irListHead}{\mathbf{ListHead}}
+\newcommand{\irListTail}{\mathbf{ListTail}}
+
+\newcommand{\interp}[1]{\llbracket #1 \rrbracket}
+
+\newcommand{\shUnit}{\mathbf{()}}
+\newcommand{\shHalt}{\mathbf{halt}}
+\newcommand{\shCast}{\mathbf{cast}}
+\newcommand{\shRett}{\mathbf{ret2}}
+\newcommand{\shApply}{\mathbf{apply}}
+\newcommand{\shHandle}{\mathbf{handle}}
+\newcommand{\shEndHandle}{\mathbf{endhandle}}
+\newcommand{\shFin}{\mathbf{fin}}
+\newcommand{\shThrow}{\mathbf{throw}}
+
+\newcommand{\vmPush}{\textbf{push}}
+\newcommand{\vmPop}{\textbf{pop}}
+\newcommand{\vmAcc}[1]{\textbf{acc} $#1$}
+\newcommand{\vmConst}{\textbf{const}}
+\newcommand{\vmHalt}{\textbf{halt}}
+\newcommand{\vmJump}{\textbf{jump}}
+\newcommand{\vmLabel}{\textbf{label}}
+\newcommand{\vmBranchIfNot}{\textbf{branchifnot}}
+\newcommand{\vmApply}{\textbf{apply}}
+\newcommand{\vmRet}{\textbf{ret}}
+\newcommand{\vmMakeBox}{\textbf{makebox}}
+\newcommand{\vmGetField}{\textbf{getfield}}
+\newcommand{\vmListHead}{\textbf{listhead}}
+\newcommand{\vmListTail}{\textbf{listtail}}
+\newcommand{\vmMakeClosure}{\textbf{makeclosure}}
+\newcommand{\vmMakeHlosure}{\textbf{makehlosure}}
+\newcommand{\vmThrow}{\textbf{throw}}
