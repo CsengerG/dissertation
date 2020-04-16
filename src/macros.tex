@@ -8,6 +8,7 @@
 \newcommand{\effLeft}{\mathbf{Left}\ }
 \newcommand{\effRight}{\mathbf{Right\ }}
 \newcommand{\effFun}{\mathbf{fun}\ }
+\newcommand{\effRecFun}{\mathbf{recfun}\ }
 \newcommand{\effHandler}{\mathbf{handler}\ }
 \newcommand{\effVal}{\mathbf{val}\ }
 \newcommand{\effWith}{\mathbf{with}\ }
@@ -63,25 +64,29 @@
 \newcommand{\shCast}{\mathbf{cast}}
 \newcommand{\shRett}{\mathbf{ret2}}
 \newcommand{\shApply}{\mathbf{apply}}
-\newcommand{\shHandle}{\mathbf{handle}}
-\newcommand{\shEndHandle}{\mathbf{endhandle}}
+\newcommand{\shCastShadow}{\mathbf{castshadow}}
+\newcommand{\shKillShadow}{\mathbf{killshadow}}
 \newcommand{\shFin}{\mathbf{fin}}
 \newcommand{\shThrow}{\mathbf{throw}}
 
 \newcommand{\vmPush}{\textbf{push}}
 \newcommand{\vmPop}{\textbf{pop}}
-\newcommand{\vmAcc}[1]{\textbf{acc} $#1$}
-\newcommand{\vmConst}{\textbf{const}}
+\newcommand{\vmAcc}[1]{\textbf{acc} #1}
+\newcommand{\vmConst}[1]{\textbf{const} #1}
 \newcommand{\vmHalt}{\textbf{halt}}
-\newcommand{\vmJump}{\textbf{jump}}
+\newcommand{\vmJump}[1]{\textbf{jump }#1}
 \newcommand{\vmLabel}{\textbf{label}}
-\newcommand{\vmBranchIfNot}{\textbf{branchifnot}}
+\newcommand{\vmBranchIfNot}[1]{\textbf{branchifnot }#1}
 \newcommand{\vmApply}{\textbf{apply}}
 \newcommand{\vmRet}{\textbf{ret}}
-\newcommand{\vmMakeBox}{\textbf{makebox}}
-\newcommand{\vmGetField}{\textbf{getfield}}
+\newcommand{\vmRett}{\textbf{ret2}}
+\newcommand{\vmMakeBox}[2]{\textbf{makebox }#1, #2}
+\newcommand{\vmGetField}[1]{\textbf{getfield }#1}
 \newcommand{\vmListHead}{\textbf{listhead}}
 \newcommand{\vmListTail}{\textbf{listtail}}
-\newcommand{\vmMakeClosure}{\textbf{makeclosure}}
-\newcommand{\vmMakeHlosure}{\textbf{makehlosure}}
+\newcommand{\vmMakeClosure}[2]{\textbf{makeclosure }#1, #2}
+\newcommand{\vmMakeHlosure}[4]{\textbf{makehlosure }#1, #2, #3, #4}
 \newcommand{\vmThrow}{\textbf{throw}}
+
+\newcommand{\hlosure}{\mathcal{H}}
+\newcommand{\konts}{\mathcal{C}}
