@@ -1,0 +1,83 @@
+\documentclass[preview]{standalone}
+\usepackage{tikz}
+\usepackage{fancyvrb}
+\usepackage{xcolor}
+\usepackage{soul}
+
+\definecolor{lightpink}{rgb}{1.0, 0.71, 0.76}
+\definecolor{lightblue}{rgb}{0.68, 0.85, 0.9}
+\definecolor{lightgreen}{rgb}{0.56, 0.93, 0.56}
+\newcommand{\hlred}[1]{\sethlcolor{lightpink}\hl{#1}}
+\newcommand{\hlblue}[1]{\sethlcolor{lightblue}\hl{#1}}
+\newcommand{\hlgreen}[1]{\sethlcolor{lightgreen}\hl{#1}}
+
+% \nodehere node_name 
+\newcommand{\nodehere}[1]{\tikz{[remember picture] \node[coordinate] (#1) {}; }}
+
+\usetikzlibrary{positioning}
+\usetikzlibrary{decorations.pathmorphing}
+
+\tikzstyle{every picture}+=[remember picture]
+
+\tikzset{snake it/.style={decorate, decoration={snake, segment length=1.5mm, amplitude=0.5mm}}}
+\tikzset{
+    position/.style args={#1:#2 from #3}{
+        at=(#3.#1), anchor=#1+180, shift=(#1:#2)
+    }
+}
+
+\begin{document}
+\begin{minipage}[t]{0.6\textwidth}
+\begin{Verbatim}[commandchars=\\\{\}]
+    effect Exc : string -->> empty;;
+
+    let h = handler
+    | \colorbox{green!30}{val x -> x}
+    | \colorbox{red!30}{effect (Exc msg) k ->}
+        \colorbox{red!30}{"got exception " ^ msg}
+    | \colorbox{purple!30}{finally msg -> "Error: " ^ msg}
+    ;;
+    
+    \colorbox{orange!30}{with h handle}
+        \colorbox{blue!30}{perform (Exc "oops!")}
+    ;;
+\end{Verbatim}
+\end{minipage}
+\begin{minipage}[t]{0.75\textwidth}
+\begin{Verbatim}[commandchars=\\\{\}]
+    SHADEcode:
+        makehlosure 0, Lval, Lfin, [(Lexc, 1)]
+        push
+        push
+        makeclosure Lwith, 0
+        \nodehere{cast}\colorbox{orange!30}{castshadow}
+        \nodehere{fin}\colorbox{orange!30}{fin} \nodehere{fin2}
+        halt \nodehere{halt}
+    
+    \nodehere{l3} Lwith:
+        \colorbox{blue!30}{const "oops!"}
+        \nodehere{throw}\colorbox{blue!30}{throw 1}
+        \colorbox{blue!30}{killshadow}
+    \nodehere{l2} Lval:
+        \colorbox{green!30}{ret2}
+    \nodehere{l1} Lexc:
+        \colorbox{red!30}{push}
+        \colorbox{red!30}{const "got exception"}
+        \colorbox{red!30}{strconcat}
+        \colorbox{red!30}{ret2}\nodehere{effret}
+    \nodehere{lfin} Lfin:
+        \colorbox{purple!30}{push}
+        \colorbox{purple!30}{const "Error: "}
+        \colorbox{purple!30}{strconcat}
+        \colorbox{purple!30}{ret}\nodehere{finret}
+\end{Verbatim}
+
+\begin{tikzpicture}[overlay]
+    \path[->,line width=1pt,dashed,black!50,>=latex] (cast) edge [bend right=65] (l3);
+    \path[->,line width=1pt,dashed,black!50,>=latex] (throw) edge [bend right=75] (l1);
+    \path[->,line width=1pt,dashed,black!50,>=latex] (effret) edge [bend right=60] (fin2);
+    \path[->,line width=1pt,dashed,black!50,>=latex] (fin) edge [bend right=75] (lfin);
+    \path[->,line width=1pt,dashed,black!50,>=latex] (finret) edge [bend right=100] (halt);
+\end{tikzpicture}
+\end{minipage}
+\end{document}

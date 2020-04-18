@@ -352,6 +352,25 @@ This section
     \label{compile-later}
 \end{figure}
 
+\section{How can SHADEcode implement Eff?}
+
+I gave a formal but dry description of the SHADE machine and its bytecode in the previous section.
+The reader might rightfully demand an explanation of why SHADE makes sense for Eff. In this section
+I will show how the byte code can implement the various flow of control algebraic effect handlers allow.
+
+It is clear that when no new shadow is cast (no with-handle is used) then the SHADE machine is essentially a Zinc machine with
+all effects behaving like exceptions. Hence all code examples below will use at least one with-handle block.
+
+\subsection{No perform}
+
+\subsection{Exception -- Continuation is not resumed}
+
+\subsection{Effect -- Continuation is resumed once}
+
+\subsection{Nondeterminism -- Continuation is resumed more than once}
+
+\subsection{Nesting with-handle blocks}
+
 
 \section{OCaml implementation}
 

@@ -1,0 +1,76 @@
+\documentclass[preview]{standalone}
+\usepackage{tikz}
+\usepackage{fancyvrb}
+\usepackage{xcolor}
+\usepackage{soul}
+
+\definecolor{lightpink}{rgb}{1.0, 0.71, 0.76}
+\definecolor{lightblue}{rgb}{0.68, 0.85, 0.9}
+\definecolor{lightgreen}{rgb}{0.56, 0.93, 0.56}
+\newcommand{\hlred}[1]{\sethlcolor{lightpink}\hl{#1}}
+\newcommand{\hlblue}[1]{\sethlcolor{lightblue}\hl{#1}}
+\newcommand{\hlgreen}[1]{\sethlcolor{lightgreen}\hl{#1}}
+
+% \nodehere node_name 
+\newcommand{\nodehere}[1]{\tikz{[remember picture] \node[coordinate] (#1) {}; }}
+
+\usetikzlibrary{positioning}
+\usetikzlibrary{decorations.pathmorphing}
+
+\tikzstyle{every picture}+=[remember picture]
+
+\tikzset{snake it/.style={decorate, decoration={snake, segment length=1.5mm, amplitude=0.5mm}}}
+\tikzset{
+    position/.style args={#1:#2 from #3}{
+        at=(#3.#1), anchor=#1+180, shift=(#1:#2)
+    }
+}
+
+\begin{document}
+\begin{minipage}[t]{0.5\textwidth}
+\begin{Verbatim}[commandchars=\\\{\}]
+    let h = handler
+    | \colorbox{red!30}{val x -> x + 1}
+    | \colorbox{green!30}{finally y -> 2 * y}
+    ;;
+    
+    with h handle
+        \colorbox{blue!30}{42}
+    ;;
+\end{Verbatim}
+\end{minipage}
+\begin{minipage}[t]{0.5\textwidth}
+\begin{Verbatim}[commandchars=\\\{\}]
+    SHADEcode:
+        makehlosure 0, Lval, Lfin, []
+        push
+        push
+        makeclosure Lwith, 0
+        \nodehere{cast}castshadow
+        \nodehere{fin}fin \nodehere{fin2}
+        halt \nodehere{halt}
+    
+    \nodehere{l3} Lwith:
+        \colorbox{blue!30}{const 42}
+        \nodehere{ks}\colorbox{blue!30}{killshadow}
+    \nodehere{l2} Lfin:
+        \colorbox{green!30}{push}
+        \colorbox{green!30}{const 2}
+        \colorbox{green!30}{mulint}
+        \colorbox{green!30}{ret}\nodehere{finret}
+    \nodehere{l1} Lval:
+        \colorbox{red!30}{push}
+        \colorbox{red!30}{const 1}
+        \colorbox{red!30}{addint}
+        \colorbox{red!30}{ret2}\nodehere{valret}
+\end{Verbatim}
+
+\begin{tikzpicture}[overlay]
+    \path[->,line width=1pt,dashed,black!50,>=latex] (cast) edge [bend right=65] (l3);
+    \path[->,line width=1pt,dashed,black!50,>=latex] (ks) edge [bend right=75] (l1);
+    \path[->,line width=1pt,dashed,black!50,>=latex] (valret) edge [bend right=90] (fin2);
+    \path[->,line width=1pt,dashed,black!50,>=latex] (fin) edge [bend right=75] (l2);
+    \path[->,line width=1pt,dashed,black!50,>=latex] (finret) edge [bend right=100] (halt);
+\end{tikzpicture}
+\end{minipage}
+\end{document}

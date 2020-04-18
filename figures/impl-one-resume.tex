@@ -1,0 +1,98 @@
+\documentclass[preview]{standalone}
+\usepackage{tikz}
+\usepackage{fancyvrb}
+\usepackage{xcolor}
+\usepackage{soul}
+
+\definecolor{lightpink}{rgb}{1.0, 0.71, 0.76}
+\definecolor{lightblue}{rgb}{0.68, 0.85, 0.9}
+\definecolor{lightgreen}{rgb}{0.56, 0.93, 0.56}
+\newcommand{\hlred}[1]{\sethlcolor{lightpink}\hl{#1}}
+\newcommand{\hlblue}[1]{\sethlcolor{lightblue}\hl{#1}}
+\newcommand{\hlgreen}[1]{\sethlcolor{lightgreen}\hl{#1}}
+
+% \nodehere node_name 
+\newcommand{\nodehere}[1]{\tikz{[remember picture] \node[coordinate] (#1) {}; }}
+\newcommand{\zseton}[1]{\tikz{[remember picture] \node[circle, fill=red, inner sep=2pt] (#1) {}; }}
+
+\usetikzlibrary{positioning}
+\usetikzlibrary{decorations.pathmorphing}
+
+\tikzstyle{every picture}+=[remember picture]
+
+\tikzset{snake it/.style={decorate, decoration={snake, segment length=1.5mm, amplitude=0.5mm}}}
+\tikzset{
+    position/.style args={#1:#2 from #3}{
+        at=(#3.#1), anchor=#1+180, shift=(#1:#2)
+    }
+}
+
+\begin{document}
+\begin{minipage}[t]{0.6\textwidth}
+\begin{Verbatim}[commandchars=\\\{\}]
+    effect Print : string -->> unit;;
+
+    let h = handler
+    | \colorbox{green!30}{val x -> (x, "")}
+    | \colorbox{red!30}{effect (Print msg) k ->}
+        \colorbox{red!30}{let (r, s) = continue k () in}
+        \colorbox{red!30}{(r, msg ^ s)}
+    | \colorbox{purple!30}{finally x -> x}
+    ;;
+    
+    \colorbox{orange!30}{with h handle}
+        \colorbox{blue!30}{perform (Print "Try");}
+        \colorbox{blue!30}{perform (Print "not to be");}
+        \colorbox{blue!30}{"confused!"}
+    ;;
+\end{Verbatim}
+\end{minipage}
+\begin{minipage}[t]{0.75\textwidth}
+\begin{Verbatim}[commandchars=\\\{\}]
+    SHADEcode:
+        makehlosure 0, Lval, Lfin, [(Lprint, 1)]
+        push
+        push
+        makeclosure Lwith, 0
+        \nodehere{cast}\colorbox{orange!30}{castshadow}
+        \nodehere{fin}\colorbox{orange!30}{fin} \nodehere{fin2}
+        halt \nodehere{halt}
+    
+    \nodehere{lwith} Lwith:
+        \colorbox{blue!30}{const "Try"}
+        \nodehere{throw1}\colorbox{blue!30}{throw 1}
+        \colorbox{blue!30}{const "not to be"}\nodehere{respoint1}
+        \nodehere{throw2}\colorbox{blue!30}{throw 1}
+        \colorbox{blue!30}{const "confused!"}\nodehere{respoint2}              \nodehere{med}
+        \colorbox{blue!30}{killshadow}\nodehere{ks}
+    Lval: \nodehere{lval}
+        \colorbox{green!30}{push}
+        \colorbox{green!30}{const ""}
+        \colorbox{green!30}{makebox 0, 2}
+        \colorbox{green!30}{ret2} \nodehere{valret}
+    \nodehere{lexc} Lprint:
+        \colorbox{red!30}{push}
+        \colorbox{red!30}{envacc 0}
+        \colorbox{red!30}{push}
+        \colorbox{red!30}{const ()}
+        \colorbox{red!30}{apply} \zseton{first} \zseton{second} \nodehere{apply}
+        \colorbox{red!30}{// create (r, msg ^ s)}
+        \colorbox{red!30}{ret2} \nodehere{effret}
+    \nodehere{lfin} Lfin:
+        \colorbox{purple!30}{ret}\nodehere{finret}
+\end{Verbatim}
+
+\begin{tikzpicture}[overlay]
+    \path[->,line width=1pt,dashed,black!50,>=latex] (cast) edge [bend right=65] node[pos=0.5, black, left] {1} (lwith);
+    \path[->,line width=1pt,dashed,black!50,>=latex] (throw1) edge [bend right=65] node[pos=0.5, black, left] {2} (lexc);
+    \path[->,line width=1pt,dashed,black!50,>=latex] (first) edge [bend right=45] node[pos=0.5, black, left] {3} (respoint1);
+    \path[->,line width=1pt,dashed,black!50,>=latex] (throw2) edge [bend right=65] node[pos=0.5, black, right] {4} (lexc);
+    \path[->,line width=1pt,dashed,black!50,>=latex] (second) edge [bend right=65] node[pos=0.5, black, right] {5} (respoint2);
+    \path[->,line width=1pt,dashed,black!50,>=latex] (ks) edge [bend left=25] node[pos=0.5, black, below] {6} (lval);
+    \path[->,line width=1pt,dashed,black!50,>=latex] (valret) edge [bend left=25] node[pos=0.5, black, right] {7} (second);
+    \path[->,line width=1pt,dashed,black!50,>=latex] (effret) edge [bend right=25] node[pos=0.5, black, below] {8} (first);
+    \draw[->, line width=1pt,dashed,black!50,>=latex] (effret) to [bend right=45] node[pos=0.5, black, right] {9} (med) to [bend right=45] (fin2);
+
+\end{tikzpicture}
+\end{minipage}
+\end{document}
