@@ -7,12 +7,12 @@
 \definecolor{lightpink}{rgb}{1.0, 0.71, 0.76}
 \definecolor{lightblue}{rgb}{0.68, 0.85, 0.9}
 \definecolor{lightgreen}{rgb}{0.56, 0.93, 0.56}
-\newcommand{\hlred}[1]{\sethlcolor{lightpink}\hl{#1}}
-\newcommand{\hlblue}[1]{\sethlcolor{lightblue}\hl{#1}}
-\newcommand{\hlgreen}[1]{\sethlcolor{lightgreen}\hl{#1}}
+\providecommand{\hlred}[1]{\sethlcolor{lightpink}\hl{#1}}
+\providecommand{\hlblue}[1]{\sethlcolor{lightblue}\hl{#1}}
+\providecommand{\hlgreen}[1]{\sethlcolor{lightgreen}\hl{#1}}
 
 % \nodehere node_name 
-\newcommand{\nodehere}[1]{\tikz{[remember picture] \node[coordinate] (#1) {}; }}
+\providecommand{\nodehere}[1]{\tikz{[remember picture] \node[coordinate] (#1) {}; }}
 
 \usetikzlibrary{positioning}
 \usetikzlibrary{decorations.pathmorphing}
@@ -43,6 +43,8 @@
     ;;
 \end{Verbatim}
 \end{minipage}
+\vspace{1cm}
+
 \begin{minipage}[t]{0.75\textwidth}
 \begin{Verbatim}[commandchars=\\\{\}]
     SHADEcode:
@@ -73,11 +75,11 @@
 \end{Verbatim}
 
 \begin{tikzpicture}[overlay]
-    \path[->,line width=1pt,dashed,black!50,>=latex] (cast) edge [bend right=65] (l3);
-    \path[->,line width=1pt,dashed,black!50,>=latex] (throw) edge [bend right=75] (l1);
-    \path[->,line width=1pt,dashed,black!50,>=latex] (effret) edge [bend right=60] (fin2);
-    \path[->,line width=1pt,dashed,black!50,>=latex] (fin) edge [bend right=75] (lfin);
-    \path[->,line width=1pt,dashed,black!50,>=latex] (finret) edge [bend right=100] (halt);
+    \path[->,line width=1pt,dashed,black!50,>=latex] (cast) edge [bend right=65] node [midway, left] {1} (l3);
+    \path[->,line width=1pt,dashed,black!50,>=latex] (throw) edge [bend right=75] node [midway, left] {2} (l1);
+    \path[->,line width=1pt,dashed,black!50,>=latex] (effret) edge [bend right=60] node [midway, right] {3} (fin2);
+    \path[->,line width=1pt,dashed,black!50,>=latex] (fin) edge [bend right=75] node [midway, left] {4} (lfin);
+    \path[->,line width=1pt,dashed,black!50,>=latex] (finret) edge [bend right=100] node [midway, right] {5} (halt);
 \end{tikzpicture}
 \end{minipage}
 \end{document}

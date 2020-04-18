@@ -23,6 +23,7 @@
 \definecolor{eclipseBlue}{RGB}{42,0.0,255}
 \definecolor{eclipseGreen}{RGB}{63,127,95}
 \definecolor{eclipsePurple}{RGB}{127,0,85}
+\definecolor{bg}{RGB}{248,248,248}
 
 \lstset{
     language={efflang},
@@ -34,14 +35,16 @@
     keepspaces=true, % does not ignore spaces to fit width, convert tabs to spaces
     showstringspaces=false, % lets spaces in strings appear as real spaces
     breaklines=true, % wrap lines if they don't fit
-    frame=trbl, % draw a frame at the top, right, left and bottom of the listing
-    frameround=tttt, % make the frame round at all four corners
+    %frame=trbl, % draw a frame at the top, right, left and bottom of the listing
+    %frameround=tttt, % make the frame round at all four corners
     framesep=4pt, % quarter circle size of the round corners
     numbers=left, % show line numbers at the left
     numberstyle=\tiny\ttfamily, % style of the line numbers
     commentstyle=\color{eclipseGreen}, % style of comments
     keywordstyle=\color{eclipsePurple}, % style of keywords
     stringstyle=\color{eclipseBlue}, % style of strings
-    xleftmargin=.2\textwidth,
-    xrightmargin=.2\textwidth
+    xleftmargin=.05\textwidth,
+    framexleftmargin=17pt,
+    backgroundcolor=\color{bg}
+    %xrightmargin=.2\textwidth
 }

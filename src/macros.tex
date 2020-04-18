@@ -1,4 +1,5 @@
-\usepackage{ stmaryrd }
+\usepackage{stmaryrd}
+\usepackage{framed}
 
 \renewcommand{\leadsto}{\rightsquigarrow}
 \newcommand{\dmid}{\ \parallel \ }
@@ -90,3 +91,21 @@
 
 \newcommand{\hlosure}{\mathcal{H}}
 \newcommand{\konts}{\mathcal{C}}
+
+\newenvironment{myfigure}[3][0.75]{
+    \def\mywidth{#1}
+    \def\mycaption{#2}
+    \def\mylabel{#3}
+    \definecolor{shadecolor}{rgb}{0.95,0.95,0.95}
+
+    \begin{figure}
+    \centering
+    \begin{minipage}{\mywidth\textwidth}
+    \begin{shaded*}
+}{
+    \caption{\mycaption}
+    \label{\mylabel}
+    \end{shaded*}
+    \end{minipage}
+    \end{figure}
+}

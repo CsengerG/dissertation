@@ -7,13 +7,13 @@
 \definecolor{lightpink}{rgb}{1.0, 0.71, 0.76}
 \definecolor{lightblue}{rgb}{0.68, 0.85, 0.9}
 \definecolor{lightgreen}{rgb}{0.56, 0.93, 0.56}
-\newcommand{\hlred}[1]{\sethlcolor{lightpink}\hl{#1}}
-\newcommand{\hlblue}[1]{\sethlcolor{lightblue}\hl{#1}}
-\newcommand{\hlgreen}[1]{\sethlcolor{lightgreen}\hl{#1}}
+\providecommand{\hlred}[1]{\sethlcolor{lightpink}\hl{#1}}
+\providecommand{\hlblue}[1]{\sethlcolor{lightblue}\hl{#1}}
+\providecommand{\hlgreen}[1]{\sethlcolor{lightgreen}\hl{#1}}
 
 % \nodehere node_name 
-\newcommand{\nodehere}[1]{\tikz{[remember picture] \node[coordinate] (#1) {}; }}
-\newcommand{\zseton}[1]{\tikz{[remember picture] \node[circle, fill=red, inner sep=2pt] (#1) {}; }}
+\providecommand{\nodehere}[1]{\tikz{[remember picture] \node[coordinate] (#1) {}; }}
+\providecommand{\zseton}[1]{\tikz{[remember picture] \node[circle, fill=red, inner sep=2pt] (#1) {}; }}
 
 \usetikzlibrary{positioning}
 \usetikzlibrary{decorations.pathmorphing}
@@ -83,15 +83,15 @@
 \end{Verbatim}
 
 \begin{tikzpicture}[overlay]
-    \path[->,line width=1pt,dashed,black!50,>=latex] (cast) edge [bend right=65] node[pos=0.5, black, left] {1} (lwith);
-    \path[->,line width=1pt,dashed,black!50,>=latex] (throw1) edge [bend right=65] node[pos=0.5, black, left] {2} (lexc);
-    \path[->,line width=1pt,dashed,black!50,>=latex] (first) edge [bend right=45] node[pos=0.5, black, left] {3} (respoint1);
-    \path[->,line width=1pt,dashed,black!50,>=latex] (throw2) edge [bend right=65] node[pos=0.5, black, right] {4} (lexc);
-    \path[->,line width=1pt,dashed,black!50,>=latex] (second) edge [bend right=65] node[pos=0.5, black, right] {5} (respoint2);
-    \path[->,line width=1pt,dashed,black!50,>=latex] (ks) edge [bend left=25] node[pos=0.5, black, below] {6} (lval);
-    \path[->,line width=1pt,dashed,black!50,>=latex] (valret) edge [bend left=25] node[pos=0.5, black, right] {7} (second);
-    \path[->,line width=1pt,dashed,black!50,>=latex] (effret) edge [bend right=25] node[pos=0.5, black, below] {8} (first);
-    \draw[->, line width=1pt,dashed,black!50,>=latex] (effret) to [bend right=45] node[pos=0.5, black, right] {9} (med) to [bend right=45] (fin2);
+    \path[->,line width=1pt,dashed,black!50,>=latex] (cast) edge [bend right=65] node[pos=0.5, left] {1} (lwith);
+    \path[->,line width=1pt,dashed,black!50,>=latex] (throw1) edge [bend right=65] node[pos=0.5, left] {2} (lexc);
+    \path[->,line width=1pt,dashed,black!50,>=latex] (first) edge [bend right=45] node[pos=0.5, left] {3} (respoint1);
+    \path[->,line width=1pt,dashed,black!50,>=latex] (throw2) edge [bend right=65] node[pos=0.5, right] {4} (lexc);
+    \path[->,line width=1pt,dashed,black!50,>=latex] (second) edge [bend right=65] node[pos=0.5, right] {5} (respoint2);
+    \path[->,line width=1pt,dashed,black!50,>=latex] (ks) edge [bend left=25] node[pos=0.5, below] {6} (lval);
+    \path[->,line width=1pt,dashed,black!50,>=latex] (valret) edge [bend left=25] node[pos=0.5, right] {7} (second);
+    \path[->,line width=1pt,dashed,black!50,>=latex] (effret) edge [bend right=25] node[pos=0.5, below] {8} (first);
+    \draw[->, line width=1pt,dashed,black!50,>=latex] (effret) to [bend right=45] node[pos=0.5, right] {9} (med) to [bend right=45] (fin2);
 
 \end{tikzpicture}
 \end{minipage}
