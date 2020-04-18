@@ -1,0 +1,9 @@
+(define return (lambda x x))
+
+(define (+k a b k) (k (+ a b))) 
+(define (*k a b k) (k (* a b)))
+
+#| Compute (1 + 2) * (3 + 4) |#
+(+k 1 2 (lambda (sum1)
+  (+k 3 4 (lambda (sum2)
+    (*k sum1 sum2 return)))))

@@ -1,0 +1,2 @@
+effect Error : string -->> empty;;
+if true then absurd (raise (Error "Lie detected!")) else 1337;;

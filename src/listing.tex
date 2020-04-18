@@ -1,0 +1,76 @@
+\usepackage{color}
+\usepackage{xcolor}
+\usepackage{caption}
+\usepackage{courier}
+
+\lstdefinelanguage{efflang}
+{
+    % list of keywords
+    morekeywords={
+        let,
+        perform,
+        continue,
+        val,
+        effect,
+        in,
+        if, then, else,
+        with, handle, handler,
+        finally,
+        match,
+        exception,
+        of
+    },
+    sensitive=false,
+    morecomment=[s]{(*}{*)},
+    morestring=[b]"
+}
+
+\lstdefinelanguage{scheme}
+{
+    % list of keywords
+    morekeywords={
+        define, call/cc, lambda
+    },
+    sensitive=false,
+    morecomment=[s]{\#|}{|\#},
+    morestring=[b]"
+}
+
+\lstset{
+  basicstyle=\small\ttfamily, % Default font
+  numberstyle=\small,          % Style of line numbers
+  numbersep=5pt,              % Margin between line numbers and text
+  tabsize=2,                  % Size of tabs
+  extendedchars=true,
+  breaklines=true,            % Lines will be wrapped
+  keywordstyle=\color{red},
+  frame=b,
+  numbers=left,
+  numberstyle=\footnotesize\color{gray},
+  numbersep=10pt,
+  captionpos=t,
+  stringstyle=\color{purple!80!blue}\ttfamily, % Color of strings
+  showspaces=false,
+  showtabs=false,
+  xleftmargin=17pt,
+  framexleftmargin=17pt,
+  framexbottommargin=4pt,
+  showstringspaces=false
+}
+
+\DeclareCaptionFont{white}{\color{white}}
+\DeclareCaptionFormat{listing}{\colorbox[cmyk]{0.43, 0.35, 0.35,0.01}{\parbox{\textwidth}{\hspace{15pt}#1#2#3}}}
+\captionsetup[lstlisting]{format=listing,labelfont=white,textfont=white, singlelinecheck=false, margin=0pt, font={bf,footnotesize}}
+
+\newcommand{\mylisting}[4]{%
+\noindent
+\begin{minipage}{\textwidth}
+\lstinputlisting[
+  language=#1,
+  caption={#2},
+  label=#3
+  ]{#4}
+\end{minipage}
+  }
+
+\lstset{language=efflang}

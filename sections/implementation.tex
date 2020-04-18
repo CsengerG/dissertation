@@ -90,7 +90,8 @@ it is a much better idea to simply have a seperate K stack per handler, because
 that will make the unwind operation on the K component of the stack machine much more efficient
 (we will unwind handler and not the continuations one by one).
 
-\begin{minipage}{.9\textwidth}
+\noindent
+\begin{minipage}{\textwidth}
 \begin{center}
 \begin{lstlisting}[language=caml]
 type cek_id (** Identifiers *)

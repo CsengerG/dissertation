@@ -1,0 +1,6 @@
+let x =
+	with prepending_handler handle
+		perform (Print "Hello");
+		perform (Print "World");
+		()
+in 42;;
