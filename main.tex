@@ -1,7 +1,7 @@
-\documentclass[oneside]{book}
+\documentclass[oneside]{scrbook}
 \usepackage[subpreambles=true]{standalone}
 
-% Encoding and language
+\usepackage[table]{xcolor}
 \usepackage[utf8]{inputenc}
 \usepackage[english]{babel}
 \usepackage{import}
@@ -10,15 +10,65 @@
 \usepackage{caption}
 \usepackage{a4wide}
 \usepackage[toc,page]{appendix}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{parskip}
+\usepackage[absolute,overlay]{textpos}
 
 
-\title{Compiling algebraic effect handlers}
-\author{Géza Csenger}
-\date{}
+% Chapter formatting
+\usepackage{titlesec, blindtext, color}
+\definecolor{gray75}{gray}{0.75}
+\newcommand{\hsp}{\hspace{20pt}}
+
+% \titleformat{\chapter}
+% [hang]
+% {\Huge\scshape}
+%     {{\large \MakeUppercase{\chaptertitlename}\ \thechapter.}\\}
+%     {.5em}
+% {\Huge\scshape}
+
+\input{./src/macros.tex}
+\input{./src/listing.tex}
 
 \begin{document}
-\maketitle
+\input titlepage
+
+\frontmatter
+
+\section*{Declaration of Originality}
+
+I, Géza Csenger of Homerton College,
+being a candidate for Part II of the Computer Science Tripos,
+hereby declare that this dissertation and the work described in it
+are my own work, unaided except as may be specified below, and
+that the dissertation does not contain material that has already
+been used to any substantial extent for a comparable purpose.
+
+I, Géza Csenger of Homerton College,
+am content for my dissertation to be made available to the students and staff of the University. 
+
+\vspace{1cm}
+\textbf{Signed}
+
+\vspace{1cm}
+\textbf{Date}
+
+\vspace{3cm}
+
+\section*{Acknowledgements}
+
+Hereby I would like to say thanks to:
+\begin{itemize}
+    \item My project supervisor, \textbf{Prof. Alan Mycroft}, for his support and guidance
+    \item My Director of Studies, \textbf{Dr John Fawcett}, for a \emph{lot} of things
+    \item Friends and family without whom completing this work would have been impossible
+\end{itemize}
+
 \tableofcontents
+\listoffigures
+
+\mainmatter
 
 \chapter{Introduction}
 \import{sections/}{introduction}

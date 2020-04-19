@@ -13,41 +13,9 @@
 \usepackage{float}
 \usepackage[super]{nth}
 
-\renewcommand{\leadsto}{\rightsquigarrow}
-\newcommand{\dmid}{\ \parallel \ }
-
-\newcommand{\effFalse}{\mathbf{false}}
-\newcommand{\effTrue}{\mathbf{true}}
-\newcommand{\effLeft}{\mathbf{Left}\ }
-\newcommand{\effRight}{\mathbf{Right\ }}
-\newcommand{\effFun}{\mathbf{fun}\ }
-\newcommand{\effHandler}{\mathbf{handler}\ }
-\newcommand{\effVal}{\mathbf{val}\ }
-\newcommand{\effWith}{\mathbf{with}\ }
-\newcommand{\effHandle}{\ \mathbf{handle}\ }
-\newcommand{\effIf}{\mathbf{if}\ }
-\newcommand{\effThen}{\ \mathbf{then}\ }
-\newcommand{\effElse}{\ \mathbf{else}\ }
-\newcommand{\effAbsurd}{\mathbf{absurd}\ }
-\newcommand{\effMatch}{\mathbf{match}\ }
-\newcommand{\effLet}{\mathbf{let}\ }
-\newcommand{\effIn}{\ \mathbf{in}\ }
-\newcommand{\effRec}{\mathbf{rec}\ }
-\newcommand{\effEffect}{\mathbf{effect}\ }
-\newcommand{\effFinally}{\mathbf{finally}\ }
-\newcommand{\effOp}{\mathtt{op}}
-\newcommand{\effPerform}{\mathbf{perform}\ }
-\newcommand{\tto}{\twoheadrightarrow}
-
-\newcommand{\handlerType}{\Rightarrow}
-\newcommand{\boolType}{\mathtt{bool}}
-\newcommand{\unitType}{\mathtt{unit}}
-\newcommand{\emptyType}{\mathtt{empty}}
-
-\newcommand{\defEq}{\stackrel{\text{def}}{=}}
-
-\newcommand{\cek}[1]{\langle #1 \rangle}
-\newcommand{\secd}[1]{\langle #1 \rangle}
+\ifstandalone
+\input{../src/macros.tex}
+\fi
 
 \begin{document}
 \section{Semantics}
