@@ -1,0 +1,3 @@
+let rec eval = function
+| Plus(e1, e2) -> eval(e1) + eval(e2)
+| ...

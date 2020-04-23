@@ -1,32 +1,34 @@
-\documentclass[oneside]{scrbook}
+\documentclass[%
+    oneside,
+    bibliography=toc,
+    listof=leveldown,% use section for the list headings
+    fontsize=11pt
+]{scrbook}
 \usepackage[subpreambles=true]{standalone}
 
+\usepackage[a4paper]{geometry}
 \usepackage[table]{xcolor}
 \usepackage[utf8]{inputenc}
 \usepackage[english]{babel}
 \usepackage{import}
-\usepackage{bookmark}
 \usepackage{listings}
 \usepackage{caption}
-\usepackage{a4wide}
 \usepackage[toc,page]{appendix}
 \usepackage{booktabs}
 \usepackage{tikz}
 \usepackage{parskip}
 \usepackage[absolute,overlay]{textpos}
+\usepackage{pdfpages}
 
+\geometry{
+    includeheadfoot,
+    margin=2.5cm
+}
 
 % Chapter formatting
 \usepackage{titlesec, blindtext, color}
-\definecolor{gray75}{gray}{0.75}
-\newcommand{\hsp}{\hspace{20pt}}
 
-% \titleformat{\chapter}
-% [hang]
-% {\Huge\scshape}
-%     {{\large \MakeUppercase{\chaptertitlename}\ \thechapter.}\\}
-%     {.5em}
-% {\Huge\scshape}
+\renewcommand{\chapterheadstartvskip}{}
 
 \input{./src/macros.tex}
 \input{./src/listing.tex}
@@ -58,15 +60,52 @@ am content for my dissertation to be made available to the students and staff of
 
 \section*{Acknowledgements}
 
-Hereby I would like to say thanks to:
+Hereby, I would like to say thanks to:
 \begin{itemize}
     \item My project supervisor, \textbf{Prof. Alan Mycroft}, for his support and guidance
     \item My Director of Studies, \textbf{Dr John Fawcett}, for a \emph{lot} of things
     \item Friends and family without whom completing this work would have been impossible
 \end{itemize}
 
+\newpage
+
+\chapter{Proforma}
+
+\begin{tabular}{@{} ll @{}}
+Candidate number: & X (TODO) \\
+Project title: & Compiling algebraic effect handlers \\
+Examination: & Computer Science Tripos -- Part II, 2020 \\
+Word Count: & TODO \\
+Lines of Code: & TODO \\
+Page Count: & TODO \\
+Project Originator : & Candidate X \\
+Supervisor: Professor Alan Mycroft \\
+\end{tabular}
+
+\section*{Original aims of the Project}
+
+The project had four core aims: to write an interpreter for Eff, to design a byte code for Eff, to write a compiler from Eff to this byte code
+and to implement a virtual machine interpreting the byte code. Additional goals were to implement various optimisations for Eff, such as
+tail resumption optimisation or minimising the copy overhead from the use of continuations.
+
+\section*{Work completed}
+
+An CEK machine interpreting Eff was implemented. A byte code for Eff (SHADEcode) was designed. A compiler from Eff to SHADEcode was
+implemented as well as a virtual machine (SHADE) interpreting SHADEcode. As far as I know, SHADE and SHADEcode are the first
+virtual machine and byte code designed specifically for Eff.
+In the Evaluation chapter
+I compare the performance of my Eff interpreter with the current official Eff interpreter and I compare the performance of the SHADE
+virtual machine with the performance of Multicore OCaml (another compiled language with similar features to Eff).
+
+\section*{Special difficulties}
+None.
+
 \tableofcontents
+
+\newpage
 \listoffigures
+\listoftables
+\lstlistoflistings
 
 \mainmatter
 
@@ -85,12 +124,27 @@ Hereby I would like to say thanks to:
 \chapter{Conclusion}
 \import{sections/}{conclusion}
 
-\begin{appendices}
-    \chapter{Eff formally}
-    \import{sections/}{eff-formally}
-\end{appendices}
-
 \bibliography{bibliography}{}
 \bibliographystyle{plain}
+
+\appendix
+
+\begin{appendices}
+\renewcommand{\thepage}{\thechapter.\arabic{page}}
+
+\chapter{Eff formally}
+\setcounter{page}{1}
+\import{sections/}{eff-formally}
+
+\chapter{Code snippets}
+\setcounter{page}{1}
+
+\chapter{Project Proposal}
+\setcounter{page}{1}
+The project proposal starts on the next page.
+\includepdf[pages=-]{sections/proposal.pdf}
+
+\end{appendices}
+
 
 \end{document}

@@ -1,4 +1,4 @@
 let temp_in_fahrenheit =
-  let t = with h handle
-    (* gives temperature in Kelvin *)
+  (* t is in Kelvins *)
+  let t = with h handle ...
   in t * 1.8 - 459.67;;

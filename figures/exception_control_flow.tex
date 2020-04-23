@@ -15,10 +15,10 @@
 \begin{tikzpicture}
     \draw[thick] (0, 0) -- (0, -4)
         node[at start, above]{\verb|no handler|};
-    \draw[->, thick] (0, -4) -- (2, -4)
+    \draw[->, thick] (0, -4) -- (7, -4)
         node[midway, above]
-        {\verb|perform|};
-    \draw[thick, snake it] (2, -4) -- (2, -8)
+        {\verb|perform (Print "Hello World!")|};
+    \draw[thick, snake it] (7, -4) -- (7, -7.5)
         node[left, midway]{No handler found}
         node[at end, below]{Crash!};
     

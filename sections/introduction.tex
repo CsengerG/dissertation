@@ -1,6 +1,7 @@
 \documentclass[class=article,crop=false,11pt]{standalone}
 
 \usepackage[subpreambles=true]{standalone}
+\usepackage[a4paper]{geometry}
 \usepackage{import}
 
 \usepackage[a4paper]{geometry}
@@ -8,8 +9,12 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{tipa}
-\usepackage{a4wide}
 \usepackage{stmaryrd}
+
+\geometry{
+    includeheadfoot,
+    margin=2.5cm
+}
 
 \newcommand{\msf}[1]{\mathsf{#1}}
 
@@ -19,7 +24,7 @@
 \begin{document}
 
 This dissertation is concerned with building a compiler for the programming language \emph{Eff}.
-Eff is a research functional programming language based on algebraic effect handlers.
+Eff is a research functional programming language based on \emph{algebraic effect handlers}.
 I describe how a language like Eff can be interpreted and how it can be compiled to byte code.
 
 The main contribution of this dissertation is the byte code designed for Eff and
@@ -46,7 +51,7 @@ While some solutions do compile algebraic effect handlers to byte code
 (e.g., the multicore branch of OCaml), the way this is done remains largely undocumented.
 
 \item \textbf{Performance.}
-Whereas the theory behind algebraic effect handlers is well-understood, only a
+Whereas the theory behind algebraic effect handlers is well understood, only a
 few attempts were made at evaluating the performance of different solutions.
 
 \item \textbf{Systems programming.}
@@ -58,23 +63,23 @@ functional systems programming less obscure.
 
 \section{Work carried out}
 
-This dissertation describes the following work I have carried out. I have implemented
+I have implemented
 a lexer and a parser for Eff as well as a high-level CEK-like interpreter working with
 a tree-like representation of an Eff program. I designed a byte-code for Eff inspired
 by the OCaml byte-code and a compiler to this byte-code. I designed an abstract machine
-as well, which ended up being similar to a SECD machine. I implemented this machine and
+as well, which ended up being similar to an SECD machine. I implemented this machine and
 compared its performance to my CEK implementation and to other solutions.
 
 I had to make some simplifications during this process.
 For instance, I dropped support for pattern matching as well as support for
-several of the language's syntactic sugars, as these were not the focus of my project.
+several of the language's syntactic sugars and type inference, as these were not the focus of my project.
 
 \section{History and related work}
 
 Simply said, \emph{computational effects} are effects like I/O, state, non-determinism
 and  various forms of jumps \cite{plotkin2002computational}. The way how these
 effects interact with each other and how we can safely deal with them always formed a
-great research interest, as the improper use of side-effects are often responsible to
+great research interest, as the improper use of side-effects are often responsible for
 many bugs when writing software.
 
 
@@ -92,9 +97,9 @@ needed for a unified category-theoretic semantics for computational effects in t
 
 In 2003, Plotkin and Power \cite{plotkin2003algebraic} used the idea that many of the computational effects
 can be naturally described by algebraic theories and extended the computational lambda calculus with \emph{effect constructors}.
-An \emph{algebraic effect} is a computational effect which is possible to describe with an algebraic theory.
+An \emph{algebraic effect} is a computational effect which can be described with an algebraic theory.
 
-It turns out that effects like X,Y and Z are all algebraic effects. However, perhaps not surprisingly, not all
+It turns out that effects like I/O, state and non-determinism are all algebraic effects. However, perhaps not surprisingly, not all
 effects are algebraic. Notably, the \emph{handle} or \emph{catch} operations---used to handle exceptions in
 most conventional programming languages---are a good example, these cannot be expressed with algebraic theories.
 

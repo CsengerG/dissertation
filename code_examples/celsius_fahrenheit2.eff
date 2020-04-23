@@ -1,4 +1,4 @@
 let h' = handler
-  (* ... same as h ... *)
-  | finally t -> t * 1.8 - 459.67 
+(* ... same as h ... *)
+| finally t -> t * 1.8 - 459.67 
 ;;
