@@ -10,4 +10,5 @@
 \contentsline {lstlisting}{\numberline {2.10}A na\IeC {\"\i }ve recursive evaluator function might look like this}{15}{lstlisting.2.10}
 \contentsline {lstlisting}{\numberline {3.1}A handler parameterised by a free variable $n$}{23}{lstlisting.3.1}
 \contentsline {lstlisting}{\numberline {3.2}The structure of a CEK machine for Eff}{24}{lstlisting.3.2}
+\contentsline {lstlisting}{\numberline {3.3}A typical implementation of a rule in the \lstinline {step} function}{26}{lstlisting.3.3}
 \contentsline {lstlisting}{\numberline {B.1}Unwinding of the K component in the CEK machine.}{B.2}{lstlisting.a.B.1}

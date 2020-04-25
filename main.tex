@@ -133,9 +133,29 @@ None.
 \begin{appendices}
 \renewcommand{\thepage}{\thechapter.\arabic{page}}
 
-\chapter{Eff formally}
+\chapter{Theory}
+\label{app:theory}
 \setcounter{page}{1}
 \import{sections/}{eff-formally}
+
+\begin{myfigure}[1]{Compilation from IR to SHADE bytecode}{fig:compilation}
+    $$ \interp{\irId\ x}_s^\gamma = \text{where\_is}\ (x, s, \gamma) $$
+    $$ \interp{\irConst\ c} = \textbf{const } c $$
+    $$ \interp{\irBox\ (t, v_1 \dots v_n)}_s ^ \gamma = \interp{v_n}_s^\gamma; \vmPush; \interp{v_{n-1}}_{s+1}^\gamma; \vmPush; \dots \interp{v_1}_{s+n-1}^\gamma; \vmMakeBox{t}{n} $$
+    $$ \underbrace{\interp{\irFun\ (x, body)}_s ^\gamma }_f = \text{fvs-to-stack} (s, \gamma, f); \vmMakeClosure{N}{L} $$
+    $$ \underbrace{\interp{\irHandler\ (v, es, f)}_s^\gamma}_h = \text{fvs-to-stack} (s, \gamma, h); \vmMakeHlosure{N}{L_v}{L_f}{L_{e_1}, L_{e_2}, \dots} $$
+    $$ \interp{\irVal\ v}_s ^ \gamma =  \interp{v}_s ^ \gamma $$
+    $$ \interp{\irIf\ (v, e_1, e_2)}_s ^ \gamma = \vmBranchIfNot\ L_\text{false}; \interp{e_1}_s^\gamma; \vmJump\ L_\text{exit}; \vmLabel\ L_\text{false}; \interp{e_2}_s^\gamma; \vmLabel\ L_\text{exit} $$
+    $$ \interp{\irLetIn\ (x, e_1, e_2)}_s^\gamma = \interp{e_1}_s^\gamma; \vmPush; \interp{e_2}_{s+1}^{\gamma[x \mapsto s]} $$
+    $$ \interp{\irLetRecIn\ (f, x, body, e)}_s^\gamma = \text{fvs-to-stack}(f, x, body, s, \gamma); \vmMakeClosure{N}{L}; \vmPush; \interp{e}_{s+1}^{\gamma[f \mapsto s]} $$
+    $$ \interp{\irPerform\ (id, v)} = \interp{v}_s ^ \gamma; \vmThrow\ id $$
+    $$ \interp{\irWithHandle\ (h, e)}_s ^ \gamma = \interp{h}_s ^ \gamma; \vmPush; \text{fvs-to-stack}(e, s, \gamma); \vmMakeClosure{N}{L}; \shCast $$
+    $$ \interp{\irBinOp\ (\mathtt{op}, v_1, v_2} = \interp{v_1}_s ^ \gamma; \vmPush; \interp{v_2}_{s+1}^\gamma; \text{instr-of}(\mathtt{op}) $$
+    $$ \interp{\irFunApp\ (v_1, v_2)} = \interp{v_1}_s ^ \gamma; \vmPush; \interp{v_2}_{s+1} ^ \gamma; \vmApply $$
+    $$ \interp{\irGetField\ (n, v)}_s ^ \gamma = \interp{v}_s ^ \gamma; \vmGetField{n} $$
+    $$ \interp{\irListHead\ v}_s ^ \gamma = \interp{v}_s ^ \gamma; \vmListHead $$
+    $$ \interp{\irListTail\ v}_s ^ \gamma = \interp{v}_s ^ \gamma ; \vmListTail $$
+\end{myfigure}
 
 \chapter{Code snippets}
 \label{sec:code-snippets}

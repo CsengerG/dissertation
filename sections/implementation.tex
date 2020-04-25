@@ -397,26 +397,18 @@ Hence we must use the accumulator.
 \label{tab:shade-bytecode}
 \end{table}
 
-\subsection{Compiling from an IR to SHADEcode}
+\paragraph{Compiling to SHADEcode}
 
-\begin{myfigure}[1]{Compilation from IR to SHADE bytecode}{fig:compilation}
-    $$ \interp{\irId\ x}_s^\gamma = \text{where\_is}\ (x, s, \gamma) $$
-    $$ \interp{\irConst\ c} = \textbf{const } c $$
-    $$ \interp{\irBox\ (t, v_1 \dots v_n)}_s ^ \gamma = \interp{v_n}_s^\gamma; \vmPush; \interp{v_{n-1}}_{s+1}^\gamma; \vmPush; \dots \interp{v_1}_{s+n-1}^\gamma; \vmMakeBox{t}{n} $$
-    $$ \underbrace{\interp{\irFun\ (x, body)}_s ^\gamma }_f = \text{fvs-to-stack} (s, \gamma, f); \vmMakeClosure{N}{L} $$
-    $$ \underbrace{\interp{\irHandler\ (v, es, f)}_s^\gamma}_h = \text{fvs-to-stack} (s, \gamma, h); \vmMakeHlosure{N}{L_v}{L_f}{L_{e_1}, L_{e_2}, \dots} $$
-    $$ \interp{\irVal\ v}_s ^ \gamma =  \interp{v}_s ^ \gamma $$
-    $$ \interp{\irIf\ (v, e_1, e_2)}_s ^ \gamma = \vmBranchIfNot\ L_\text{false}; \interp{e_1}_s^\gamma; \vmJump\ L_\text{exit}; \vmLabel\ L_\text{false}; \interp{e_2}_s^\gamma; \vmLabel\ L_\text{exit} $$
-    $$ \interp{\irLetIn\ (x, e_1, e_2)}_s^\gamma = \interp{e_1}_s^\gamma; \vmPush; \interp{e_2}_{s+1}^{\gamma[x \mapsto s]} $$
-    $$ \interp{\irLetRecIn\ (f, x, body, e)}_s^\gamma = \text{fvs-to-stack}(f, x, body, s, \gamma); \vmMakeClosure{N}{L}; \vmPush; \interp{e}_{s+1}^{\gamma[f \mapsto s]} $$
-    $$ \interp{\irPerform\ (id, v)} = \interp{v}_s ^ \gamma; \vmThrow\ id $$
-    $$ \interp{\irWithHandle\ (h, e)}_s ^ \gamma = \interp{h}_s ^ \gamma; \vmPush; \text{fvs-to-stack}(e, s, \gamma); \vmMakeClosure{N}{L}; \shCast $$
-    $$ \interp{\irBinOp\ (\mathtt{op}, v_1, v_2} = \interp{v_1}_s ^ \gamma; \vmPush; \interp{v_2}_{s+1}^\gamma; \text{instr-of}(\mathtt{op}) $$
-    $$ \interp{\irFunApp\ (v_1, v_2)} = \interp{v_1}_s ^ \gamma; \vmPush; \interp{v_2}_{s+1} ^ \gamma; \vmApply $$
-    $$ \interp{\irGetField\ (n, v)}_s ^ \gamma = \interp{v}_s ^ \gamma; \vmGetField{n} $$
-    $$ \interp{\irListHead\ v}_s ^ \gamma = \interp{v}_s ^ \gamma; \vmListHead $$
-    $$ \interp{\irListTail\ v}_s ^ \gamma = \interp{v}_s ^ \gamma ; \vmListTail $$
-\end{myfigure}
+Compilation to SHADEcode is standard. We keep track of the size of the stack $s$ and a compilation
+environment $\gamma$ which tells us where the free variables of currently compiled expressions
+reside (stack or environment). The equation
+$$ \interp{\irLetIn\ (x, e_1, e_2)}_s^\gamma = \interp{e_1}_s^\gamma; \vmPush; \interp{e_2}_{s+1}^{\gamma[x \mapsto s]} $$
+describes how one can compile let expressions. The expression $e_1$ is compiled first which generates the code
+that leaves the value of $e_1$ in the accumulator. Then a \vmPush\ instruction saves this
+on the stack and the expression $e_2$ is compiled with the knowledge that the size of the stack
+has increased to $s+1$ and the new compilation environment knows that $x$ resides on position
+$s$ in the stack ($\gamma[x \mapsto x]$). A full description of the compilation process in this
+style can be found in Appendix \autoref{app:theory}.
 
 \subsection{How does SHADEcode implement Eff?}
 \label{sec:shade-illustration}
@@ -430,34 +422,72 @@ all effects behaving like exceptions. The next page contains various examples an
 into how everything fits together.
 
 \begin{figure}
-    \scalebox{.6}{
+    \centering
+    \scalebox{.75}{
         \subimport{../figures/}{impl-no-perform.tex}
     }
-
     \caption{No effect is performed.}
     \label{fig:shadecode-no-effect}
 \end{figure}
 
+\autoref{fig:shadecode-no-effect} shows what happens when no effect is performed in
+a with-handle block. The with-handle block is entered via \vmCastShadow\ (a second shadow
+is cast and we jump to \lstinline{Lwith}). Next, after the body of the with-handle block
+executes fully the \vmKillShadow\ instruction gives the control to the value case.
+The \vmRett\ instruction at the end of the value case destroys the second shadow
+and returns to the default shadow while increasing the program counter. Now the
+\vmFin\ instruction is responsible for executing the finally case and getting rid
+of the hlosure from the stack. The \vmRet\ instruction at the end of the finally case
+simply returns as if it was a function call and execution halts as the program counter
+now points to \vmHalt.
+
 \begin{figure}
-    \scalebox{.6}{
+    \centering
+    \scalebox{.75}{
         \subimport{../figures/}{impl-exception.tex}
     }
-
     \caption{An effect is performed but its continuation is not resumed.}
     \label{fig:shadecode-exception}
 \end{figure}
 
+\autoref{fig:shadecode-exception} depicts a case when the effect has exception-like
+behaviour. This case is different from the previous one in that the \vmKillShadow\ instruction
+is never executed. However, the \vmRett\ instruction at the end of the effect case of handler
+$h$ will still destroy the shadow and return to the \vmFin\ instruction which is
+executed before the machine halts as we would expect.
 
-\begin{wrapfigure}{r}{0.5\textwidth}
-    \begin{center}
-    \scalebox{.6}{
+\autoref{fig:shadecode-one-resume} shows an example where the continuation is resumed
+in the effect case (this is actually our beloved Hello World again!). This case is particularly
+interesting as effects are performed in the with-handle block, continuations are resumed,
+the \vmKillShadow\ instruction is executed and the \vmRett\ of the value case
+\emph{returns to an effect case} which then returns to another effect case and
+finally the top shadow is destroyed by the \vmRett\ of an effect case just as we
+saw in the previous example.
+
+The red dots next to the \vmApply\ instruction are there to show that the dump
+is essentially a separate call stack for continuations and effect cases.
+Two separate \vmRett\ instructions return to the same \vmApply\ instruction
+but first the effect case handling \lstinline{Print "not to be"} is given
+control and only after that effect case finished can the effect case handling
+\lstinline{Print "Try"} resume.
+
+\begin{figure}
+    \centering
+    \scalebox{.75}{
         \subimport{../figures/}{impl-one-resume.tex}
     }
-    \end{center}
     \caption{An effect is performed and its continuation is resumed.}
     \label{fig:shadecode-one-resume}
-\end{wrapfigure}
+\end{figure}
  
+\autoref{fig:shadecode-two-resume} shows what happens when we take everything to
+the next level and use multi-shot continuations (i.e., we resume the same continuation
+more than once). This is a typical non-determinism example where an effect case resumes
+a continuation with both \lstinline{true} and \lstinline{false} to determine all the
+values the with-handle block can evaluate to.
+\footnote{We are expecting the result \lstinline{[5,-5,15,5]} as $(x-y)$ can be $(10-5)$, $(10-15)$,
+$(20-5)$ or $(20-15)$.}
+
 \begin{landscape}
     \begin{figure}
         \centering
