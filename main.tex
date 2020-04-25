@@ -1,9 +1,10 @@
 \documentclass[%
-    oneside,
+    12pt,
+    a4paper,
     bibliography=toc,
     listof=leveldown,% use section for the list headings
-    fontsize=11pt
-]{scrbook}
+    oneside
+]{book}
 \usepackage[subpreambles=true]{standalone}
 
 \usepackage[a4paper]{geometry}
@@ -28,7 +29,7 @@
 % Chapter formatting
 \usepackage{titlesec, blindtext, color}
 
-\renewcommand{\chapterheadstartvskip}{}
+%\renewcommand{\chapterheadstartvskip}{}
 
 \input{./src/macros.tex}
 \input{./src/listing.tex}
@@ -137,7 +138,13 @@ None.
 \import{sections/}{eff-formally}
 
 \chapter{Code snippets}
+\label{sec:code-snippets}
 \setcounter{page}{1}
+
+\mylisting{caml}
+{Unwinding of the K component in the CEK machine.}
+{lst:cek-unwind-ocaml}
+{code_examples/cek_unwind.ml}
 
 \chapter{Project Proposal}
 \setcounter{page}{1}

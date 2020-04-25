@@ -18,6 +18,7 @@
 \usepackage{pdflscape}
 \usepackage{wrapfig}
 \usepackage{booktabs}
+\usepackage{cleveref}
 
 \ifstandalone
 \input{../src/listing.tex}
@@ -31,15 +32,10 @@
 
 This chapter is concerned with the implementation of a CEK interpreter and
 a SECD-like virtual machine for Eff. As the project is theory based, I will start this chapter
-with continuing the Preparation and introducing a CEK machine for Eff, then my SECD-like
-SHADE virtual machine, its byte code and compilation from Eff to this byte code.
+with continuing on the topics discussed in the Preparation chapter and introducing a CEK machine for Eff, then my SECD-like
+SHADE virtual machine.
 
-It will be useful to think about the theory precisely and in-depth because it will
-help to define the types and interfaces of the various OCaml modules of the project.
-Indeed, I will often talk about the theory in the context of the abstract types
-of the implementation of my project.
-
-Following this I discuss my OCaml implementation and finally I write about the various 
+Following this I discuss my OCaml implementation of the above and finally I write about the various 
 software engineering practices I used to carry out the work.
 
 \section{A CEK machine for Eff}
@@ -52,24 +48,19 @@ My implementation uses a similar machine.
 
 I talked a lot about closures in the Preparation chapter but the concepts discussed there
 did not involve any handlers. In functional languages closures are used to make it possible
-to handle functions as values because they can contain free variables. In Eff, handlers are
-similar because they too can have free variables.
+to handle functions as values. This wouldn't be trivial as functions can have free variables.
+In Eff, handlers are similar in this respect as they too can have free variables.
 
-\begin{lstlisting}[language=efflang]
-let make_handler n =
-    let h = handler
-    | val x -> x + n
-    | effect (E x) k ->
-        (* body of effect case using `n` *)
-    | finally x ->
-        (* body of finally case using `n` *)
-;;
-\end{lstlisting}
+\mylisting{efflang}
+{A handler parameterised by a free variable $n$}
+{lst:parameterised handlers}
+{../code_examples/hlosures.eff}
 
-In the code snippet above there is a \verb|make_handler| function which returns a handler
+In \autoref{lst:parameterised handlers} the \verb|make_handler| function returns a handler
 \emph{parameterised} by \verb|n|. We see that we need to remember the value of \verb|n|
-with each handler during runtime. We can simply attach an environment $E$ to a handler $H$ to
-get around this problem just how we do this with closures when talking about functions.
+with each handler during runtime. This can be done simply by attaching the environment $E$
+to a handler $H$ to get around this problem, similarly to how one would do this with closures.
+
 In the rest of this chapter I will refer to such structures as \emph{hlosures} (handler closures)
 and will denote the hlosure of handler $H$ in the context of environment $E$ as $\mathcal{H}(H, E)$.
 
@@ -84,47 +75,49 @@ closures belong to which with-handle block in the K stack.
 
 During the runtime we always know about the current handler so we could simply tag all
 closures in the K stack with the current handler at the time of its creation. However,
-it is a much better idea to simply have a seperate K stack per handler, because
-that will make the unwind operation on the K component of the stack machine much more efficient
-(we will unwind handler and not the continuations one by one).
+it is a much better idea to simply have a separate K stack per handler, because
+that will make the \emph{unwind} operation on the K component of the machine much
+more efficient (we will unwind handlers and not continuations one by one).
 
-\noindent
-\begin{minipage}{\textwidth}
-\begin{center}
-\begin{lstlisting}[language=caml]
-type cek_id (** Identifiers *)
-type cek_env (** Environments *)
-type cek_control (** Control terms *)
+\mylisting{caml}
+{The structure of a CEK machine for Eff}
+{lst:cek-structure-types}
+{../code_examples/cek_structure.ml}
 
-(** Closures and kontinuations *)
-type cek_kont = cek_id * cek_env * cek_control
-type cek_k = cek_kont list
-
-(** CEK machine configuration *)
-type cek_machine = cek_control * cek_env * cek_k
-\end{lstlisting}
-\end{center}
-\end{minipage}
-
-Remember that handlers are represented as hlosures during runtime. Hence I will call the
-structure described above a \emph{hlosure frame}. Hlosure frames are the new entries in
-the K stack of my CEK machine. They consist of a hlosure and a kontinuation stack and
-have the type \verb|cek_hlosure_frame = cek_hlosure * cek_kont list|.
-
-\begin{lstlisting}[language=caml]
-type cek_hlosure = cek_control * cek_env
-type cek_hlosure_frame = cek_hlosure * cek_kont list
-type cek_k = cek_hlosure_frame list
-
-type cek_machine = cek_control * cek_env * cek_k
-\end{lstlisting}
+I will call such a structure a \emph{hlosure frame}. Hlosure frames will be the new entries
+in the K stack of the CEK machine. They consist of a hlosure and a kontinuation stack as
+can be seen in \autoref{lst:parameterised handlers}.
 
 \subsection{CEK abstract machine}
 
 Now that we know how we account for handlers and delimited continuations in the CEK
-machine we can turn our attention to the transition rules of a CEK machine interpreting Eff.
+machine we can turn our attention to the transition rules of a CEK machine interpreting Eff (\autoref{fig:cek-machine}).
 
-\begin{myfigure}{A CEK machine interpreting Eff}{cek-machine}
+\subsubsection{Notation}
+
+As expressions don't admit reduction we can simply interpret them in the context of an environment $\gamma$. For an expression $e$
+this is written $\interp{e}\gamma$ and the notation means that if $e$ is a variable then its value is looked up from $\gamma$. The runtime representation
+of a functions $\effFun x \to c$ is with closures and they are written as tuples of the form $(x.c, \gamma)$.
+Hlosures are written as $\mathcal{H}(h, \gamma)$ and the runtime representation of recursive functions $\effRec f\ x = c$ happens with recursive
+closures $\mathcal{R}(f, x.c, \gamma)$ which differ from normal closures in that they also include the name of the function represented.
+The stack of closures in hlosure frames is written as $\mathcal{C}$.
+
+\subsubsection{Function and continuation application}
+
+As we discussed in the Preparation chapter delimited continuations and functions behave very similarly and there
+was no need to distinguish them in the abstract syntax of Eff. However, the runtime system must be aware of what
+is applied to an argument! Fortunately, we can always distinguish closures, recursive closures and continuations
+at runtime.
+
+Function application or applying closures is standard. When we apply a recursive closure $\mathcal{R}(f, x.c, \gamma)$
+we make sure that we bind $f$ to $\mathcal{R}(f, x.c, \gamma)$, so that $f$ can be invoked again in the function body.
+With the hlosure frame representation of K, applying a continuation $\kappa$ is just the same as prepending it to $K$.
+I would like to raise attention to how \emph{convenient} this representation is. When an effect behaves like an exception (i.e., when $\kappa$ is not resumed)
+all the handlers up to the handler handling the exception are all in $\kappa$ and are not in K anymore. However, when we do resume $\kappa$ then all
+the handlers are put back in place again in K, thereby restoring the original execution context the effect was raised from.
+This means that is no extra effort needed to manage the handler stack separately: the handler stack is managed automagically by the use of continuations.
+
+\begin{myfigure}[0.9]{A CEK machine interpreting Eff}{fig:cek-machine}
     Initialisation:
     $$ c \longrightarrow \cek{c, \{\}, []} $$
     %
@@ -156,23 +149,24 @@ machine we can turn our attention to the transition rules of a CEK machine inter
     \end{align*}
 \end{myfigure}
 
-As expressions don't admit reduction we can simply interpret them in the context of an environment $\gamma$. For an expression $e$
-this is written $\interp{e}\gamma$ and means that if $e$ is a variable then its value is looked up from $\gamma$. The runtime representation
-of a functions $effFun x \to c$ is with closures and they are written as the tuple $(x.c, \gamma)$, similarly how it was done in the Preparation. 
-Hlosures are written as $\mathcal{H}(h, \gamma)$ and the runtime representation of recursive functions $\effRec f\ x = c$ is with recursive
-closures which also include the name of the function: $\mathcal{R}(f, x.c, \gamma)$.
+\subsubsection{Perform and with-handle}
 
-Function application does not need a lot of explanation. When we apply a recursive closure $\mathcal{R}(f, x.c, \gamma)$ we make sure that we bind
-$f$ to $\mathcal{R}(f, x.c, \gamma)$, so that $f$ can be invoked again in the function body. 
+The remaining two features of Eff are convenient to implement with hlosure frames too.
+The rule for with-handle blocks simply prepends $([], \mathcal{H})$ to $K$, where $[]$ is
+an empty stack of continuations and $\mathcal{H}$ is a hlosure.
 
-With the hlosure frame representation of K applying a continuation $\kappa$ is just the same as prepending it to $K$.
-I would like to raise attention to how convenient this representation is. When an effect behaves like an exception (i.e., when $\kappa$ is not resumed)
-all the handlers up to the handler handling the exception are all in $\kappa$ and are not in K anymore. However, when we do resume $\kappa$ then all
-the handlers are put back in place again in K, thereby restoring the original execution context the effect was raised from.
+Performing effects is a little more difficult due to the unwinding of the $K$ component. When
+an effect is performed we must search for the closest handler capable of handling the effect.
+However, we must also concatenate together all the delimited continuations from the hlosure frames
+we jump through. \autoref{fig:cek-k-unwind} depicts concisely how this can be done. The CEK state
+is temporarily extended with a fourth component which behaves as an accumulator for hlosure
+frames (and hence as an accumulator for delimited continuations).
 
-This means that is no extra effort needed to manage the handler stack separately: the handler stack is managed automagically by the use of continuations.
-
-The rule for the with-handle blocks simply prepends a new hlosure frame to K containing an empty continuation stack and the hlosure $\hlosure$.
+If a handler frame contains a hlosure $\mathcal{H}$ that can handle the performed effect then $\kappa$ (the list of
+hlosure frames carrying the delimited continuation in the fourth component) is bound to $k$ and the
+identifier of the effect argument from the effect case is bound to $e$ in $\mathcal{H}'s$ (!) environment.
+Otherwise, the current hlosure frame is removed from the CEK state and is appended to $\kappa$ and the unwinding
+continues.
 
 \begin{myfigure}[.95]{Unwinding of the K component in the CEK machine}{fig:cek-k-unwind}
     \begin{align*}
@@ -187,96 +181,130 @@ The rule for the with-handle blocks simply prepends a new hlosure frame to K con
         \end{align*}
 \end{myfigure}
 
-The way K is unwound upon performing an effect is described in \autoref{cek-k-unwind}. The CEK state is temporarily extended with a
-fourth component which is an accumulator for $\kappa$ we are trying to determine. Here is the same in OCaml:
+An OCaml code snippet showing how to implement this same functionality can be found in Appendix \autoref{sec:code-snippets}.
+A nice feature of functional languages is that once we get our theory right, the theory usually lends
+itself to an almost trivial implementation. This is the case with the CEK machine too and this is why
+I won't talk about the implementation in detail here---it closely follows the rules presented earlier.
 
-\begin{lstlisting}[language=caml]
-(* int -> cek_value -> cek_k -> cek_k -> cek_state *)
-let rec unwind eff_id eff_arg hlosure_frame_acc = function
-| [] ->
-    let msg = "Runtime exception: a handler handling effect with ID=" 
-        ^ (string_of_int eff_id) ^ "could not be found" in
-    raise (CEKerror msg)
-| hf :: hfs ->
-    let continuation = hlosure_frame_acc @ [hf] in
-  
-    (* Current hlosure frame matches effect *)
-    if is_match eff_id hf then
-        (* Obtain matching effect case *)
-        let matching_effcase = List.find (fun effcase -> effcase.eff_id = eff_id) hf.hlosure.handler.effcases in
-        
-        (* Bind argument of effect and the current continuation to the corresponding indentifiers in the hlosure environment *)
-        let env = hf.hlosure.env
-        |> (Cek_env.add matching_effcase.arg_label eff_arg)
-        |> (Cek_env.add matching_effcase.kont_label (CEKcont continuation)) in
-        
-        (* Return the new CEK state *)
-        { c = matching_effcase.eff_control;
-          e = env;
-          k = hfs; }
+All transition rules are implemented via a \lstinline{step} function which performs a single step of the
+transition rules shown in \autoref{fig:cek-machine} as shown by \autoref{lst:impl-step-func} below.
 
-    (* If no match is found the continue the unwinding hlosure frames *)
-    else
-        unwind eff_id eff_arg continuation hfs
-;;
-\end{lstlisting}
+\mylisting{caml}
+{A typical implementation of a rule in the \lstinline{step} function}
+{lst:impl-step-func}
+{../code_examples/step_function.ml}
 
 \section{The SHADE virtual machine}
 \label{sec:shade-machine}
 
-The SHADE virtual machine is a SECD-like virtual machine which was the goal of
-my project.
-The SHADE name is an anagram from the initials A,D,E,H,S -- the main
-components of the machine.
-It had many versions and the final version turned out to be surprisingly similar
-to the solution Multicore OCaml uses with its fibres -- the heap-allocated fibres
-of OCaml show a lot of resemblance with the shadows of the SHADE machine.
+The SHADE virtual machine is a SECD-like virtual machine in that it has a dump component,
+however, it interprets byte code (SHADEcode, which is described in \autoref{tab:shade-bytecode})
+rather than the source terms of a language. The name is an anagram from the initials of the
+main components of the machine: 
+\emph{accumulator} (A), \emph{dump} (D), \emph{environment} (E), \emph{hlosure} (H) and
+\emph{stack} (S). The rest of this section is concerned with a
+description of this machine using its transition rules. \Cref{sec:shade-illustration} will
+give an overview of how the byte code implements the different aspects of the Eff language.
 
-The SHADE virtual machine interprets SHADE byte code which will be described
-in the next section. Here I give the description of the machine with its transition
-rules.
-
-The state of the machine at any point can be characterised with a two-tuple
-$$ \langle A, D \rangle $$
-where $A$ is the accumulator and $D$ is a list of \emph{shadows}, essentially a stack
-of continuations like the dump in SECD machines.
-A shadow is a four-tuple $$ \langle pc, E, H, S \rangle $$, where $pc$ is the
+\paragraph{Configuration.}
+The state of the machine can be characterised with a two-tuple $ \langle A, D \rangle $
+where $A$ is the accumulator and $D$ is a dump. I call the elements of $D$ \emph{shadows}.
+Shadows are the SHADE equivalent of CEK hlosure frames.
+A shadow is a four-tuple $ \langle pc, E, H, S \rangle $, where $pc$ is the
 program-counter of the shadow, $E$ is an environment, $H$ is a hlosure and $S$ is
 a stack.
+\footnote{The SHADE machine had many versions throughout the year and this final version
+turns out to be surprisingly similar to the solution Multicore OCaml uses with its fibres
+-- the heap-allocated fibres of OCaml show a lot of resemblance with the shadows of the
+SHADE machine.}
 
-The \emph{top-shadow} is a special shadow I will refer to often. To avoid having to refer to
-it through the $D$ component I will use the notation $\langle A, d, D \rangle$ instead, to mean the SHADE state
- $\langle A, d :: D \rangle$.
+Only the \emph{top shadow} is executing of all the shadows at any point in the execution.
+To avoid having to refer to the top shadow through the $D$ component I will use the notation
+$\langle A, d, D \rangle$ instead, to mean the SHADE configuration $\langle A, d :: D \rangle$.
+
 In the program counter field ($pc$) of a shadow I will write the instruction the program counter
 points to and its value interchangeably. On the left hand side of the transition rules it is more
 convenient to refer to the instruction and on the right hand side it is often useful to write
 $pc+1$ to mean that the program counter is incremented or write $L$ to mean
 that we perform a jump to the label $L$.
 
-\autoref{shade-machine} is only dealing with inter-shadow instructions. These are instructions which manipulate
-the D component of the machine and implement the Eff-specific features (perform, resume, with-handle and
-returning from with-handle blocks).
+\subsection{Transition rules and SHADEcode}
 
-Intra-shadow instructions are standard stack machine instructions similar to those of the Caml Virtual Machine \cite{caml-vm}.
+\autoref{fig:shade-machine} shows only transition rules for \emph{inter-shadow instructions}. These are instructions which implement
+the interactions between shadows (i.e., they manipulate the D component of the machine and implement the
+Eff-specific features like performing effects, applying continuations, entering and returning from with-handle blocks and handler cases).
+
+\emph{Intra-shadow} instructions are standard stack machine instructions similar to those of the Caml Virtual Machine \cite{caml-vm}.
 I won't give formal transition rules for these here. \autoref{tab:shade-bytecode} includes all SHADE instructions and explains their purpose in prose.
 
-\begin{myfigure}[0.95]{SHADE machine transition rules}{fig:shade-machine}
-    Initialisation:
-    $$\text{program} \to \shade{\shUnit, (0, \{\}, H_{def}, []), []}$$
-    Termination:
-    $$ \shade{v, (\shHalt, E, H, S), D} \to v $$
-    Transition rules for Eff-specific instructions:
-    $$ \shade{\mathcal{C}(cp, \gamma), (\shCastShadow, E, H, \hlosure :: S), D} \to \shade{A, (cp, \gamma, \hlosure, []), (pc+1, E, H, \hlosure :: S) :: D} $$
-    $$ \shade{A, (\shKillShadow, E, \hlosure(h, \gamma), S), D} \to  \shade{A, (L_{\text{valcase}(h)}, \gamma, \hlosure(h, \gamma),S), D} $$
-    $$ \shade{A, (\shFin, E, H, \hlosure(h, \gamma) :: S), D} \to \shade{A, (L_{\text{fincase}(h)}, \gamma, (pc, E) :: S), D} $$
-    $$ \shade{A, (\shThrow\ id, E, H, S), D} \to \shade{A, (\shThrow\ id, E, H, S), D, []}_\text{unwind}^{id} $$
+The SHADE machine is initialised by loading a program compiled to byte code and initialising $D$
+to a list containing an \emph{empty shadow} with the default handler $H_{def}$. The default handler
+is responsible for handling effects which rise to the toplevel.
+\footnote{Runtime systems can define built-in effects this way. The Evaluation chapter will show how
+can one implement a web server in Eff by defining 2 built-in effects which interact with the Linux kernel.}
+The machine terminates when it has reached the \vmHalt\ instruction.
 
-    $$ \shade{A, (\shRett, E, H, S), D} \to \shade{A, D} $$
-    $$ \shade{A, (\shApply, E, H, \mathcal{C}(cp, \gamma) :: S), D} \to \shade{A, (cp, \gamma, H, (pc, E) :: S), D} $$
-    $$ \shade{A, (\shApply, E, H, \kappa :: S), D} \to \shade{A, \kappa\ @\ ((pc, E, H, S) :: D)} $$
-\end{myfigure}
+\paragraph{Communication between shadows.}
 
-\begin{myfigure}[1]{Stack unwinding in SHADE}{fig:shade-stack-unwind}
+I will start to introduce the SHADE byte code and the SHADE transition rules. Unfortunately, there is a circular
+dependency between the concepts in this section. I apologise in advance for starting to talk about the compilation
+this suddenly, but the cycle must be broken somewhere. Let us consider how with-handle blocks are compiled:
+$$ \interp{\irWithHandle\ (h, e)}_s ^ \gamma = \interp{h}_s ^ \gamma; \vmPush; \text{fvs-to-stack}(e, s, \gamma); \vmMakeClosure{N}{L}; \shCastShadow; \shFin.$$
+The handler is first compiled and is pushed to the stack. Then the closure of the with-handle block's body
+is constructed and a new shadow corresponding to this block is created by the \vmCastShadow\ instruction.
+$L$ is a fresh label denoting the start of the with-handle block's body. The code for the body of the with-handle
+block is generated separately. The \vmFin\ instruction invokes the finally case after control is returned to this
+shadow again. When this happens, the hlosure of $h$ is still on the stack of this shadow and this is the reason
+why the \vmCastShadow\ instruction does not consume the hlosure from the stack. It might not be obvious why we need a
+separate instruction for finally cases. The reason is that control can return in many ways: it can come from a value
+or effect case via a \vmRett\ instruction. However, when many continuations are resumed in the same with-handle block
+(think about the Hello World example), then only the last \vmRett\ instruction actually leaves the with-handle block
+and therefore we cannot make the invocation of finally cases a feature of the \vmRett\ instruction. This is the
+responsibility of the same shadow a with-handle block resides in.
+
+\begin{myfigure}[0.95]
+    {SHADE machine transition rules}
+    {fig:shade-machine}
+        Initialisation:
+        $$\text{program} \to \shade{\shUnit, (0, \{\}, H_{def}, []), []}$$
+        Termination:
+        $$ \shade{v, (\shHalt, E, H, S), D} \to v $$
+        Transition rules for Eff-specific instructions:
+        $$ \shade{\mathcal{C}(cp, \gamma), (\shCastShadow, E, H, \hlosure :: S), D} \to \shade{A, (cp, \gamma, \hlosure, []), (pc+1, E, H, \hlosure :: S) :: D} $$
+        $$ \shade{A, (\shKillShadow, E, \hlosure(h, \gamma), S), D} \to  \shade{A, (L_{\text{valcase}(h)}, \gamma, \hlosure(h, \gamma),S), D} $$
+        $$ \shade{A, (\shFin, E, H, \hlosure(h, \gamma) :: S), D} \to \shade{A, (L_{\text{fincase}(h)}, \gamma, (pc, E) :: S), D} $$
+        $$ \shade{A, (\shThrow\ id, E, H, S), D} \to \shade{A, (\shThrow\ id, E, H, S), D, []}_\text{unwind}^{id} $$
+    
+        $$ \shade{A, (\shRett, E, H, S), D} \to \shade{A, D} $$
+        $$ \shade{A, (\shApply, E, H, \mathcal{C}(cp, \gamma) :: S), D} \to \shade{A, (cp, \gamma, H, (pc, E) :: S), D} $$
+        $$ \shade{A, (\shApply, E, H, \kappa :: S), D} \to \shade{A, \kappa\ @\ ((pc, E, H, S) :: D)} $$
+    \end{myfigure}
+
+Another important detail is that the bodies of functions, with-handle blocks and
+handler cases are not compiled the same way. The body of with-handle blocks always ends with a \vmKillShadow\ 
+instruction, value cases and effect cases end with a \vmRett\ instruction, the bodies of functions and
+finally cases end with \vmRet.
+
+The reason why the transition rule of \vmKillShadow\ invokes the value case of the current handler is
+because the bodies of with-handle blocks end with \vmKillShadow\ instructions---\vmKillShadow\ does not actually destroy
+the current top shadow; it simply prepares it for the execution of the value case of a handler by jumping to
+the corresponding label and putting the environment of the hlosure in $E$. As value cases end with \vmRett\
+instructions and they always destroy the top shadow, the job is finished by the \vmRett\ of a value case.
+
+If the behaviour of an effect is exception-like then control might not reach the end of a with-handle block.
+This justifies why \vmKillShadow\ cannot be responsible for actually destroying shadows or for invoking the
+finally case of a handler which further justifies the existence of the \vmFin\ instruction.
+
+The \vmFin\ instruction implements the invocation of finally cases as a function call but it also pops
+the handler the \vmCastShadow\ instruction left on the stack. With this Eff effect handlers are implemented.
+
+\paragraph{Similarities with the CEK machine.}
+The \vmApply\ instruction implements function and continuation application the same way it was done in the
+CEK machine. The \vmThrow\ instruction is used to perform an effect. When this happens the dump has to be unwound
+the same way the $K$ component of the CEK machines needed to be unwound.
+
+
+\begin{myfigure}[1]{Dump unwinding in SHADE}{fig:shade-stack-unwind}
     $$ \shade{A, \underbrace{(pc, E, H, S)}_d, D, \kappa }_\text{unwind}^{id} \text{ and } H \uparrow id \to \begin{cases}
         \text{Runtime exception} & \text{if } D = [] \\
     \shade{A, d, D', \kappa @ [d]}_\text{unwind}^{id} & \text{if } D = d' :: D' \end{cases} $$
@@ -285,10 +313,16 @@ I won't give formal transition rules for these here. \autoref{tab:shade-bytecode
         \shade{A, (L_{\text{effcase}(h, id)}, \gamma[x \mapsto A, k \mapsto \kappa] ), D} \text{ if } h \downarrow id $$
 \end{myfigure}
 
+\paragraph{Calling convention}
 
-\subsection{SHADEcode -- an instruction set}
+Another fine but important detail is that the calling convention for functions, continuations \emph{and} effects
+must match. At the time of the compilation we have no idea whether an identifier will stand for a function or a
+continuation. One might think that this still leaves us many possibilities, but this actually completely defines
+the calling convention in SHADE.
 
-This section
+We cannot use the stack to pass function or continuation arguments around because by resuming a continuation we
+are also restoring shadows and therefore we lose the access to the current stack. The same goes for returning values.
+Hence we must use the accumulator.
 
 \begin{table}
 \centering
@@ -318,7 +352,7 @@ This section
         \verb|pc := adress of L| \\
     \vmBranchIfNot{$L$} & 
         If A = false then jump to location L. Otherwise continue with the next instruction. &
-        \begin{tabular}[t]{@{}l@{}} \verb|pc := pc + 1| if \verb|A = true|\\\verb|pc := L| if \verb|A = false| \end{tabular} \\
+        \begin{tabular}[t]{@{}l@{}} if \verb|A| then \verb|pc := pc + 1|\\else \verb|pc := L| \end{tabular} \\
     \vmApply &
         Apply the top of the stack to the accumulator. &
         see \autoref{fig:shade-machine} \\
@@ -328,6 +362,15 @@ This section
     \vmRett & 
         Return from a value or effect case with the value in A. Destroy the top shadow and increment the program counter of the new top shadow. &
         see \autoref{fig:shade-machine} \\
+    \vmFin &
+        Something &
+        something \\
+    \vmCastShadow &
+        Something &
+        someting \\
+    \vmKillShadow &
+        Something &
+        something \\
     \vmMakeBox{$t$}{$n$} &
         Create a box with tag $t$ using $A$ and the top $n-1$ elements of S. & \\
     \vmGetField{$n$} &
@@ -350,7 +393,7 @@ This section
         \begin{tabular}[t]{@{}l@{}}\verb|A := bop(A, S.top())|\\\verb|S.pop()|\end{tabular} \\
     \bottomrule
 \end{tabular}}
-\caption{SHADE instruction set}
+\caption{SHADEcode, the instruction set of the SHADE machine}
 \label{tab:shade-bytecode}
 \end{table}
 
@@ -375,14 +418,8 @@ This section
     $$ \interp{\irListTail\ v}_s ^ \gamma = \interp{v}_s ^ \gamma ; \vmListTail $$
 \end{myfigure}
 
-\begin{figure}
-
-
-    \caption{The compile-later relation}
-    \label{compile-later}
-\end{figure}
-
-\section{How can SHADEcode implement Eff?}
+\subsection{How does SHADEcode implement Eff?}
+\label{sec:shade-illustration}
 
 I gave a formal but dry description of the SHADE machine and its bytecode in the previous section.
 The reader might rightfully demand an explanation of why SHADE makes sense for Eff. In this section

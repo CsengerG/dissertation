@@ -1,0 +1,8 @@
+let make_handler n =
+  let h = handler
+  | val x -> x + n
+  | effect (E x) k ->
+    (* body of effect case using `n` *)
+  | finally x ->
+    (* body of finally case using `n` *)
+;;

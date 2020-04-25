@@ -88,6 +88,9 @@
 \providecommand{\vmMakeClosure}[2]{\textbf{makeclosure }#1, #2}
 \providecommand{\vmMakeHlosure}[4]{\textbf{makehlosure }#1, #2, #3, #4}
 \providecommand{\vmThrow}{\textbf{throw}}
+\providecommand{\vmFin}{\textbf{fin}}
+\providecommand{\vmCastShadow}{\textbf{castshadow}}
+\providecommand{\vmKillShadow}{\textbf{killshadow}}
 
 \providecommand{\hlosure}{\mathcal{H}}
 \providecommand{\konts}{\mathcal{C}}
@@ -98,7 +101,7 @@
     \def\mylabel{#3}
     \definecolor{shadecolor}{rgb}{0.95,0.95,0.95}
 
-    \begin{figure}
+    \begin{figure}[tb]
     \centering
     \begin{minipage}{\mywidth\textwidth}
     \begin{shaded*}
