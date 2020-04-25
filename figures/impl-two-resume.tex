@@ -4,6 +4,12 @@
 \usepackage{xcolor}
 \usepackage{soul}
 \usepackage{graphicx}
+\usepackage{listings}
+
+\lstset{basicstyle=\Large\ttfamily,
+numbers=left,
+escapechar=\%,
+firstnumber=last}
 
 \definecolor{lightpink}{rgb}{1.0, 0.71, 0.76}
 \definecolor{lightblue}{rgb}{0.68, 0.85, 0.9}
@@ -17,14 +23,14 @@
 \providecommand{\zseton}[1]{\tikz{[remember picture] \node[circle, fill=red, inner sep=2pt] (#1) {}; }}
 
 %
-\providecommand{\hframe}[5]{%
-    \coordinate (BF) at (#1);
+\providecommand{\hframe}[6][white]{%
+    \coordinate (BF) at (#2);
     \coordinate (JA) at ($ (BF) + (3,-2) $);
     \coordinate (CSB) at ($ (BF) + (0,-0.5) $);
     \coordinate (CSJ) at ($ (BF) + (3,-0.5) $);
-    \draw (BF) rectangle (JA);
-    \draw (CSB) -- (CSJ) node [above, pos=0.5] (A) {#2} node [below, pos=0.5] (B)
-    {\begin{tabular}{c}pc = #3 \\ A = #4\\ S=[#5]\end{tabular}};%
+    \filldraw[fill=#1, draw=black] (BF) rectangle (JA);
+    \draw (CSB) -- (CSJ) node [above, pos=0.5] (A) {#3} node [below, pos=0.5] (B)
+    {\begin{tabular}{c}pc = #4 \\ A = #5\\ S=[#6]\end{tabular}};%
 }
 
 \usetikzlibrary{positioning}
@@ -43,70 +49,70 @@
 
 \begin{document}
 \begin{tabular}{l}
-\begin{minipage}{1.2\textwidth}
+\begin{minipage}{1.3\textwidth}
 \begin{Verbatim}[fontsize=\Large,commandchars=\\\{\}]
-    effect Choose : unit -->> bool;;
+effect Choose : unit -->> bool;;
 
-    let h = handler
-    | \colorbox{blue!30}{val x -> [x]}
-    | \colorbox{red!30}{effect (Choose ()) k ->}
-        \colorbox{red!30}{(continue k true) @ (continue k false)}
-    | \colorbox{purple!30}{finally x -> x}
-    ;;
-    
-    \colorbox{orange!30}{with h handle}
-        \colorbox{green!30}{let x = if (perform (Choose ())) then 10 else 20 in}
-        \colorbox{green!30}{let y = if (perform (Choose ())) then 5 else 15 in}
-        \colorbox{green!30}{x - y}
-    ;;
+let h = handler
+| \colorbox{blue!30}{val x -> [x]}
+| \colorbox{red!30}{effect (Choose ()) k ->}
+    \colorbox{red!30}{(continue k true) @ (continue k false)}
+| \colorbox{purple!30}{finally x -> x}
+;;
+
+\colorbox{orange!30}{with h handle}
+    \colorbox{green!30}{let x = if (perform (Choose ())) then 10 else 20 in}
+    \colorbox{green!30}{let y = if (perform (Choose ())) then 5 else 15 in}
+    \colorbox{green!30}{x - y}
+;;
 \end{Verbatim}
 \end{minipage}%
-\begin{minipage}{.9\textwidth}
-\begin{Verbatim}[fontsize=\Large, numbers=left, commandchars=\\\{\}]
+\begin{minipage}{1.15\textwidth}
+\begin{lstlisting}
 SHADEcode:
-    makehlosure 0, Lval, Lfin, [(Lchoose, 1)]
-    push
-    push
-    makeclosure Lwith, 0
-    \nodehere{cast}\colorbox{orange!30}{castshadow}
-    \nodehere{fin}\colorbox{orange!30}{fin} \nodehere{fin2}
-    halt \nodehere{halt}
-\colorbox{blue!30}{Lval:}
-    \colorbox{blue!30}{makebox 0, 1}
-    \colorbox{blue!30}{ret2}
-\end{Verbatim}
+makehlosure 0, Lval, Lfin, [(Lchoose, 1)]
+push
+push
+makeclosure Lwith, 0
+%\nodehere{cast}\colorbox{orange!30}{castshadow}%
+%\nodehere{fin}\colorbox{orange!30}{fin} \nodehere{fin2}%
+halt
+%\colorbox{blue!30}{Lval:}%
+ %\colorbox{blue!30}{makebox 0, 1}%
+ %\colorbox{blue!30}{ret2}%
+\end{lstlisting}
 \end{minipage}%
 \begin{minipage}{0.6\textwidth}
-\begin{Verbatim}[fontsize=\Large, numbers=left, commandchars=\\\{\}, firstnumber=last]
-\colorbox{red!30}{Lchoose:} \nodehere{lchoose}
-    \colorbox{red!30}{envacc 0}
-    \colorbox{red!30}{push}
-    \colorbox{red!30}{const true}
-    \colorbox{red!30}{apply}
-    \colorbox{red!30}{push}
-    \colorbox{red!30}{envacc 0}
-    \colorbox{red!30}{const false}
-    \colorbox{red!30}{apply}
-    \colorbox{red!30}{lstappend}
-    \colorbox{red!30}{ret2}
-\end{Verbatim}
+\begin{lstlisting}[escapechar=\%]
+%\colorbox{red!30}{Lchoose:} \nodehere{lchoose}%
+ %\colorbox{red!30}{envacc 0}%
+ %\colorbox{red!30}{push}%
+ %\colorbox{red!30}{const true}%
+ %\colorbox{red!30}{apply}%
+ %\colorbox{red!30}{push}%
+ %\colorbox{red!30}{envacc 0}%
+ %\colorbox{red!30}{const false}%
+ %\colorbox{red!30}{apply}%
+ %\colorbox{red!30}{lstappend}%
+ %\colorbox{red!30}{ret2}%
+\end{lstlisting}
 \end{minipage}%
 \begin{minipage}{0.7\textwidth}
-\begin{Verbatim}[fontsize=\Large, numbers=left, commandchars=\\\{\}, firstnumber=last]
-\nodehere{lwith}\colorbox{green!30}{Lwith:}
-    \colorbox{green!30}{const ()}
-    \colorbox{green!30}{throw 1}\nodehere{firstthrow}
-    \colorbox{green!30}{push}
-    \colorbox{green!30}{//...}
-    \colorbox{green!30}{const ()}
-    \colorbox{green!30}{throw 1}
-    \colorbox{green!30}{push}
-    \colorbox{green!30}{//...}
-    \colorbox{green!30}{subint}
-    \colorbox{green!30}{killshadow}
-\colorbox{purple!30}{Lfin:}
-    \colorbox{purple!30}{ret}
-\end{Verbatim}
+\begin{lstlisting}[escapechar=\%]
+%\nodehere{lwith}\colorbox{green!30}{Lwith:}%
+ %\colorbox{green!30}{const ()}%
+ %\colorbox{green!30}{throw 1}\nodehere{firstthrow}%
+ %\colorbox{green!30}{push}%
+ %\colorbox{green!30}{//...}%
+ %\colorbox{green!30}{const ()}%
+ %\colorbox{green!30}{throw 1}%
+ %\colorbox{green!30}{push}%
+ %\colorbox{green!30}{//...}%
+ %\colorbox{green!30}{subint}%
+ %\colorbox{green!30}{killshadow}%
+%\colorbox{purple!30}{Lfin:}%
+ %\colorbox{purple!30}{ret}%
+\end{lstlisting}
 \end{minipage}
 \\ \\ \\ \\
 \begin{minipage}{3.7\textwidth}
@@ -117,34 +123,34 @@ SHADEcode:
         \hframe{0,-3}{\texttt{h}}{23}{$\mathcal{C}(\mathtt{Lwith}, \{\})$}{};
         \draw[-{Stealth[length=3mm]}] (3, -4) -- (4.5, -4) node [above, pos=0.5] (C) {\verb|23--25|};
     
-        \hframe{4.5,-3}{\texttt{h}}{25}{()}{};
-        \draw[-{Stealth[length=3mm]}] (7.5, -4) -- (9, -4) node [above, pos=0.5] (C) {\verb|throw 1|};
+        \hframe[orange!20]{4.5,-3}{\texttt{h}}{25}{()}{};
+        \draw[-{Stealth[length=3mm]}, red] (7.5, -4) -- (9, -4) node [above, pos=0.5] (C) {\verb|throw 1|};
         \node [above] (kappa1) at (6,-3) {$\kappa_1$};
     
-        \hframe{9,-3}{\texttt{h}}{12}{()}{};
+        \hframe{9,-3}{empty}{12}{()}{};
         \draw[-{Stealth[length=3mm]}] (12, -4) -- (13.5, -4) node [above, pos=0.5] (C) {\verb|12--16|};
         
-        \hframe{13.5,-3}{\texttt{h}}{16}{true}{};
+        \hframe{13.5,-3}{empty}{16}{true}{};
         \draw[-{Stealth[length=3mm]}, red] (15,-5) to [in=-5, out=-150] (8.25, -5.5) node [above] (X) {\verb|apply| $\kappa_1$ \verb|true|} to [out=175,in=30] (1.5,-6);
         
         %%%%%%
     
-        \hframe{0,-6}{\texttt{h}}{26}{true}{};
+        \hframe[orange!20]{0,-6}{\texttt{h}}{26}{true}{};
         \draw[-{Stealth[length=3mm]}] (3, -7) -- (4.5, -7) node [above, pos=0.5] (C) {\verb|26--29|};
         
-        \hframe{4.5,-6}{\texttt{h}}{29}{()}{10};
-        \draw[-{Stealth[length=3mm]}] (7.5, -7) -- (9, -7) node [above, pos=0.5] (C) {\verb|throw 1|};
+        \hframe[orange!60]{4.5,-6}{\texttt{h}}{29}{()}{10};
+        \draw[-{Stealth[length=3mm]}, red] (7.5, -7) -- (9, -7) node [above, pos=0.5] (C) {\verb|throw 1|};
     
-        \hframe{9,-6}{\texttt{h}}{12}{()}{};
+        \hframe{9,-6}{empty}{12}{()}{};
         \draw[-{Stealth[length=3mm]}] (12, -7) -- (13.5, -7) node [above, pos=0.5] (C) {\verb|12--16|};
-        \node [above] (kappa1) at (6,-6) {$\kappa_2$};
+        \node [above] (kappa2) at (6,-6) {$\kappa_2$};
     
-        \hframe{13.5,-6}{\texttt{h}}{16}{true}{};
+        \hframe{13.5,-6}{empty}{16}{true}{};
         \draw[-{Stealth[length=3mm]}, red] (15,-8) to [in=-5, out=-150] (8.25, -8.5) node [above] (X) {\verb|apply| $\kappa_2$ \verb|true|} to [out=175,in=30] (1.5,-9);
     
         %%%%%%
     
-        \hframe{0,-9}{\texttt{h}}{30}{true}{10};
+        \hframe[orange!60]{0,-9}{\texttt{h}}{30}{true}{10};
         \draw[-{Stealth[length=3mm]}] (3, -10) -- (4.5, -10) node [above, pos=0.5] (C) {\verb|30--33|};
     
         \hframe{4.5,-9}{\texttt{h}}{33}{5}{5,10};
@@ -154,28 +160,28 @@ SHADEcode:
     
         %%%%%%
     
-        \hframe{18,-6}{\texttt{h}}{17}{[5]}{};
+        \hframe{18,-6}{empty}{17}{[5]}{};
         \draw[-{Stealth[length=3mm]}, blue] [bend right] (13,-10) -- (19.5,-8) node [above, pos=0.5] (Z) {\verb|ret2|};
         
-        \hframe{22.5,-6}{\texttt{h}}{20}{false}{[5]};
+        \hframe{22.5,-6}{empty}{20}{false}{[5]};
         \draw[-{Stealth[length=3mm]}] (21, -7) -- (22.5, -7) node [above, pos=0.5] (C) {\verb|...|};
     
-        \hframe{22.5,-9}{\texttt{h}}{30}{false}{10};
+        \hframe[orange!60]{22.5,-9}{\texttt{h}}{30}{false}{10};
         \draw[red,-{Stealth[length=3mm]}] (24, -8) -- (24, -9) node [left, pos=0.5] (C) {\verb|apply| $\kappa_2$ \verb|false|};
     
         \hframe{27,-9}{\texttt{h}}{11}{[-5]}{15,10};
         \draw[-{Stealth[length=3mm]}] (25.5, -10) -- (27, -10) node [above, pos=0.5] (C) {\verb|...|};
     
-        \hframe{27,-6}{\texttt{h}}{21}{[-5]}{[5]};
+        \hframe{27,-6}{empty}{21}{[-5]}{[5]};
         \draw[blue, -{Stealth[length=3mm]}] (28.5, -9) -- (28.5, -8) node [left, pos=0.5] (C) {\verb|ret2|};
     
         \hframe{31.5,-6}{\texttt{h}}{22}{[5, -5]}{[]};
         \draw[-{Stealth[length=3mm]}] (30, -7) -- (31.5, -7) node [above, pos=0.5] (C) {\verb|lstapp|};
     
-        \hframe{31.5,-3}{\texttt{h}}{17}{[5, -5]}{[]};
+        \hframe{31.5,-3}{empty}{17}{[5, -5]}{[]};
         \draw[red, -{Stealth[length=3mm]}] (33, -6) -- (33, -5) node [left, pos=0.5] (C) {\verb|ret2|};
     
-        \hframe{39.5,0}{\texttt{Built-in handler}}{8}{[5, -5, 15, 5]}{$\mathcal{H}$};
+        \hframe{39.5,0}{\texttt{Built-in handler}}{8}{\colorbox{yellow}{[5, -5, 15, 5]}}{$\mathcal{H}$};
         \draw[red, -{Stealth[length=3mm]}] (33, -6) -- (33, -5) node [left, pos=0.5] (C) {\verb|ret2|};
     
         \draw[red, -{Stealth[length=3mm]}] (34.5,-4) -- (35,-4) -- (35,-7) node [right, pos=0.5] (C) {$\kappa_1$ \verb|false|} --
