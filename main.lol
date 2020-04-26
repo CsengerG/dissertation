@@ -12,4 +12,5 @@
 \contentsline {lstlisting}{\numberline {3.2}The structure of a CEK machine for Eff}{25}{lstlisting.3.2}
 \contentsline {lstlisting}{\numberline {3.3}A typical implementation of a rule in the \lstinline {step} function}{28}{lstlisting.3.3}
 \contentsline {lstlisting}{\numberline {3.4}Getting abstractions right can lead to beautiful and concise functional programs}{41}{lstlisting.3.4}
+\contentsline {lstlisting}{\numberline {4.1}Cloning continuations must be done explicitly in Multicore OCaml}{47}{lstlisting.4.1}
 \contentsline {lstlisting}{\numberline {B.1}Unwinding of the K component in the CEK machine.}{B.2}{lstlisting.a.B.1}
