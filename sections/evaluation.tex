@@ -24,27 +24,106 @@
 
 \begin{document}
 
-Intro here
-Eff vs CEK vs Shade VM vs Multicore Ocaml
+This chapter of my dissertation is concerned with comparing my CEK interpreter implementation of Eff and my SHADE virtual machine with
+other existing solutions implementing algebraic effect handlers. Specifically, the comparison is split into two parts: to evaluate the performance
+of the CEK interpreter I compare against the Eff interpreter and against the interpreter of Multicore OCaml. The SHADE virtual machine is compared
+to Multicore OCaml's byte code interpreter.
+
+At the end of this chapter I show a proof of concept web server is described. This is more of a qualitative evaluation and is supposed to show
+what is possible to do with effect handlers in the real-world.
+
+\paragraph{Evaluation strategy and technical details.}
+
+I will run multiple benchmarks each of which uses effect handlers in a different way. Each benchmark is ran 10 times and on the plots
+the arithmetic average of the execution times is reported as well as the standard deviation. Data is collected using GNU's \verb|time| command.
+During the measurements my laptop was connected to the power supply and I tried to minimise noise in the measurements by not running any other
+process (apart from a terminal) and turning off unnecessary functionalities like WiFi, Ethernet, Bluetooth, etc.
+
+All benchmarks are executed on a Lenovo Thinkpad X1 \nth{6} gen. with
+an Intel Core i7-8565U CPU, 16GB of RAM using a single thread. The operating system in use is a 64bit Ubuntu 18.04.4 LTS, Linux kernel version \verb|5.3.0-46-generic|.
+
+Eff is compiled from its official GitHub repository at the time where the top commit has SHA1 \verb|796900d|.
+\footnote{The official repository is \url{https://github.com/matijapretnar/eff/} at the time of writing.}
+The version of Multicore OCaml used in the benchmarks is obtained by OPAM, the identifier of the OPAM switch is \verb|4.06.1+multicore|.
 
 \section{Exceptions}
 
-\subsection{Results}
+The exception benchmark raises and catches exception-like effects (the continuation is never resumed). I must add that
+in the OCaml benchmark I used effects simulating exceptions rather than \emph{actual} OCaml exceptions. Actual OCaml
+exceptions are implemented very efficiently in OCaml (they are not resumable at all).
 
-\includegraphics[width=25em]{eval_plots/exc_comp.png}
+\begin{figure}
+    \centering
+    \includegraphics[width=40em]{eval_plots/interp_exception.png}
+    \caption{The CEK interpreter performs better than Eff but worse than Multicore OCaml}
+    \label{fig:exception-interpreters}
+\end{figure}
+
+Athough the OCaml interpreter beats the CEK interpreter in this benchmark, the performance of the SHADE VM
+is comparable to MultiCaml's VM even though the execution time for SHADE includes the compilation time to SHADEcode,
+but the times for MultiCaml do not include compilation. The reason why this is so is simple: I did not implement
+serialization for my byte code and the compilation time is less and less significant as we increase the number of exceptions.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=35em]{eval_plots/comp_exception.png}
+    \caption{The peformance of SHADE is comparable to Multicore OCaml's}
+    \label{fig:exception-bytecode}
+\end{figure}
+
+Note that as the byte code solutions are vastly more efficient than their interpreter counterparts they are compared with a larger number of exceptions.
+It takes around 63 seconds for the Eff interpreter to evaluate the benchmark with 5000 exceptions, whereas this takes only
+3.5 seconds for the CEK interpreter. For SHADE VM the same takes around 200 miliseconds (with compilation included),
+which is a 300-fold improvement!
 
 \section{State and I/O}
 
-\subsection{Results}
+The state benchmark implements
+an integer state and increments it every time the \verb|Incr| effect is performed. The handler of the \verb|Incr| effect
+resumes the continuation exactly once. The reason why I chose such a simple computationally cheap operation as integer addition
+was that I wanted to measure the performance of performing effects and resuming continuations. As $N$ increases we can be confident
+that the cost of performing effects and resuming continuations will dominate the execution time.
 
-\includegraphics[width=25em]{eval_plots/state_interp.png}
+\begin{figure}
+    \centering
+    \includegraphics[width=35em]{eval_plots/interp_state.png}
+    \caption{Again, the CEK interpreter performs better than Eff but worse than the interpreter of Multicore OCaml}
+    \label{fig:state-interpreters}
+\end{figure}
 
-\includegraphics[width=25em]{eval_plots/state_comp.png}
+\begin{figure}
+    \centering
+    \includegraphics[width=35em]{eval_plots/comp_state.png}
+    \caption{SHADE VM's performance is still head-to-head with Multicore OCaml}
+    \label{fig:state-bytecode}
+\end{figure}
 
-\section{Non-determinism -- The N queens problem}
+\section{Non-determinism -- Solving the N-queens problem}
 
-\subsection{Results}
+The $N$-queens
+\footnote{The N-queens problem is concerned with finding the positions of $N$ queens on an $N \times N$ chessboard
+such that no two queens attack each other.}
+benchmark is a backtracking program which can resume continuations up to $N$ times. Here I don't compare against the CEK interpreter
+for the bigger benchmarks because due to its naïve implementation it slows down significantly after $N > 14$. However, the performance of
+SHADE VM remains acceptable, but significantly worse than the VM of Multicore OCaml.
 
-\section{Concurrency -- A webserver in Eff}
+\begin{figure}
+    \centering
+    \includegraphics[width=35em]{eval_plots/comp_state.png}
+    \caption{SHADE VM loses against Multicore OCaml here but is still more performant than the Eff interpreter}
+    \label{fig:n-queens}
+\end{figure}
+
+The reason why Multicore OCaml performs so much better than SHADE VM is what I already mentioned in the Implementation chapter. Multicore OCaml
+implements one-shot continuations and relies on the user to specify when a continuation should be cloned.
+
+\mylisting{caml}
+{Cloning continuations must be done explicitly in Multicore OCaml}
+{lst:multicaml-cloning}
+{../code_examples/multicaml_cloning.ml}
+
+\section{Concurrency -- Actually greeting the world}
+
+\section{Summary}
 
 \end{document}
