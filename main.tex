@@ -20,6 +20,7 @@
 \usepackage{parskip}
 \usepackage[absolute,overlay]{textpos}
 \usepackage{pdfpages}
+\usepackage{tabularx}
 
 \geometry{
     includeheadfoot,
@@ -71,25 +72,25 @@ Hereby, I would like to say thanks to:
 \newpage
 
 \chapter{Proforma}
+\begin{tabularx}{\textwidth}{@{} ll @{}}
+Candidate number & X \\
+Project title & Compiling algebraic effect handlers \\
+Examination & Computer Science Tripos -- Part II, 2020 \\
+Word Count & TODO \\
+Lines of Code & 6158
+\footnote{Obtained with Visual Studio Code's \href{https://marketplace.visualstudio.com/items?itemName=uctakeoff.vscode-counter}{VS Code Counter} extension} \\
+Page Count & 40 \\
+Project Originator & Candidate X \\
+Supervisor & Professor Alan Mycroft \\
+\end{tabularx}
 
-\begin{tabular}{@{} ll @{}}
-Candidate number: & X (TODO) \\
-Project title: & Compiling algebraic effect handlers \\
-Examination: & Computer Science Tripos -- Part II, 2020 \\
-Word Count: & TODO \\
-Lines of Code: & TODO \\
-Page Count: & TODO \\
-Project Originator : & Candidate X \\
-Supervisor: Professor Alan Mycroft \\
-\end{tabular}
-
-\section*{Original aims of the Project}
+\paragraph{Original aims of the Project}
 
 The project had four core aims: to write an interpreter for Eff, to design a byte code for Eff, to write a compiler from Eff to this byte code
 and to implement a virtual machine interpreting the byte code. Additional goals were to implement various optimisations for Eff, such as
 tail resumption optimisation or minimising the copy overhead from the use of continuations.
 
-\section*{Work completed}
+\paragraph{Work completed}
 
 An CEK machine interpreting Eff was implemented. A byte code for Eff (SHADEcode) was designed. A compiler from Eff to SHADEcode was
 implemented as well as a virtual machine (SHADE) interpreting SHADEcode. As far as I know, SHADE and SHADEcode are the first
@@ -98,7 +99,7 @@ In the Evaluation chapter
 I compare the performance of my Eff interpreter with the current official Eff interpreter and I compare the performance of the SHADE
 virtual machine with the performance of Multicore OCaml (another compiled language with similar features to Eff).
 
-\section*{Special difficulties}
+\paragraph{Special difficulties}
 None.
 
 \tableofcontents
