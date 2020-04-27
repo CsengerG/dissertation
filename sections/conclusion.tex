@@ -16,7 +16,7 @@
 
 \begin{document}
 
-I think this was a successful project. This dissertation is actually a story about a journey
+The project was a success. This dissertation is actually a story about a journey
 which starts in the theoretical valleys of Mathematics, leads through the more practical
 (but still quite theoretical) areas of Computer Science and finally ends in the realms of Software
 Engineering.
@@ -36,15 +36,8 @@ seem to be almost the same.}.
 
 The Evaluation chapter was concerned with comparing the CEK evaluator and the SHADE VM to other existing solutions, namely
 Multicore OCaml and the official Eff interpreter. We found that the SHADE VM is reasonably efficient even without implementing
-any optimisations. 
-
-At the end of the chapter it was shown how algebraic effects and their handlers
-could be used for systems programming by exhibiting a toy web server implementation in Eff. This little demo supports the claims
-we made in the Introduction: algebraic effect handlers do allow a programmer to implement their own concurrency model and
-make the implementation of the language runtime easier. The last point is emphasised just by my own experience: I designed
-and implemented a compiler and virtual machine alone and at the end of my project I was able to write concurrent software in Eff, compile and
-run it on my VM. I wouldn't have been able to do this if I also have to think about a concurrency model which I had to bake in
-my runtime system and implement it properly.
+any optimisations. It was also shown how algebraic effects and their handlers
+could be used for systems programming by exhibiting a toy web server implementation in Eff.
 
 \section{Further work}
 
@@ -54,8 +47,8 @@ practice side. The most ambitious ones are the following.
 The fact that there are algebraic theories behind algebraic effects and their handlers allows us to prove certain
 compiler transformations correct by equational reasoning. This gives us the opportunity to take a set of effect
 equations (for instance, the equation $\mathtt{set}(x,y); \mathtt{set}(x,z) = \mathtt{set}(x, z)$ would say the first
-\texttt{set} can be optimised away) and generate new optimisations (perhaps entirely new ones or ones dependent on the
-semantics of some effects).
+\texttt{set} can be optimised away) and generate new optimisations (perhaps entirely new ones no one has thought about yet
+or ones that are dependent on the semantics of some effects).
 
 Type and effect systems admit to even more optimisations and the opportunity to parallelise independent parts of programs.
 As hardware is getting increasingly parallel such optimisations can help us to get the most out of our multicore machines.
@@ -72,8 +65,7 @@ language enthusiasts.
 \section{Self-reflection}
 
 If I were to start the project again I would try to be less ambitious. I vastly underestimated the intellectual challenge
-behind continuations, handlers and control operators. If I were to start the project again I would make the implementation
-of a CEK machine the new success criterion and would make deriving SHADE VM and its byte code as extensions.
+behind continuations, handlers and control operators.
 
 At the beginning of the project I got a bit carried away with syntactic sugar and trying to implement a lot of features
 of the language properly. This proved to be counterproductive and I had to abandon these efforts. If I had to do this
