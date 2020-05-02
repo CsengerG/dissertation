@@ -23,6 +23,8 @@
 
 \begin{document}
 
+% TODO: necessary to understand these things in order to appreciate what follows; hence the tutorial style.
+% TODO: took me X time to understand this; for the benefit of the next person blah blah,... tutorial
 This chapter of my dissertation contains a tutorial introduction to the
 programming language Eff. It also discusses continuations and their
 relationships with two abstract machines, and talks about some of the software
@@ -83,6 +85,7 @@ given to an effect handler (this would be an exception handler in OCaml or Java)
 or the program will terminate with an exception if no handler can handle the
 effect.
 
+% REPHRASE DO NOT BE CONFUSED
 Do not be confused by how an effect is constructed. Effects are not values in
 the Eff language. That is, \lstinline{Print "Hello World"} would be meaningless
 in itself, just like the exception \lstinline{Failure "hd"} would be meaningless

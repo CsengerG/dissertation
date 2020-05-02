@@ -1,13 +1,12 @@
 \documentclass[%
     12pt,
-    a4paper,
     bibliography=toc,
     listof=leveldown,% use section for the list headings
     oneside
 ]{book}
 \usepackage[subpreambles=true]{standalone}
 
-\usepackage[a4paper]{geometry}
+\usepackage[margin=1in]{geometry}
 \usepackage[table]{xcolor}
 \usepackage[utf8]{inputenc}
 \usepackage[english]{babel}
@@ -37,6 +36,8 @@
 
 \begin{document}
 \input titlepage
+% TODO: put CRSID to first page
+% TODO: ask from candidate number from college
 
 \frontmatter
 
@@ -97,6 +98,7 @@ or minimising the copy overhead from the use of continuations.
 
 \paragraph{Work completed}
 
+% DONT MENTION CEK... you mean syntax level interpreter here
 A CEK machine interpreting Eff was implemented. A byte code for Eff (SHADEcode)
 was designed. A compiler from Eff to SHADEcode was implemented as well as a
 virtual machine (SHADE) interpreting SHADEcode. As far as I know, SHADE and
@@ -165,6 +167,7 @@ None.
     $$ \interp{\irListTail\ v}_s ^ \gamma = \interp{v}_s ^ \gamma ; \vmListTail $$
 \end{myfigure}
 
+% TODO: code for the N-queens here
 \chapter{Code snippets}
 \label{sec:code-snippets}
 \setcounter{page}{1}

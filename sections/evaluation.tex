@@ -20,6 +20,10 @@
 
 \begin{document}
 
+% TODO: reference figures
+% TODO: baselines on the plots?
+% TODO: talk in numbers---take X% of the time it takes Y to do this
+
 This chapter of my dissertation is concerned with comparing my CEK interpreter
 implementation of Eff and my SHADE virtual machine with other existing solutions
 implementing algebraic effect handlers. Specifically, the comparison is split
@@ -234,6 +238,7 @@ one can implement a toy webserver using one's own runtime system written from
 scratch in less than a year justifies the second claim (the cited paper is a
 result of the collaboration of 6 people).
 
+% TODO: rephrase wonderful
 \begin{figure}
     \centering
     \includegraphics[width=30em]{eval_plots/webserver.png}
@@ -244,6 +249,8 @@ result of the collaboration of 6 people).
     \label{fig:hello-online-world}
 \end{figure}
 
+% TODO: use EXACT numbers
+% TODO: webserver was load tested with wrk2 -t=4 -R=100 -c=20
 \section{Summary}
 
 \begin{itemize}
