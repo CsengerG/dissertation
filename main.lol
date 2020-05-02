@@ -1,4 +1,4 @@
-\contentsline {lstlisting}{\numberline {2.1}Printing is an effect taking a string as its argument and returning unit as a result.}{5}{lstlisting.2.1}
+\contentsline {lstlisting}{\numberline {2.1}Printing is an effect taking a string as its argument and returning unit as the result.}{5}{lstlisting.2.1}
 \contentsline {lstlisting}{\numberline {2.2}A handler definition consisting of 2 cases: a value case and an effect case.}{6}{lstlisting.2.2}
 \contentsline {lstlisting}{\numberline {2.3}The Hello World example in Eff.}{6}{lstlisting.2.3}
 \contentsline {lstlisting}{\numberline {2.4}Handler without finally}{7}{lstlisting.2.4}
@@ -13,4 +13,4 @@
 \contentsline {lstlisting}{\numberline {3.3}A typical implementation of a rule in the \lstinline {step} function}{28}{lstlisting.3.3}
 \contentsline {lstlisting}{\numberline {3.4}Getting abstractions right can lead to beautiful and concise functional programs}{41}{lstlisting.3.4}
 \contentsline {lstlisting}{\numberline {4.1}Cloning continuations must be done explicitly in Multicore OCaml}{45}{lstlisting.4.1}
-\contentsline {lstlisting}{\numberline {B.1}Unwinding of the K component in the CEK machine.}{B.2}{lstlisting.a.B.1}
+\contentsline {lstlisting}{\numberline {B.1}Unwinding of the K component in the CEK machine}{B.2}{lstlisting.a.B.1}

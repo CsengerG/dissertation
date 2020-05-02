@@ -1,24 +1,17 @@
 \documentclass[class=article, crop=false]{standalone}
 \usepackage[subpreambles=true]{standalone}
-\usepackage[a4paper]{geometry}
 \usepackage{import}
-\usepackage{ebproof}
 \usepackage[utf8]{inputenc}
 \usepackage[table]{xcolor}
 \usepackage{tikz}
 \usepackage{hyperref}
 \usepackage{amsmath}
-\usepackage{amssymb}
 \usepackage{listings}
-\usepackage{verbatim}
-\usepackage[super]{nth}
-\usepackage{float}
-\usepackage{subcaption}
-\usepackage{rotating}
 \usepackage{pdflscape}
-\usepackage{wrapfig}
 \usepackage{booktabs}
 \usepackage{cleveref}
+
+\usepackage[margin=1in]{geometry}
 
 \ifstandalone
 \input{../src/listing.tex}
@@ -30,92 +23,117 @@
 
 \begin{document}
 
-This chapter is concerned with the implementation of a CEK interpreter and
-a SECD-like virtual machine for Eff. As the project is theory based, I will start this chapter
-with continuing on the topics discussed in the Preparation chapter and introducing a CEK machine for Eff, then my SECD-like
-SHADE virtual machine.
+This chapter is concerned with the implementation of a CEK interpreter and an
+SECD-like virtual machine for Eff. 
 
-Following this I discuss my OCaml implementation of the above and finally I write about the various 
-software engineering practices I used to carry out the work.
+% chapter is split into 2
+As the project is theory-based, I will start
+this chapter by continuing the topics discussed in the Preparation chapter
+introducing a CEK machine for Eff and then my SECD-like SHADE virtual machine.
+
+Following this I discuss my OCaml implementation of the above and finally I
+write about the various software engineering practices I used to carry out the
+work.
+
+% backups as said in the proposal
 
 \section{A CEK machine for Eff}
 
-As mentioned in the Introduction, the Links programming language uses a CEK interpreter
-to implement algebraic effects and their handlers \cite{hillerstrom2016compilation}.
-My implementation uses a similar machine.
+My implementation uses a CEK interpreter inspired by Hillerström's
+machine for Links \cite{hillerstrom2016compilation}.
 
 \subsection{Hlosures}
 
-I talked a lot about closures in the Preparation chapter but the concepts discussed there
-did not involve any handlers. In functional languages closures are used to make it possible
-to handle functions as values. This wouldn't be trivial as functions can have free variables.
-In Eff, handlers are similar in this respect as they too can have free variables.
+I talked a lot about closures in the Preparation chapter but the concepts
+discussed there did not involve any handlers. In functional languages closures
+are used to make it possible to handle functions as values. This non-trivial
+because functions can have free variables with values 
+dependent on the context. In Eff, handlers are similar in this respect
+as they too can have free variables.
 
 \mylisting{efflang}
 {A handler parameterised by a free variable $n$}
 {lst:parameterised handlers}
 {../code_examples/hlosures.eff}
 
-In \autoref{lst:parameterised handlers} the \verb|make_handler| function returns a handler
-\emph{parameterised} by \verb|n|. We see that we need to remember the value of \verb|n|
-with each handler during runtime. This can be done simply by attaching the environment $E$
-to a handler $H$ to get around this problem, similarly to how one would do this with closures.
+In \autoref{lst:parameterised handlers} the \lstinline|make_handler| function
+returns a handler \emph{parameterised} by \lstinline|n|. We see that we need to
+remember the value of \verb|n| at the time of the creation of each handler
+at runtime. This can be done by attaching the environment $E$ to a handler $H$,
+similarly to how one would do this with closures and functions.
 
-In the rest of this chapter I will refer to such structures as \emph{hlosures} (handler closures)
-and will denote the hlosure of handler $H$ in the context of environment $E$ as $\mathcal{H}(H, E)$.
+In the rest of this chapter I will refer to such structures as \emph{hlosures}
+(handler closures) and will denote the hlosure of handler $H$ in the context of
+environment $E$ as $\mathcal{H}(H, E)$.
 
 \subsection{Hlosure frames}
 
-When an effect is raised in an Eff program control is given to a matching effect case.
-Now the current delimited continuation must be determined as it might be used in the body
-of an effect case. The continuation is delimited by the with-handle block the matching
-handler is handling. In the Preparation chapter we saw that we had access to the current
-continuation at all times with the CEK machine, however we would struggle to decide which
-closures belong to which with-handle block in the K stack.
+When an effect is raised in an Eff program, control is given to a matching
+effect case. Now the current delimited continuation must be determined as it
+might be used in the body of an effect case. The continuation is delimited by
+the with-handle block the \emph{matching handler} is handling. In the
+Preparation chapter we saw that we had access to the current continuation at
+all times in a CEK machine, however, now we also need to decide which closures
+belong to which with-handle blocks in the $K$ stack.
 
-During the runtime we always know about the current handler so we could simply tag all
-closures in the K stack with the current handler at the time of its creation. However,
-it is a much better idea to simply have a separate K stack per handler, because
-that will make the \emph{unwind} operation on the K component of the machine much
-more efficient (we will unwind handlers and not continuations one by one).
+At runtime we always know about the current handler, so we could simply tag all
+closures in the $K$ stack with the current handler at the time of its creation.
+However, it is a much better idea to simply have a separate $K$ stack per
+handler, because that will make the \emph{unwind} operation on the $K$ component
+much more efficient (we will unwind handlers and not continuations one by one).
 
 \mylisting{caml}
 {The structure of a CEK machine for Eff}
 {lst:cek-structure-types}
 {../code_examples/cek_structure.ml}
 
-I will call such a structure a \emph{hlosure frame}. Hlosure frames will be the new entries
-in the K stack of the CEK machine. They consist of a hlosure and a kontinuation stack as
-can be seen in \autoref{lst:parameterised handlers}.
+I will call such a structure a \emph{hlosure frame}. Hlosure frames will be the
+new entries in the $K$ stack of the CEK machine. They consist of a hlosure and
+a \emph{kontinuation stack} as can be seen in
+\autoref{lst:parameterised handlers}.
+
+%  LINE NUMBERS
 
 \subsection{CEK abstract machine}
 
-Now that we know how we account for handlers and delimited continuations in the CEK
-machine we can turn our attention to the transition rules of a CEK machine interpreting Eff (\autoref{fig:cek-machine}).
+Now that we know how we account for handlers and delimited continuations in the
+CEK machine we can turn our attention to the transition rules of a CEK machine
+interpreting Eff (\autoref{fig:cek-machine}).
 
 \subsubsection{Notation}
 
-As expressions don't admit reduction we can simply interpret them in the context of an environment $\gamma$. For an expression $e$
-this is written $\interp{e}\gamma$ and the notation means that if $e$ is a variable then its value is looked up from $\gamma$. The runtime representation
-of a functions $\effFun x \to c$ is with closures and they are written as tuples of the form $(x.c, \gamma)$.
-Hlosures are written as $\mathcal{H}(h, \gamma)$ and the runtime representation of recursive functions $\effRec f\ x = c$ happens with recursive
-closures $\mathcal{R}(f, x.c, \gamma)$ which differ from normal closures in that they also include the name of the function represented.
-The stack of closures in hlosure frames is written as $\mathcal{C}$.
+As expressions do not admit reduction we can simply interpret them in the
+context of an environment $\gamma$. For an expression $e$ this is written
+$\interp{e}\gamma$ and the notation means that if $e$ is a variable then its
+value is looked up from $\gamma$. The runtime representation of functions
+$\effFun x \to c$ happens with closures and they are written as tuples of the
+form $(x.c, \gamma)$. Hlosures are written as $\mathcal{H}(h, \gamma)$ and the
+runtime representation of recursive functions $\effRec f\ x = c$ happens with
+recursive closures $\mathcal{R}(f, x.c, \gamma)$ which differ from normal
+closures in that they also include the name of the function represented.
+The kontinuation stack in hlosure frames is written as $\mathcal{C}$.
 
 \subsubsection{Function and continuation application}
 
-As we discussed in the Preparation chapter delimited continuations and functions behave very similarly and there
-was no need to distinguish them in the abstract syntax of Eff. However, the runtime system must be aware of what
-is applied to an argument! Fortunately, we can always distinguish closures, recursive closures and continuations
-at runtime.
+As we discussed in the Preparation chapter delimited continuations and functions
+behave very similarly and there was no need to distinguish them in the abstract
+syntax of Eff. However, the runtime system must be aware of what is applied to
+an argument! Fortunately, we can always distinguish closures, recursive closures
+and continuations at runtime.
 
-Function application or applying closures is standard. When we apply a recursive closure $\mathcal{R}(f, x.c, \gamma)$
-we make sure that we bind $f$ to $\mathcal{R}(f, x.c, \gamma)$, so that $f$ can be invoked again in the function body.
-With the hlosure frame representation of K, applying a continuation $\kappa$ is just the same as prepending it to $K$.
-I would like to raise attention to how \emph{convenient} this representation is. When an effect behaves like an exception (i.e., when $\kappa$ is not resumed)
-all the handlers up to the handler handling the exception are all in $\kappa$ and are not in K anymore. However, when we do resume $\kappa$ then all
-the handlers are put back in place again in K, thereby restoring the original execution context the effect was raised from.
-This means that is no extra effort needed to manage the handler stack separately: the handler stack is managed automagically by the use of continuations.
+Function application or applying closures is standard. When we apply a recursive
+closure $\mathcal{R}(f, x.c, \gamma)$ we make sure that we bind $f$ to
+$\mathcal{R}(f, x.c, \gamma)$, so that $f$ can be recursively invoked in its
+function body. With the hlosure frame representation of $K$, applying a
+continuation $\kappa$ is just the same as prepending it to $K$. I would like to
+raise attention to how \emph{convenient} this representation is. When an effect
+behaves like an exception (i.e., when $\kappa$ is not resumed) all the handlers
+up to the handler handling the exception are all in $\kappa$ and are not in $K$
+anymore. However, when we do resume $\kappa$ then all the handlers are put back
+in place again in $K$, thereby restoring the original execution context the
+effect was raised from. This means that there is no extra effort needed to
+manage the handler stack separately: the handler stack is managed
+\emph{automagically} by the use of continuations.
 
 \begin{myfigure}[0.9]{A CEK machine interpreting Eff}{fig:cek-machine}
     Initialisation:
@@ -151,21 +169,26 @@ This means that is no extra effort needed to manage the handler stack separately
 
 \subsubsection{Perform and with-handle}
 
-The remaining two features of Eff are convenient to implement with hlosure frames too.
-The rule for with-handle blocks simply prepends $([], \mathcal{H})$ to $K$, where $[]$ is
-an empty stack of continuations and $\mathcal{H}$ is a hlosure.
+The remaining two features of Eff can be conveniently implemented with hlosure
+frames too. The rule for with-handle blocks simply prepends $([], \mathcal{H})$
+to $K$, where $[]$ is an empty kontinuation stack and $\mathcal{H}$ is a
+hlosure representing the handler from the with-handle block.
 
-Performing effects is a little more difficult due to the unwinding of the $K$ component. When
-an effect is performed we must search for the closest handler capable of handling the effect.
-However, we must also concatenate together all the delimited continuations from the hlosure frames
-we jump through. \autoref{fig:cek-k-unwind} depicts concisely how this can be done. The CEK state
-is temporarily extended with a fourth component which behaves as an accumulator for hlosure
-frames (and hence as an accumulator for delimited continuations).
+Performing effects is a little bit more difficult due to the unwinding of the
+$K$ component. When an effect is performed we must search for the closest
+handler capable of handling the effect. However, we must also concatenate
+together all the delimited continuations from the hlosure frames we jump
+through. \autoref{fig:cek-k-unwind} depicts concisely how this can be done. The
+CEK state is temporarily extended with a fourth component which behaves as an
+accumulator for hlosure frames (and hence as an accumulator for delimited
+continuations).
 
-If a handler frame contains a hlosure $\mathcal{H}$ that can handle the performed effect then $\kappa$ (the list of
-hlosure frames carrying the delimited continuation in the fourth component) is bound to $k$ and the
-identifier of the effect argument from the effect case is bound to $e$ in $\mathcal{H}'s$ (!) environment.
-Otherwise, the current hlosure frame is removed from the CEK state and is appended to $\kappa$ and the unwinding
+If a handler frame contains a hlosure $\mathcal{H}$ that can handle the
+performed effect then $\kappa$ (the list of hlosure frames carrying the
+delimited continuation in the fourth component) is bound to $k$ and the
+identifier of the effect argument from the effect case is bound to $e$ in
+$\mathcal{H}'s$ (!) environment. Otherwise, the current hlosure frame is
+removed from the CEK state and is appended to $\kappa$ and the unwinding
 continues.
 
 \begin{myfigure}[.95]{Unwinding of the K component in the CEK machine}{fig:cek-k-unwind}
@@ -181,13 +204,17 @@ continues.
         \end{align*}
 \end{myfigure}
 
-An OCaml code snippet showing how to implement this same functionality can be found in Appendix \autoref{sec:code-snippets}.
-A nice feature of functional languages is that once we get our theory right, the theory usually lends
-itself to an almost trivial implementation. This is the case with the CEK machine too and this is why
-I won't talk about the implementation in detail here---it closely follows the rules presented earlier.
+An OCaml code snippet showing how to implement this same functionality can be
+found in Appendix \autoref{sec:code-snippets}. A nice feature of functional
+languages is that once we get our theory right, the theory usually lends
+itself to an almost trivial implementation. This is the case with the CEK
+machine too and this is why I will not talk about the implementation in
+detail here---however, a typical rule implementation can be found below.
+% NOT BELOW
 
-All transition rules are implemented via a \lstinline{step} function which performs a single step of the
-transition rules shown in \autoref{fig:cek-machine} as shown by \autoref{lst:impl-step-func} below.
+All transition rules are implemented via a \lstinline{step} function which
+performs a single step of the transition rules shown in
+\autoref{fig:cek-machine}. This can be seen in \autoref{lst:impl-step-func}.
 
 \mylisting{caml}
 {A typical implementation of a rule in the \lstinline{step} function}
@@ -197,70 +224,86 @@ transition rules shown in \autoref{fig:cek-machine} as shown by \autoref{lst:imp
 \section{The SHADE virtual machine}
 \label{sec:shade-machine}
 
-The SHADE virtual machine is a SECD-like virtual machine in that it has a dump component,
-however, it interprets byte code (SHADEcode, which is described in \autoref{tab:shade-bytecode})
-rather than the source terms of a language. The name is an anagram from the initials of the
-main components of the machine: 
-\emph{accumulator} (A), \emph{dump} (D), \emph{environment} (E), \emph{hlosure} (H) and
-\emph{stack} (S). The rest of this section is concerned with a
-description of this machine using its transition rules. \Cref{sec:shade-illustration} will
-give an overview of how the byte code implements the different aspects of the Eff language.
+The SHADE virtual machine is an SECD-like virtual machine in that it has a dump
+component, however, it interprets byte code (SHADEcode, which is described in
+\autoref{tab:shade-bytecode}) rather than the source terms of a language. The
+name is an anagram from the initials of the main components of the machine: 
+\emph{accumulator} (A), \emph{dump} (D), \emph{environment} (E),
+\emph{hlosure} (H) and \emph{stack} (S). The rest of this section is concerned
+with a description of this machine using its transition rules.
+\Cref{sec:shade-illustration} will give an overview of how the byte code
+implements the different aspects of the Eff language.
 
 \paragraph{Configuration.}
-The state of the machine can be characterised with a two-tuple $ \langle A, D \rangle $
-where $A$ is the accumulator and $D$ is a dump. I call the elements of $D$ \emph{shadows}.
-Shadows are the SHADE equivalent of CEK hlosure frames.
-A shadow is a four-tuple $ \langle pc, E, H, S \rangle $, where $pc$ is the
-program-counter of the shadow, $E$ is an environment, $H$ is a hlosure and $S$ is
-a stack.
-\footnote{The SHADE machine had many versions throughout the year and this final version
-turns out to be surprisingly similar to the solution Multicore OCaml uses with its fibres
--- the heap-allocated fibres of OCaml show a lot of resemblance with the shadows of the
-SHADE machine.}
+The state of the machine can be characterised with a two-tuple
+$\langle A, D \rangle$ where $A$ is the accumulator and $D$ is a dump. I call
+the elements of $D$ \emph{shadows}. Shadows are the SHADE equivalent of CEK
+hlosure frames. A shadow is a four-tuple $\langle pc, E, H, S \rangle$, where
+$pc$ is the program-counter of the shadow, $E$ is an environment, $H$ is a
+hlosure and $S$ is a stack.
+\footnote{The SHADE machine had many versions throughout the year and this
+final version turns out to be surprisingly similar to the solution Multicore
+OCaml uses with its fibres -- the heap-allocated fibres of OCaml show a lot
+of resemblance with the shadows of the SHADE machine.}
 
-Only the \emph{top shadow} is executing of all the shadows at any point in the execution.
-To avoid having to refer to the top shadow through the $D$ component I will use the notation
-$\langle A, d, D \rangle$ instead, to mean the SHADE configuration $\langle A, d :: D \rangle$.
+Only the \emph{top shadow} is executing of all the shadows at any point in the
+execution. To avoid having to refer to the top shadow through the $D$ component
+I will use the notation $\langle A, d, D \rangle$ instead to denote the SHADE
+configuration $\langle A, d :: D \rangle$.
 
-In the program counter field ($pc$) of a shadow I will write the instruction the program counter
-points to and its value interchangeably. On the left hand side of the transition rules it is more
-convenient to refer to the instruction and on the right hand side it is often useful to write
-$pc+1$ to mean that the program counter is incremented or write $L$ to mean
-that we perform a jump to the label $L$.
+In the program counter field ($pc$) of a shadow I will write the instruction
+the program counter points to and its value interchangeably. On the left hand
+side of the transition rules it is more convenient to refer to the instruction
+and on the right hand side it is often useful to write $pc+1$ to mean that the
+program counter is incremented or write $L$ to mean that we perform a jump to
+the label $L$.
 
 \subsection{Transition rules and SHADEcode}
 
-\autoref{fig:shade-machine} shows only transition rules for \emph{inter-shadow instructions}. These are instructions which implement
-the interactions between shadows (i.e., they manipulate the D component of the machine and implement the
-Eff-specific features like performing effects, applying continuations, entering and returning from with-handle blocks and handler cases).
+\autoref{fig:shade-machine} shows only transition rules for \emph{inter-shadow
+instructions}. These are instructions which implement the interactions between
+shadows (i.e., they manipulate the D component of the machine and implement the
+Eff-specific features like performing effects, applying continuations, entering
+and returning from with-handle blocks and handler cases).
 
-\emph{Intra-shadow} instructions are standard stack machine instructions similar to those of the Caml Virtual Machine \cite{caml-vm}.
-I won't give formal transition rules for these here. \autoref{tab:shade-bytecode} includes all SHADE instructions and explains their purpose in prose.
+\emph{Intra-shadow} instructions are standard stack machine instructions similar
+to those of the Caml Virtual Machine \cite{caml-vm}. I will not give formal
+transition rules for these here. \autoref{tab:shade-bytecode} includes all
+SHADE instructions and explains their purpose in prose.
 
-The SHADE machine is initialised by loading a program compiled to byte code and initialising $D$
-to a list containing an \emph{empty shadow} with the default handler $H_{def}$. The default handler
-is responsible for handling effects which rise to the toplevel.
-\footnote{Runtime systems can define built-in effects this way. The Evaluation chapter will show how
-can one implement a web server in Eff by defining 2 built-in effects which interact with the Linux kernel.}
-The machine terminates when it has reached the \vmHalt\ instruction.
+The SHADE machine is initialised by loading a program compiled to byte code
+and initialising $D$ to a list containing an \emph{empty shadow} with the
+default handler $H_{def}$. The default handler is responsible for handling
+effects which rise to the toplevel
+\footnote{Runtime systems can define built-in effects this way. The Evaluation
+chapter will show how can one implement a web server in Eff by defining 2
+built-in effects which interact with the Linux kernel.}.
+The machine terminates when it reaches the \vmHalt\ instruction.
 
 \paragraph{Communication between shadows.}
 
-I will start to introduce the SHADE byte code and the SHADE transition rules. Unfortunately, there is a circular
-dependency between the concepts in this section. I apologise in advance for starting to talk about the compilation
-this suddenly, but the cycle must be broken somewhere. Let us consider how with-handle blocks are compiled:
+I will start to introduce the SHADE byte code and the SHADE transition rules.
+Unfortunately, there is a circular dependency between the concepts in this
+section. I apologise in advance for starting to talk about the compilation
+this suddenly, but the cycle must be broken somewhere. Let us consider how
+with-handle blocks are compiled:
 $$ \interp{\irWithHandle\ (h, e)}_s ^ \gamma = \interp{h}_s ^ \gamma; \vmPush; \text{fvs-to-stack}(e, s, \gamma); \vmMakeClosure{N}{L}; \shCastShadow; \shFin.$$
-The handler is first compiled and is pushed to the stack. Then the closure of the with-handle block's body
-is constructed and a new shadow corresponding to this block is created by the \vmCastShadow\ instruction.
-$L$ is a fresh label denoting the start of the with-handle block's body. The code for the body of the with-handle
-block is generated separately. The \vmFin\ instruction invokes the finally case after control is returned to this
-shadow again. When this happens, the hlosure of $h$ is still on the stack of this shadow and this is the reason
-why the \vmCastShadow\ instruction does not consume the hlosure from the stack. It might not be obvious why we need a
-separate instruction for finally cases. The reason is that control can return in many ways: it can come from a value
-or effect case via a \vmRett\ instruction. However, when many continuations are resumed in the same with-handle block
-(think about the Hello World example), then only the last \vmRett\ instruction actually leaves the with-handle block
-and therefore we cannot make the invocation of finally cases a feature of the \vmRett\ instruction. This is the
-responsibility of the same shadow a with-handle block resides in.
+The handler is first compiled and is pushed to the stack. Then the closure of
+the with-handle block's body is constructed and a new shadow corresponding to
+this block is created by the \vmCastShadow\ instruction. $L$ is a fresh label
+denoting the start of the with-handle block's body. The code for the body of
+the with-handle block is generated separately. The \vmFin\ instruction invokes
+the finally case after control is returned to this shadow again. When this
+happens, the hlosure of $h$ is still on the stack of this shadow and this is
+the reason why the \vmCastShadow\ instruction does not consume the hlosure from
+the stack. It might not be obvious why we need a separate instruction for
+finally cases. The reason is that control can return in many ways: it can come
+from a value or effect case via a \vmRett\ instruction. However, when many
+continuations are resumed in the same with-handle block (think about the Hello
+World example), then only the last \vmRett\ instruction actually leaves the
+with-handle block and therefore we cannot make the invocation of finally cases
+a feature of the \vmRett\ instruction. This is the responsibility of the same
+shadow a with-handle block resides in.
 
 \begin{myfigure}[0.95]
     {SHADE machine transition rules}
@@ -280,29 +323,37 @@ responsibility of the same shadow a with-handle block resides in.
         $$ \shade{A, (\shApply, E, H, \kappa :: S), D} \to \shade{A, \kappa\ @\ ((pc, E, H, S) :: D)} $$
     \end{myfigure}
 
-Another important detail is that the bodies of functions, with-handle blocks and
-handler cases are not compiled the same way. The body of with-handle blocks always ends with a \vmKillShadow\ 
-instruction, value cases and effect cases end with a \vmRett\ instruction, the bodies of functions and
-finally cases end with \vmRet.
+Another important detail is that three syntacticly similar contstructs are not
+compiled the same way: the bodies of functions, with-handle blocks and handler
+cases.
+The body of with-handle blocks
+always ends with a \vmKillShadow\  instruction, value cases and effect cases end
+with a \vmRett\ instruction, the bodies of functions and finally cases end with
+\vmRet.
 
-The reason why the transition rule of \vmKillShadow\ invokes the value case of the current handler is
-because the bodies of with-handle blocks end with \vmKillShadow\ instructions---\vmKillShadow\ does not actually destroy
-the current top shadow; it simply prepares it for the execution of the value case of a handler by jumping to
-the corresponding label and putting the environment of the hlosure in $E$. As value cases end with \vmRett\
-instructions and they always destroy the top shadow, the job is finished by the \vmRett\ of a value case.
+The reason why the transition rule of \vmKillShadow\ invokes the value case of
+the current handler is because the bodies of with-handle blocks end with
+\vmKillShadow\ instructions---\vmKillShadow\ does not actually destroy the
+current top shadow; it simply prepares it for the execution of the value case
+of a handler by jumping to the corresponding label and putting the environment
+of the hlosure in $E$. As value cases end with \vmRett\ instructions and they
+always destroy the top shadow, the job is finished by the \vmRett\ of a value
+case.
 
-If the behaviour of an effect is exception-like then control might not reach the end of a with-handle block.
-This justifies why \vmKillShadow\ cannot be responsible for actually destroying shadows or for invoking the
-finally case of a handler which further justifies the existence of the \vmFin\ instruction.
+If the behaviour of an effect is exception-like then control might not reach
+the end of a with-handle block. This justifies why \vmKillShadow\ cannot be
+responsible for actually destroying shadows or for invoking the finally case of
+a handler which further justifies the existence of the \vmFin\ instruction.
 
-The \vmFin\ instruction implements the invocation of finally cases as a function call but it also pops
-the handler the \vmCastShadow\ instruction left on the stack. With this Eff effect handlers are implemented.
+The \vmFin\ instruction implements the invocation of finally cases as a
+function call but it also pops the handler the \vmCastShadow\ instruction left
+on the stack. With this, Eff effect handlers are implemented.
 
 \paragraph{Similarities with the CEK machine.}
-The \vmApply\ instruction implements function and continuation application the same way it was done in the
-CEK machine. The \vmThrow\ instruction is used to perform an effect. When this happens the dump has to be unwound
-the same way the $K$ component of the CEK machines needed to be unwound.
-
+The \vmApply\ instruction implements function and continuation application the
+same way it was done in the CEK machine. The \vmThrow\ instruction is used to
+perform an effect. When this happens the dump has to be unwound the same way
+the $K$ component of the CEK machines needed to be unwound.
 
 \begin{myfigure}[1]{Dump unwinding in SHADE}{fig:shade-stack-unwind}
     $$ \shade{A, \underbrace{(pc, E, H, S)}_d, D, \kappa }_\text{unwind}^{id} \text{ and } H \uparrow id \to \begin{cases}
@@ -315,13 +366,15 @@ the same way the $K$ component of the CEK machines needed to be unwound.
 
 \paragraph{Calling convention}
 
-Another fine but important detail is that the calling convention for functions, continuations \emph{and} effects
-must match. At the time of the compilation we have no idea whether an identifier will stand for a function or a
-continuation. One might think that this still leaves us many possibilities, but this actually completely defines
-the calling convention in SHADE.
+Another fine but important detail is that the calling convention for functions,
+continuations \emph{and} effects must match. At the time of the compilation we
+have no idea whether an identifier will stand for a function or a continuation.
+One might think that this still leaves us many possibilities, but this actually
+completely defines the calling convention in SHADE.
 
-We cannot use the stack to pass function or continuation arguments around because by resuming a continuation we
-are also restoring shadows and therefore we lose the access to the current stack. The same goes for returning values.
+We cannot use the stack to pass function or continuation arguments around
+because by resuming a continuation we are also restoring shadows and therefore
+we lose the access to the current stack. The same goes for returning values.
 Hence we must use the accumulator.
 
 \begin{table}
@@ -351,16 +404,21 @@ Hence we must use the accumulator.
         Jump to location L. &
         \verb|pc := adress of L| \\
     \vmBranchIfNot{$L$} & 
-        If A = false then jump to location L. Otherwise continue with the next instruction. &
-        \begin{tabular}[t]{@{}l@{}} if \verb|A| then \verb|pc := pc + 1|\\else \verb|pc := L| \end{tabular} \\
+        If A = false then jump to location L. Otherwise continue with the next
+        instruction. &
+        \begin{tabular}[t]{@{}l@{}}
+            if \verb|A| then \verb|pc := pc + 1|\\
+            else \verb|pc := L| \end{tabular} \\
     \vmApply &
         Apply the top of the stack to the accumulator. &
         see \autoref{fig:shade-machine} \\
     \vmRet &
-        Return with the value in A. Restore the old program counter and environment from S. &
+        Return with the value in A. Restore the old program counter and
+        environment from S. &
         see \autoref{fig:shade-machine} \\
     \vmRett & 
-        Return from a value or effect case with the value in A. Destroy the top shadow and increment the program counter of the new top shadow. &
+        Return from a value or effect case with the value in A. Destroy the top
+        shadow and increment the program counter of the new top shadow. &
         see \autoref{fig:shade-machine} \\
     \vmFin &
         Something &
@@ -383,14 +441,31 @@ Hence we must use the accumulator.
         Load the tail of a list to A. &
         \verb|A := A.tail| \\
     \vmMakeClosure{$L$}{$n$} &
-        Form an environment of A and the top $n-1$ elements of S and create a closure with this environment of location L. &
-        \begin{tabular}[t]{@{}l@{}}\verb|E = [A, S[0:N]];| \\ \verb|S.pop(N-1);| \\ \verb|A := closure(L, E)|\end{tabular} \\
-    \begin{tabular}[t]{@{}l@{}}\textbf{makehlosure} $N$, $L_v$ \\ $L_f$, $L_{e_1}$, $L_{e_2}, ...$\end{tabular} &
-        Similar to \vmMakeClosure{$L$}{$N$} but with many locations each corresponding to a handler case. &
-        \begin{tabular}[t]{@{}l@{}}\verb|E = [A, S[0:N-1]];| \\ \verb|S.pop(N-1);| \\ \verb|A := hlosure(|$L_v$, $L_f$,\\ \quad\quad\quad\quad\quad $L_{e_1}$\verb|,.., E)|\end{tabular} \\
-    binary operators \textbf{intadd}, \textbf{floatadd}, etc. &
+        Form an environment of A and the top $n-1$ elements of S and create a
+        closure with this environment of location L. &
+        \begin{tabular}[t]{@{}l@{}}
+            \verb|E = [A, S[0:N]];| \\
+            \verb|S.pop(N-1);| \\
+            \verb|A := closure(L, E)|
+        \end{tabular} \\
+    \begin{tabular}[t]{@{}l@{}}
+        \textbf{makehlosure} $N$, $L_v$ \\
+        $L_f$, $L_{e_1}$, $L_{e_2}, ...$
+    \end{tabular} &
+        Similar to \vmMakeClosure{$L$}{$N$} but with many locations each
+        corresponding to a handler case. &
+        \begin{tabular}[t]{@{}l@{}}
+            \verb|E = [A, S[0:N-1]];| \\
+            \verb|S.pop(N-1);| \\
+            \verb|A := hlosure(|$L_v$, $L_f$,\\
+            \quad\quad\quad\quad\quad $L_{e_1}$\verb|,.., E)|
+        \end{tabular} \\
+        binary operators \textbf{intadd}, \textbf{floatadd}, etc. &
         Perform a binary operation with A and S.top. &
-        \begin{tabular}[t]{@{}l@{}}\verb|A := bop(A, S.top())|\\\verb|S.pop()|\end{tabular} \\
+        \begin{tabular}[t]{@{}l@{}}
+            \verb|A := bop(A, S.top())| \\
+            \verb|S.pop()|
+        \end{tabular} \\
     \bottomrule
 \end{tabular}}
 \caption{SHADEcode, the instruction set of the SHADE machine}
@@ -399,27 +474,31 @@ Hence we must use the accumulator.
 
 \paragraph{Compiling to SHADEcode}
 
-Compilation to SHADEcode is standard. We keep track of the size of the stack $s$ and a compilation
-environment $\gamma$ which tells us where the free variables of currently compiled expressions
-reside (stack or environment). The equation
+Compilation to SHADEcode is standard. We keep track of the size of the stack
+$s$ and a compilation environment $\gamma$ which tells us where the free
+variables of currently compiled expressions reside (stack or environment).
+The equation
 $$ \interp{\irLetIn\ (x, e_1, e_2)}_s^\gamma = \interp{e_1}_s^\gamma; \vmPush; \interp{e_2}_{s+1}^{\gamma[x \mapsto s]} $$
-describes how one can compile let expressions. The expression $e_1$ is compiled first which generates the code
-that leaves the value of $e_1$ in the accumulator. Then a \vmPush\ instruction saves this
-on the stack and the expression $e_2$ is compiled with the knowledge that the size of the stack
-has increased to $s+1$ and the new compilation environment knows that $x$ resides on position
-$s$ in the stack ($\gamma[x \mapsto x]$). A full description of the compilation process in this
-style can be found in Appendix \autoref{app:theory}.
+describes how one can compile let expressions. The expression $e_1$ is compiled
+first which generates the code that leaves the value of $e_1$ in the accumulator.
+Then a \vmPush\ instruction saves this on the stack and the expression $e_2$ is
+compiled with the knowledge that the size of the stack has increased to $s+1$
+and the new compilation environment knows that $x$ resides at position $s$ in
+the stack ($\gamma[x \mapsto x]$). A full description of the compilation process
+in this style can be found in Appendix \autoref{app:theory}.
 
 \subsection{How does SHADEcode implement Eff?}
 \label{sec:shade-illustration}
 
-I gave a formal but dry description of the SHADE machine and its bytecode in the previous section.
-The reader might rightfully demand an explanation of why SHADE makes sense for Eff. In this section
-I will show how the byte code can implement the various flow of control algebraic effect handlers allow.
+I gave a formal but dry description of the SHADE machine and its bytecode in
+the previous section. The reader might rightfully demand an explanation of why
+SHADE makes sense for Eff. In this section I will show how the byte code can
+implement the various flow of control algebraic effect handlers allow.
 
-It is clear that when no new shadow is cast (no with-handle is used) then the SHADE machine is essentially a Zinc machine with
-all effects behaving like exceptions. The next page contains various examples and should give a good insight
-into how everything fits together.
+It is clear that when no new shadow is cast (no with-handle is used) then the
+SHADE machine is essentially a Zinc machine with all effects behaving like
+exceptions. The next page contains various examples and should give a good
+insight into how everything fits together.
 
 \begin{figure}
     \centering
@@ -430,16 +509,17 @@ into how everything fits together.
     \label{fig:shadecode-no-effect}
 \end{figure}
 
-\autoref{fig:shadecode-no-effect} shows what happens when no effect is performed in
-a with-handle block. The with-handle block is entered via \vmCastShadow\ (a second shadow
-is cast and we jump to \lstinline{Lwith}). Next, after the body of the with-handle block
-executes fully the \vmKillShadow\ instruction gives the control to the value case.
-The \vmRett\ instruction at the end of the value case destroys the second shadow
-and returns to the default shadow while increasing the program counter. Now the
-\vmFin\ instruction is responsible for executing the finally case and getting rid
-of the hlosure from the stack. The \vmRet\ instruction at the end of the finally case
-simply returns as if it was a function call and execution halts as the program counter
-now points to \vmHalt.
+\autoref{fig:shadecode-no-effect} shows what happens when no effect is performed
+in a with-handle block. The with-handle block is entered via \vmCastShadow\
+(a second shadow is cast and we jump to \lstinline{Lwith}). Next, after the
+body of the with-handle block executes fully the \vmKillShadow\ instruction
+gives the control to the value case. The \vmRett\ instruction at the end of
+the value case destroys the second shadow and returns to the default shadow
+while increasing the program counter. Now the \vmFin\ instruction is responsible
+for executing the finally case and getting rid of the hlosure from the stack.
+The \vmRet\ instruction at the end of the finally case simply returns as if it
+was a function call and execution halts as the program counter now points to
+\vmHalt.
 
 \begin{figure}
     \centering
@@ -450,25 +530,27 @@ now points to \vmHalt.
     \label{fig:shadecode-exception}
 \end{figure}
 
-\autoref{fig:shadecode-exception} depicts a case when the effect has exception-like
-behaviour. This case is different from the previous one in that the \vmKillShadow\ instruction
-is never executed. However, the \vmRett\ instruction at the end of the effect case of handler
-$h$ will still destroy the shadow and return to the \vmFin\ instruction which is
-executed before the machine halts as we would expect.
+\autoref{fig:shadecode-exception} depicts a case when the effect has
+exception-like behaviour. This case is different from the previous one in that
+the \vmKillShadow\ instruction is never executed. However, the \vmRett\
+instruction at the end of the effect case of handler $h$ will still destroy the
+shadow and return to the \vmFin\ instruction which is executed before the
+machine halts as we would expect.
 
-\autoref{fig:shadecode-one-resume} shows an example where the continuation is resumed
-in the effect case (this is actually our beloved Hello World again!). This case is particularly
-interesting as effects are performed in the with-handle block, continuations are resumed,
-the \vmKillShadow\ instruction is executed and the \vmRett\ of the value case
-\emph{returns to an effect case} which then returns to another effect case and
-finally the top shadow is destroyed by the \vmRett\ of an effect case just as we
-saw in the previous example.
+\autoref{fig:shadecode-one-resume} shows an example where the continuation is
+resumed in the effect case (this is actually our beloved Hello World again!).
+This case is particularly interesting as effects are performed in the
+with-handle block, continuations are resumed, the \vmKillShadow\ instruction is
+executed and the \vmRett\ of the value case \emph{returns to an effect case}
+which then returns to another effect case and finally the top shadow is
+destroyed by the \vmRett\ of an effect case just as we saw in the previous
+example.
 
 The red dots next to the \vmApply\ instruction are there to show that the dump
 is essentially a separate call stack for continuations and effect cases.
 Two separate \vmRett\ instructions return to the same \vmApply\ instruction
 but first the effect case handling \lstinline{Print "not to be"} is given
-control and only after that effect case finished can the effect case handling
+control and only after that effect case is finished can the effect case handling
 \lstinline{Print "Try"} resume.
 
 \begin{figure}
@@ -481,28 +563,29 @@ control and only after that effect case finished can the effect case handling
 \end{figure}
  
 \autoref{fig:shadecode-two-resume} shows what happens when we take everything to
-the next level and use multi-shot continuations (i.e., we resume the same continuation
-more than once). This is a typical non-determinism example where an effect case resumes
-a continuation with both \lstinline{true} and \lstinline{false} to determine all the
-values the with-handle block can evaluate to.
-\footnote{We are expecting the result \lstinline{[5,-5,15,5]} as $(x-y)$ can be $(10-5)$, $(10-15)$,
-$(20-5)$ or $(20-15)$.}
+the next level and use multi-shot continuations (i.e., we resume the same
+continuation more than once). This is a typical non-determinism example where
+an effect case resumes a continuation with both \lstinline{true} and
+\lstinline{false} to determine all the values the with-handle block can evaluate
+to. \footnote{We are expecting the result \lstinline{[5,-5,15,5]} as $(x-y)$
+can be $(10-5)$, $(10-15)$, $(20-5)$ or $(20-15)$.}
 \autoref{fig:shadecode-two-resume} also outlines the structure of the dump.
 The red arrows denote the instructions which increase the size of the dump and
 the black arrows are just there to show where we are in the execution.
-The blue \vmRett\ instructions are those of the value case's and they are only invoked
-``at depth 4'' in the diagram.
+The blue \vmRett\ instructions are those of the value case's and they are only
+invoked ``at depth 4'' in the diagram.
 
-Continuations are highlighted with shades of orange.
-Because all continuations are invoked twice these must be cloned which can add a
-significant copy overhead. This is one way Eff differs from Multicore OCaml. Multicore
-OCaml only supports one-shot continuations and programmers must be aware whether they already
-used a continuation or not. In Multicore OCaml the same continuation can only be used when it
-was cloned before resuming it for the second time. The programmer must manually do this with the
-\lstinline|Obj.copy_continuation| call. If the programmer forgets about this then the program can
-crash. As Eff is different in this respect, the SHADE machine always keeps a clean copy of every
-continuation which can be cloned on demand when it is resumed. This is an inefficiency but is
-necessary for correctness.
+Continuations are highlighted with shades of orange. Because all continuations
+are invoked twice these must be cloned which can add a significant copy overhead.
+This is one way Eff differs from Multicore OCaml. Multicore OCaml only supports
+one-shot continuations and programmers must be aware whether they already used
+a continuation or not. In Multicore OCaml the same continuation can only be used
+when it was cloned before resuming it for the second time. The programmer must
+manually do this with the \lstinline|Obj.copy_continuation| call. If the
+programmer forgets about this then the program can crash. As Eff is different
+in this respect, the SHADE machine always keeps a clean copy of every
+continuation which can be cloned on demand when it is resumed.
+This is an inefficiency but is necessary for correctness.
 
 \begin{landscape}
     \begin{figure}
@@ -513,18 +596,18 @@ necessary for correctness.
     \end{figure}
 \end{landscape}
 
-
-
 \section{Software engineering}
 
-Now that the theory is sorted out I can present my OCaml implementation of the project.
+Now that the theory is sorted out I can present my OCaml implementation of the
+project.
 
 \subsection{Repository structure}
 
-The repository of my OCaml implementation is structured as a typical OCaml package.
-A \verb|bin| directory contains the entry points of the executables generated, the
-\verb|lib| directory contains the collection of modules making up the project. The
-\verb|test| directory contains unit tests and regression tests.
+The repository of my OCaml implementation is structured as a typical OCaml
+package. A \verb|bin| directory contains the entry points of the executables
+generated, the \verb|lib| directory contains the collection of modules making
+up the project. The \verb|test| directory contains unit tests and regression
+tests.
 
 \begin{figure}
     \centering
@@ -542,21 +625,31 @@ A \verb|bin| directory contains the entry points of the executables generated, t
     \textbf{Module name} & \textbf{Description} \\
     \midrule
     \textbf{Stx} & 
-        Specifies Eff syntax trees. The \verb|ocamllex| and the Menhir parser generator uses this module to generate a parser for Eff.  \\
+        Specifies Eff syntax trees. The \verb|ocamllex| and the Menhir parser
+        generator uses this module to generate a parser for Eff.  \\
     \textbf{Preprocess} &
-        Implements preprocessing functionalities on abstract syntax trees. At this stage all identifiers are given unique integer De Bruijn indices
+        Implements preprocessing functionalities on ASTs. At this stage all
+        identifiers are given unique integer De Bruijn indices
         and some syntactic sugars are removed.  \\
     \textbf{Translate} &
-        Implements various translation functionalities. Erases the distinctions between computations and expressions and implements translations from ASTs to
-        various intermediate representations. \\
-    \textbf{Cek\_types} & Contains the specification of the CEK machine discussed in this chapter. \\
+        Implements various translation functionalities. Erases the distinctions
+        between computations and expressions and implements translations from
+        ASTs to various intermediate representations. \\
+    \textbf{Cek\_types} & Contains the specification of the CEK machine
+        discussed in this chapter. \\
     \textbf{Cek} & Implementation of the CEK machine. \\
-    \textbf{Ir} & Specification of an intermediate representation close to \emph{A-normal form}. The \verb|Compile| module generates SHADE byte code from this representation. \\
-    \textbf{Freevars} & Implements analysis of free variables on the IR. \\
+    \textbf{Ir} &
+        Specification of an intermediate representation close to \emph{A-normal
+        form}. The \verb|Compile| module generates SHADE byte code from this
+        representation. \\
+    \textbf{Freevars} &
+        Implements analysis of free variables on the IR. \\
     \textbf{Compile} & Implements the compilation from IR to SHADE byte code. \\
     \textbf{Shade\_types} & Contains the specification of the SHADE machine. \\
-    \textbf{Display} & Implements pretty printing of VM results and contains printers used for the debugging of the SHADE VM. \\
-    \textbf{Builtins} & Contains the implementation of built-in effects of the SHADE runtime system. \\
+    \textbf{Display} & Implements pretty printing of VM results and contains
+        printers used for the debugging of the SHADE VM. \\
+    \textbf{Builtins} & Contains the implementation of built-in effects of the
+        SHADE runtime system. \\
     \textbf{Shade} & Implements the SHADE machine. \\
     \bottomrule
     \end{tabular}}
@@ -565,47 +658,66 @@ A \verb|bin| directory contains the entry points of the executables generated, t
 \end{table}
 
 \mylisting{caml}
-{Getting abstractions right can lead to beautiful and concise functional programs}
+{Getting abstractions right can lead to beautiful and concise functional
+programs}
 {lst:impl-shade-modular}
 {../code_examples/shade.ml}
 
 \subsection{Testing}
 
-As stated in the Introduction correctness and hence testing were crucial for the success of this project. Hence I took testing very seriously.
-I used the Alcotest library to run my test suites. In total there are a 104 tests covering the project. Appendix X contains a screenshot
-of a typical output Alcotest produces when testing the Virtual Machine.
+As stated in the Introduction correctness and hence testing were crucial for
+the success of this project. Hence I took testing very seriously. I used the
+Alcotest library to run my test suites. In total there are a 104 tests covering
+the project. Appendix X contains a screenshot of a typical output Alcotest
+produces when testing the Virtual Machine.
 
-As I used TDD as my development methodology I wrote most of my tests upfront. However, when a bug was discovered later I added regression
-tests too.
+As I used TDD as my development methodology I wrote most of my tests upfront.
+However, when a bug was discovered later I added regression tests too.
 
 \subsection{Version control}
 
 I used Git together with GitHub
 \footnote{\url{https://github.com/}}
-to version control my project and used many branches ot organise development better. My main branch was \verb|master| which always contained
-a stable (in the sense that it passed all the tests) version. Additionally, I would categorise the other branches into 3 other categories.
+to version control my project and used many branches to organise development
+better. My main branch was \verb|master| which always contained a stable (in
+the sense that it passed all the tests) version. Additionally, I would
+categorise the other branches into 3 other categories.
 
-\paragraph{Feature branches} were used to separate the development of new features from the already stable version of the project. Feature
-branches were merged to the main branch when I judged them to be stable enough.
+\paragraph{Feature branches} were used to separate the development of new
+features from the already stable version of the project. Feature branches were 
+merged to the main branch when I judged them to be stable enough.
 
-\paragraph{Refactor} I frequently went back to refactor pieces of code I was not satisfied with. From summer internships
-I knew that I will do this often and hence I had a separate branch for this too. This was useful because when looking at
-\verb|git log| I could quickly tell apart the meaningful commits (ones which add new code) and others which just improved
-the quality of the code or added documentation/comments.
+\paragraph{Refactor} I frequently went back to refactor pieces of code I was
+not satisfied with. From summer internships I knew that I will do this often
+and hence I had a separate branch for this too. This was useful because when
+looking at \verb|git log| I could quickly tell apart the meaningful commits
+(ones which add new code) and others which just improved the quality of the
+code or added documentation/comments.
 
 \paragraph{Benchmarking} I used a separate branch for evaluation.
 
 \subsection{OPAM}
 
-The project is packaged as an OCaml package. After further refactoring I intend to publish this project as an OCaml package.
+The project is packaged as an OCaml package. After further refactoring I
+intend to publish this project as an OCaml package.
 
 \subsection{Coding style and documentation}
 
-I tried to stick to OCaml best-practices while developing, such as always having corresponding signature/interface \verb|.mli| files
-for all my modules. In these I used \verb|(**| style comments to document my code. This proved very useful later.
-The \verb|odoc| OCaml tool can generate browsable HTML documentation from the \verb|mli| interfaces. I often found myself reading
-this documentation when I was implementing a complex part of the software. Documentation can also speed up the learning process
-for other hobbyist language enthusiasts wishing to contribute to the project were I to publish this package on GitHub.
+I tried to stick to OCaml best-practices while developing, such as always
+having corresponding signature/interface \verb|.mli| files for all my modules.
+In these I used \verb|(**| style comments to document my code. This proved very
+useful later. The \verb|odoc| OCaml tool can generate browsable HTML
+documentation from the \verb|mli| interfaces. I often found myself reading
+this documentation when I was implementing a complex part of the software.
+Documentation can also speed up the learning process for other hobbyist language
+enthusiasts wishing to contribute to the project were I to publish this package
+on GitHub.
+
+% familiar to other OCaml programmers
+% idiomatic
+% time management
+
+\subsection{Time management}
 
 \section{Summary}
 

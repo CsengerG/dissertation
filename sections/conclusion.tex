@@ -1,84 +1,89 @@
 \documentclass[class=article, crop=false]{standalone}
-\usepackage[a4paper]{geometry}
-\usepackage[subpreambles=true]{standalone}
-\usepackage{import}
-\usepackage{ebproof}
 \usepackage[utf8]{inputenc}
-\usepackage{tikz}
 \usepackage{hyperref}
-\usepackage{amsmath}
-\usepackage{amssymb}
-\usepackage{listings}
-\usepackage{verbatim}
-\usepackage[super]{nth}
-\usepackage{float}
-\usepackage{subcaption}
+
+\usepackage[margin=1in]{geometry}
 
 \begin{document}
 
 The project was a success. This dissertation is actually a story about a journey
-which starts in the theoretical valleys of Mathematics, leads through the more practical
-(but still quite theoretical) areas of Computer Science and finally ends in the realms of Software
-Engineering.
+which starts in the theoretical valleys of Mathematics, leads through the more
+practical (but still quite theoretical) areas of Computer Science and finally
+ends in the realms of Software Engineering.
 
-In the Introduction we saw how we needed the proper mathematical foundations (by Moggi, Plotkin and Power) to be able to think
-about programming language semantics. In the Preparation chapter we thought about various evaluators and abstract machines and
-how they could be used to interpret Eff (in particular, the handling of continuations presented a challenge). Once it was clear
-what properties we desire from our abstract machines we could think about how we implement them and realise them as virtual
-machines\footnote{An abstract machine has no instruction set and doesn't require compilation, while a virtual machine has an
-instruction set and does require programs to be compiled to such an instruction set before they can be interpreted.}.
+In the Introduction we saw how we needed the proper mathematical foundations
+(by Moggi, Plotkin and Power) to be able to think about programming language
+semantics. In the Preparation chapter we thought about various evaluators and
+abstract machines and how they could be used to interpret Eff (in particular,
+the handling of continuations presented a challenge). Once it was clear what
+properties we desire from our abstract machines we could think about how we
+implement them and realise them as virtual machines\footnote{An abstract machine
+has no instruction set and does not require compilation, while a virtual machine
+has an instruction set and does require programs to be compiled to such an
+instruction set before they can be interpreted.}.
 
-In the Implementation chapter an implementation of a higher level CEK evaluator (interpreting source terms) is described along
-with its abstract machine semantics. Furthermore, the SECD-like SHADE VM is derived for Eff as well as its instruction set
-(SHADEcode). A compiler is designed from Eff to SHADEcode. The SHADE machine is my own ``invention'', although it turned out
-to be rather similar to how Multicore OCaml implements algebraic effect handlers\footnote{In particular, shadows and fibres
-seem to be almost the same.}.
+In the Implementation chapter an implementation of a higher level CEK evaluator
+(interpreting source terms) was described along with its abstract machine
+semantics. Furthermore, the SECD-like SHADE VM is derived for Eff as well as
+its instruction set (SHADEcode). A compiler is designed from Eff to SHADEcode.
+The SHADE machine is my own ``invention'', although it turned out to be rather
+similar to how Multicore OCaml implements algebraic effect handlers
+\footnote{In particular, shadows and fibres seem to be almost the same.}.
 
-The Evaluation chapter was concerned with comparing the CEK evaluator and the SHADE VM to other existing solutions, namely
-Multicore OCaml and the official Eff interpreter. We found that the SHADE VM is reasonably efficient even without implementing
-any optimisations. It was also shown how algebraic effects and their handlers
-could be used for systems programming by exhibiting a toy web server implementation in Eff.
+The Evaluation chapter was concerned with comparing the CEK evaluator and the
+SHADE VM to other existing solutions, namely Multicore OCaml and the official
+Eff interpreter. We found that the SHADE VM is reasonably efficient even without
+implementing any optimisations. It was also shown how algebraic effects and
+their handlers could be used for systems programming by exhibiting a toy web
+server implementation in Eff.
 
 \section{Further work}
 
-I was very enthusiastic about this project all along and I have a lot of ideas to improve it both on the theory and on the
-practice side. The most ambitious ones are the following.
+The fact that there are algebraic theories behind algebraic effects and their
+handlers allows us to prove certain compiler transformations correct by
+equational reasoning. This gives us the opportunity to take a set of effect
+equations (for instance, the equation $\mathtt{set}(x,y); \mathtt{set}(x,z) =
+\mathtt{set}(x, z)$ would show that the first \texttt{set} can be optimised
+away) and generate new optimisations (perhaps entirely new ones no-one has
+thought about yet or ones that are dependent on the semantics of some effects).
 
-The fact that there are algebraic theories behind algebraic effects and their handlers allows us to prove certain
-compiler transformations correct by equational reasoning. This gives us the opportunity to take a set of effect
-equations (for instance, the equation $\mathtt{set}(x,y); \mathtt{set}(x,z) = \mathtt{set}(x, z)$ would say the first
-\texttt{set} can be optimised away) and generate new optimisations (perhaps entirely new ones no one has thought about yet
-or ones that are dependent on the semantics of some effects).
+Type and effect systems admit to even more optimisations and the opportunity to
+parallelise independent parts of programs. As hardware is getting increasingly
+parallel such optimisations can help us to get the most out of our multicore
+machines.
 
-Type and effect systems admit to even more optimisations and the opportunity to parallelise independent parts of programs.
-As hardware is getting increasingly parallel such optimisations can help us to get the most out of our multicore machines.
+My implementation was concerned with only the core features of Eff. There would
+be countless ways to improve the compiler or the virtual machine. One of the
+most interesting improvements would be to design a custom garbage collector for
+Eff which might be another Part II project. The rules of SHADE VM are simple
+enough that a byte code interpreter for SHADEcode should not be too hard to
+implement in a low-level language such as C. This is something I will
+potentially try to do.
 
-My implementation is concerned with only the core features of Eff. There would be countless ways to improve the compiler
-or the virtual machine. For me one of the most interesting improvements would be to design a custom garbage collector for Eff
-which might be another Part II project. The rules of SHADE VM are simple enough that a byte code interpreter for SHADEcode
-should not be too hard to implement in a low-level language such as C. This is something I will potentially try to do.
-
-The project is packaged up as an OPAM package and I intend to make it available on Github for other programming
-language enthusiasts.
-
+The project is packaged up as an OPAM package and I intend to make it available
+on Github for other programming language enthusiasts.
 
 \section{Self-reflection}
 
-If I were to start the project again I would try to be less ambitious. I vastly underestimated the intellectual challenge
-behind continuations, handlers and control operators.
+If I were to start the project again I would try to be less ambitious. I vastly
+underestimated the intellectual challenge behind continuations, handlers and
+control operators.
 
-At the beginning of the project I got a bit carried away with syntactic sugar and trying to implement a lot of features
-of the language properly. This proved to be counterproductive and I had to abandon these efforts. If I had to do this
-again I would make the development even more iterative than it was: I would design a smaller minimal MVP first, build
-a very minimal but working (and tested!) pipeline and then iterate more on improvements. This was my strategy when developing,
-but I could do it better the next time.
+At the beginning of the project I got a bit carried away with syntactic sugar
+and trying to implement a lot of features of the language properly. This proved
+to be counterproductive and I had to abandon these efforts. If I had to do this
+again I would make the development even more iterative than it was: I would
+design a smaller minimal viable product first, build a very minimal but working
+(and tested!) pipeline and then iterate more on improvements. This was my
+strategy when developing, but I could do it better the next time.
 
-Furthermore, I think there is a lack of elementary material concerning this topic on the web. This made the preparation
-quite difficult.
+Furthermore, I think there is a lack of elementary material concerning this
+topic on the web. 
 
 \section{Closing thoughts}
 
-I am hoping that my Preparation chapter and this dissertation as a whole will in some ways help popularise algebraic effects
-and their handlers and that readers of this document will find them less cryptic than I first did.
+I am hoping that my Preparation chapter and this dissertation as a whole will
+in some ways help popularise algebraic effects and their handlers and that
+readers of this document will find them less cryptic than I first did.
 
 \end{document}

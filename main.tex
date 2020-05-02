@@ -42,15 +42,15 @@
 
 \section*{Declaration of Originality}
 
-I, Géza Csenger of Homerton College,
-being a candidate for Part II of the Computer Science Tripos,
-hereby declare that this dissertation and the work described in it
-are my own work, unaided except as may be specified below, and
-that the dissertation does not contain material that has already
-been used to any substantial extent for a comparable purpose.
+I, Géza Csenger of Homerton College, being a candidate for Part II of the 
+Computer Science Tripos, hereby declare that this dissertation and the work
+described in it are my own work, unaided except as may be specified below, and
+that the dissertation does not contain material that has already been used to
+any substantial extent for a comparable purpose.
 
 I, Géza Csenger of Homerton College,
-am content for my dissertation to be made available to the students and staff of the University. 
+am content for my dissertation to be made available to the students and staff
+of the University. 
 
 \vspace{1cm}
 \textbf{Signed}
@@ -64,9 +64,12 @@ am content for my dissertation to be made available to the students and staff of
 
 Hereby, I would like to say thanks to:
 \begin{itemize}
-    \item My project supervisor, \textbf{Prof. Alan Mycroft}, for his support and guidance
-    \item My Director of Studies, \textbf{Dr John Fawcett}, for a \emph{lot} of things
-    \item Friends and family without whom completing this work would have been impossible
+    \item My project supervisor, \textbf{Prof. Alan Mycroft}, for his support
+        and guidance
+    \item My Director of Studies, \textbf{Dr John Fawcett}, for a \emph{lot} of
+        things
+    \item Friends and family without whom completing this work would have been
+        impossible
 \end{itemize}
 
 \newpage
@@ -86,18 +89,22 @@ Supervisor & Professor Alan Mycroft \\
 
 \paragraph{Original aims of the Project}
 
-The project had four core aims: to write an interpreter for Eff, to design a byte code for Eff, to write a compiler from Eff to this byte code
-and to implement a virtual machine interpreting the byte code. Additional goals were to implement various optimisations for Eff, such as
-tail resumption optimisation or minimising the copy overhead from the use of continuations.
+The project had four core aims: to write an interpreter for Eff, to design a
+byte code for Eff, to write a compiler from Eff to this byte code and to
+implement a virtual machine interpreting the byte code. Additional goals were
+to implement various optimisations for Eff, such as tail resumption optimisation
+or minimising the copy overhead from the use of continuations.
 
 \paragraph{Work completed}
 
-An CEK machine interpreting Eff was implemented. A byte code for Eff (SHADEcode) was designed. A compiler from Eff to SHADEcode was
-implemented as well as a virtual machine (SHADE) interpreting SHADEcode. As far as I know, SHADE and SHADEcode are the first
-virtual machine and byte code designed specifically for Eff.
-In the Evaluation chapter
-I compare the performance of my Eff interpreter with the current official Eff interpreter and I compare the performance of the SHADE
-virtual machine with the performance of Multicore OCaml (another compiled language with similar features to Eff).
+A CEK machine interpreting Eff was implemented. A byte code for Eff (SHADEcode)
+was designed. A compiler from Eff to SHADEcode was implemented as well as a
+virtual machine (SHADE) interpreting SHADEcode. As far as I know, SHADE and
+SHADEcode are the first virtual machine and byte code designed
+\emph{specifically} for Eff. In the Evaluation chapter I compare the performance
+of my Eff interpreter with the current official Eff interpreter and the
+performance of the SHADE virtual machine with the performance of Multicore
+OCaml (another compiled language with similar features to Eff).
 
 \paragraph{Special difficulties}
 None.
@@ -163,9 +170,45 @@ None.
 \setcounter{page}{1}
 
 \mylisting{caml}
-{Unwinding of the K component in the CEK machine.}
+{Unwinding of the K component in the CEK machine}
 {lst:cek-unwind-ocaml}
 {code_examples/cek_unwind.ml}
+
+\chapter{Software Engineering}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=35em]{screenshots/documentation.png}
+
+    \caption{Writing documentation helps both with structuring a developer's own
+    thoughts and helps new contributors accommodate to a new codebase}
+    \label{fig:app-screenshot-documentation}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=35em]{screenshots/tests.png}
+
+    \caption{Tests help to guarantee some correctness properties of the software}
+    \label{fig:app-screenshot-tests}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=35em]{screenshots/webserver_log.png}
+    
+    \caption{Excerpt from the webserver's log}
+    \label{fig:app-screenshot-webserver-log}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=35em]{screenshots/webserver_hello_world.png}
+
+    \caption{The output of a Hello World webserver implemented using effect handlers}
+    \label{fig:app-screenshot-webserver-hello-world}
+
+\end{figure}
 
 \chapter{Project Proposal}
 \setcounter{page}{1}
@@ -173,6 +216,5 @@ The project proposal starts on the next page.
 \includepdf[pages=-]{sections/proposal.pdf}
 
 \end{appendices}
-
 
 \end{document}

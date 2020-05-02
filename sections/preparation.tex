@@ -4,17 +4,14 @@
 \usepackage{ebproof}
 \usepackage[utf8]{inputenc}
 \usepackage[table]{xcolor}
-\usepackage{tikz}
 \usepackage{hyperref}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{listings}
-\usepackage{verbatim}
-\usepackage{a4wide}
 \usepackage[super]{nth}
-\usepackage{float}
 \usepackage{subcaption}
 \usepackage{booktabs}
+\usepackage[margin=1in]{geometry}
 
 \ifstandalone
 \input{../src/listing.tex}
@@ -26,42 +23,47 @@
 
 \begin{document}
 
-This chapter of my dissertation contains a tutorial introduction to the programming language
-Eff. It also discusses continuations and their relationships with two abstract machines, and
-talks about some of the software engineering aspects of the project.
+This chapter of my dissertation contains a tutorial introduction to the
+programming language Eff. It also discusses continuations and their
+relationships with two abstract machines, and talks about some of the software
+engineering aspects of the project.
 
 \section{A quick Eff tutorial}
 
-Eff is a programming language based on algebraic effect handlers.
-Eff resembles OCaml in that if we removed OCaml's \cite{ocaml-website} side-effecting operations and
-re-created them by \emph{simulating} them with a more general notion of exception
-(specifically, resumable exceptions)
-then we would get Eff as the result. In Eff, \emph{effect} is used to mean
-resumable exception. This tutorial will show how printing can be understood as an effect and how it can be
+Eff is a programming language based on algebraic effect handlers. Eff resembles
+OCaml in that if we removed OCaml's \cite{ocaml-website} side-effecting
+operations and re-created them by \emph{simulating} them with a more general
+notion of exception (specifically, resumable exceptions) then we would get Eff
+as the result. In Eff, \emph{effect} is used to mean resumable exception. This
+tutorial will show how printing can be understood as an effect and how it can be
 \emph{simulated} in a pure functional way using effect handlers.
 
-To implement effects and effect handlers Eff uses the following keywords which are
-not part of OCaml at the time of writing\footnote{Although a branch of OCaml, namely Multicore OCaml
-is just getting merged in the main OCaml branch so we might see some of these keywords in OCaml in the future.}: 
-\lstinline{effect}, \lstinline{perform}, \lstinline{handler}, \lstinline{continue}, \lstinline{with-handle} and \lstinline{finally}.
-What follows is a brief introduction of these features by using the
-unmissable Hello World example.
+To implement effects and effect handlers Eff uses the following keywords which
+are not part of OCaml at the time of writing\footnote{Although a branch of OCaml,
+namely Multicore OCaml is just getting merged in the main OCaml branch so we
+might see some of these keywords in OCaml in the future.}: 
+\lstinline{effect}, \lstinline{perform}, \lstinline{handler},
+\lstinline{continue}, \lstinline{with-handle} and \lstinline{finally}.
+What follows is a brief introduction of these features by using the unmissable
+Hello World program.
 
 \subsection{Effects}
 
 Effects lie in the heart of Eff (hence the name). A programmer can define
-effects using the \lstinline{effect} keyword, by specifying the effect's name
-(which must be capitalized just like OCaml variant tags) and the type of the effect.
-An effect definition can be seen on line 1 of \autoref{first-example}. Effects always have a type
-of $A \tto B$ for some types $A$ and $B$.
+effects using the \lstinline{effect} keyword by specifying the effect's name
+(which must be capitalised just like OCaml variant tags) and the type of the
+effect. An effect definition can be seen on line 1 of \autoref{first-example}.
+Effects always have a type of $A \tto B$ for some types $A$ and $B$.
 
-In the introduction of this tutorial I said that effects are resumable exceptions. The careful
-reader might notice that the type $A \tto B$ is similar to the function type $A \to B$ but
-it is quite different from usual types of exceptions. For instance, in SML \cite{milner1997definition}
-one would expect to see declarations representing errors like \lstinline{exception Error of string} (an error which
-can carry an error message with itself could be declared like this) but would not expect to talk about the \emph{return type} of
-an exception, as these can never return in SML. However, in Eff, due to the resumable nature of effects
-this makes sense.
+In the introduction of this tutorial I said that effects are resumable
+exceptions. The careful reader might notice that the type $A \tto B$ is similar
+to the function type $A \to B$ but it is quite different from usual types of
+exceptions. For instance, in SML \cite{milner1997definition} one would expect
+to see declarations representing errors like
+\lstinline{exception Error of string} (an error which can carry an error message
+with itself could be declared like this) but would not expect to talk about the
+\emph{return type} of an exception, as these can never return in SML. However,
+in Eff, due to the resumable nature of effects this makes sense.
 
 \subsection{Performing effects}
 
@@ -71,102 +73,113 @@ using the \lstinline{perform} keyword and by providing an argument of type $A$.
 The type of the resulting expression is $B$.
 
 \mylisting{efflang}
-{Printing is an effect taking a string as its argument and returning unit as a result.}
+{Printing is an effect taking a string as its argument and returning unit as the result.}
 {first-example}
 {../code_examples/first_program.eff}
 
-The \lstinline{perform} keyword is similar to \lstinline|raise| in OCaml or to \lstinline|throw|
-in Java in that when we perform an effect the control will be given to an effect
-handler (this would be an exception handler in OCaml or Java) or the program
-will terminate with an exception if no handler can handle the effect.
+The \lstinline{perform} keyword is similar to \lstinline|raise| in OCaml or to
+\lstinline|throw| in Java in that when we perform an effect the control will be
+given to an effect handler (this would be an exception handler in OCaml or Java)
+or the program will terminate with an exception if no handler can handle the
+effect.
 
-Don't be confused by how an effect is constructed. Effects are not values in
-the Eff language. That is, \lstinline{Print "Hello World"} would be meaningless in
-itself, just like the exception \lstinline{Failure "hd"} would be meaningless in OCaml
-if we did not raise it. The situation is similar here but effects are \emph{performed} and not raised.
+Do not be confused by how an effect is constructed. Effects are not values in
+the Eff language. That is, \lstinline{Print "Hello World"} would be meaningless
+in itself, just like the exception \lstinline{Failure "hd"} would be meaningless
+in OCaml if we did not raise it. The situation is similar here but effects are
+\emph{performed} and not raised.
 
 In Java, if we throw an exception without introducing a try-catch block handling
 it, the exception will rise to the toplevel and will cause our program to crash.
-This is exactly the result \autoref{first-example} would produce
-as we didn't surround line 3 with the try-catch block equivalent
-of Eff, which is a \emph{with-handle block}. However, to do this, we need to be
-able to declare \emph{effect handlers} first.
+This is exactly the result \autoref{first-example} would produce as we did not
+surround line 3 with the try-catch block equivalent of Eff, which is the
+\emph{with-handle block}. However, to do this, we need to be able to declare
+\emph{effect handlers} first.
 
-\subsection{Handlers}
+\subsection{Effect handlers}
 
-Handlers give meaning to effects: this is what programmers can use to specify
-what they mean by an effect, such as \lstinline{Print} in \autoref{first-example}.
-Using handlers we can make the code evaluate properly. Right now it always
-crashes on line 3 and does not continue executing the rest of the program.
-This is hardly what we desire from \lstinline{Print}.
+Effect handlers give meaning to effects: this is what programmers can use to
+specify what they mean by an effect, such as \lstinline{Print} in
+\autoref{first-example}. Using handlers we can make the code evaluate properly.
+Right now it always crashes on line 3 and does not continue executing the rest
+of the program. This is hardly what we desire from \lstinline{Print}.
 
-Before we do this, we must think about how we would \emph{simulate printing} in a pure functional
-language. One way of doing this would be to implement all functions of type $A \to B$ to
-return something of type $B \times \mathtt{string}$ instead, i.e., the result the function would return in
-its original form \emph{together} with a message it prints. Such a transformation would be
-a tedious manual task to do for \emph{all} our functions, not to mention how we would need to
-unbox the actual result of a function from a tuple every time we wished to access it. Fortunately,
-handlers happen to alleviate this problem.
+Before we do this, we must think about how we would \emph{simulate printing} in
+a pure functional language. One way of doing this would be to implement all
+functions of type $A \to B$ to return something of type $B \times \mathtt{string}$
+instead (i.e., the new function would return a pair; its original return value
+\emph{together} with the message it would print). Such a transformation would be
+a tedious manual task to implement for \emph{all} our functions, not to mention
+how we would need to unbox the actual result of a function from a tuple every
+time we wished to access it. Fortunately, handlers happen to alleviate this
+problem.
 
-Handlers are first-class citizens (i.e., values) in Eff and they show some similarities
-with SML's \lstinline|case| statement. A handler can be declared with the \lstinline|handler| keyword
-and by specifying so-called \emph{cases}:
+Handlers are first-class citizens (values) in Eff and they show some similarities
+with SML's \lstinline|case| statement. A handler can be declared with the
+\lstinline|handler| keyword and by specifying so-called \emph{cases}:
 
 \mylisting{efflang}
 {A handler definition consisting of 2 cases: a value case and an effect case.}
 {prepending-print-handler}
 {../code_examples/print_handler.eff}
 
-To complete our Hello World example we must be able to \emph{apply} this handler. This is done
-using a \emph{with-handle block} as illustrated below.
+To complete our Hello World example we must be able to \emph{apply} this handler.
+This is done using a \emph{with-handle block} as illustrated below.
 
 \mylisting{efflang}
 {The Hello World example in Eff.}
 {hello-world}
 {../code_examples/hello_world.eff}
 
-The code above evaluates to the pair \texttt{((), "Hello World!")}.
-The handler on \autoref{prepending-print-handler} implements printing. It uses two types of cases as described below.
+The code above evaluates to the pair \texttt{((), "Hello World!")}. The handler
+on \autoref{prepending-print-handler} implements printing. It uses two types of
+cases as described below.
 
-A \emph{value case} has the form $\mathtt{val}\ x \to c$. This is a case that describes how to handle the
-\emph{return value} of a computation.
-It takes the return value of a computation enclosed by a with-handle block, binds it to the
-identifier $x$ and performs the computation $c$.
-In \autoref{prepending-print-handler} we are simply saying that if the computation handled by this
-handler has finished computing without invoking any effects, then we are returning a pair containing
-the result of the computation and the empty string (this reflects that nothing was printed).
+A \emph{value case} has the form $\mathtt{val}\ x \to c$. This is a case that
+describes how to handle the \emph{return value} of a computation. It takes the
+return value of a computation enclosed by a with-handle block, binds it to the
+identifier $x$ and performs the computation $c$. In \autoref{prepending-print-handler}
+we are simply saying that if the computation handled by this handler has finished
+computing without invoking any effects, then we are returning a pair containing
+the result of the computation and the empty string (this reflects that nothing
+was printed).
 
-An \emph{effect case} is a generalisation of SML's \verb|handle| or Java's \verb|catch|. 
-It has the form $\mathtt{effect}\ \mathtt{op}\ e\ k \to c$, where the \texttt{effect} keyword
-plays the rôle of Java's catch, \texttt{op} is an effect name, $e$ is an expression, $k$ is
-an identifier to be used as the name for a continuation and $c$ is a computation.
-The continuation $k$ can then be \emph{resumed} with the \verb|continue| keyword
-and with an argument to the continuation.
-Note that when an effect of type $A \tto B$ is handled,
-we get \emph{read access} to its argument $e$ of type $A$ and we can resume its continuation $k$ if we provide
-$k$ a value of type $B$ (this is why we resume the continuation by giving it a
-\lstinline{()} value in \autoref{prepending-print-handler}---\lstinline{Print} is of type $\mathtt{string} \tto \mathtt{unit}$).
+An \emph{effect case} is a generalisation of SML's \verb|handle| or Java's
+\verb|catch|. It has the form $\mathtt{effect}\ \mathtt{op}\ e\ k \to c$, where
+the \texttt{effect} keyword plays the rôle of Java's catch, \texttt{op} is an
+effect name, $e$ is an expression, $k$ is an identifier to be used as the name
+for a continuation and $c$ is a computation. The continuation $k$ can then be
+\emph{resumed} with the \verb|continue| keyword and with an argument to the
+continuation. Note that when an effect of type $A \tto B$ is handled, we get
+\emph{read access} to its argument $e$ of type $A$ and we can resume its
+continuation $k$ if we provide $k$ a value of type $B$ (this is why we resume
+the continuation by giving it a \lstinline{()} value in
+\autoref{prepending-print-handler}---\lstinline{Print} is of type
+$\mathtt{string} \tto \mathtt{unit}$).
 
-% TODO:  and a finally rule. The effect rule first resumes the rest of the program to obtain its result and its output. ``Printing'' out \texttt{message} is simulated by string concatenation; we prepend \texttt{message} to the output of the rest of the program.
 As handlers are values, they have their own type of the form $A \Rightarrow B$.
-Handler types are similar to the $\to$ function types but they work on computations
-rather than on values. We can see why this is so if we think about what \lstinline|prepending_print_handler|
-is doing in our example. Used with a with-handle block it transforms any computation
-of type $A$ to one of the type $A \times \mathtt{string}$. One might think of handlers
-as transformations on computations. The handler on \autoref{prepending-print-handler} is of
-type $\alpha \Rightarrow \alpha \times \mathtt{string}$.
+Handler types are similar to the $\to$ function types but they work on
+computations rather than on values. We can see why this is so if we think about
+what \lstinline|prepending_print_handler| is doing in our example. Used with a
+with-handle block it transforms any computation of type $A$ to one of the type
+$A \times \mathtt{string}$. One might think of handlers as transformations on
+computations. The handler on \autoref{prepending-print-handler} is of type
+$\alpha \Rightarrow \alpha \times \mathtt{string}$.
 
 \subsubsection{The finally case}
 
-There is an extra case we did not mention, the \emph{finally case}. A finally case is
-invoked after the computation in a with-handle block finished evaluating and after all other
-handler cases finished evaluating.
+There is an extra case we did not mention, the \emph{finally case}. A finally
+case is invoked after the computation in a with-handle block has finished
+evaluating and after all other handler cases finished evaluating.
 
 Finally cases are just syntactic sugar for let wrappers around with-handle blocks.
-That is, $\textbf{finally } res \to fin$ does the same as $\textbf{let } res \leftarrow \textbf{with } h \textbf{ handle } c \textbf{ in } fin$.
-Finally rules were introduced to avoid having to use such inconvenient let wrappers \cite{bauer2015programming}.
-To see the use-case of this feature, compare the following two code snippets below, where the result of a physics simulation is returned in
-Kelvin but we wish to convert this result to Fahrenheit every time we want to display it on some user interface.
+That is, $\textbf{finally } res \to fin$ does the same as
+$\textbf{let } res \leftarrow \textbf{with } h \textbf{ handle } c \textbf{ in } fin$.
+Finally rules were introduced to avoid having to use such inconvenient let
+wrappers \cite{bauer2015programming}. To see the use case of this feature,
+compare the following two code snippets below, where the result of a physics
+simulation is returned in Kelvin but we wish to convert this result to
+Fahrenheit every time we want to display it on some user interface.
 
 \begin{figure}
   \begin{minipage}{.48\textwidth}
@@ -185,17 +198,19 @@ Kelvin but we wish to convert this result to Fahrenheit every time we want to di
   \end{minipage}%
 \end{figure}
 
-Instead of using a let-wrapper every time to convert to Fahrenheit we could use the same handler $h$ but extend it with a finally rule
-that does this conversion and hence avoids code duplication.
+Instead of using a let-wrapper every time to convert to Fahrenheit we could
+use the same handler $h$ but extend it with a finally rule that does this
+conversion and hence avoids code duplication.
 
-A handler can have any number of effect cases (even zero) but at most one finally case and at most one value case.
-Value cases and finally cases are optional. When they are avoided they are assumed to be identities (i.e.,
+A handler can have any number of effect cases (even zero) but at most one
+finally case and at most one value case. Value cases and finally cases are
+optional. When they are avoided they are assumed to be identities (i.e.,
 \lstinline{val x -> x} or \lstinline{finally x -> x} respectively).
 
 \paragraph{Illustration.}
 
-Imagining how the execution happens in the Hello World example is not trivial. The aim of the following illustration
-is to help with this.
+Imagining how the execution happens in the Hello World example is not trivial.
+The aim of the following illustration is to help with this.
 \begin{figure}[ht]
 \begin{subfigure}{.5\textwidth}
   \centering
@@ -219,77 +234,90 @@ is to help with this.
 \section{Continuations and control operators}
 \label{sec:continuations}
 
-Although continuations came up briefly in the previous section I did not explain what they are in detail.
-This section is devoted to this because continuations are playing a crucial rôle in Eff and in what follows
-in this dissertation.
+Although continuations came up briefly in the previous section I did not
+explain what they are in detail. This section is devoted to this because
+continuations are playing a crucial rôle in Eff and in what follows in this
+dissertation.
 
 \subsection{CPS in Scheme}
 \lstset{language=scheme}
 
-Continuations can represent an arbitrary program point in the execution of a program and thus one can say
-that continuations are always there, whenever a program executes. But where? A programming style called
-\emph{continuation passing style} (CPS) is a style of programming where every function of $n$ arguments is
-rewritten to an extended version taking $n+1$ arguments, the last of which is commonly named $k$ and
-represents a continuation.
+Continuations can represent an arbitrary program point in the execution of a
+program and thus one can say that continuations are always there, whenever a
+program executes. But where? A programming style called \emph{continuation
+passing style} (CPS) is a style of programming where every function of $n$
+arguments is rewritten to an extended version taking $n+1$ arguments, the last
+of which is commonly named $k$ and represents a continuation.
 
-Consider the Scheme code snippet below which uses this style to redefine the built-in binary addition and
-multiplication functions of Scheme as ternary functions \lstinline|+k| and \lstinline|*k| with an extra argument \verb|k|.
-Also note how the expression \lstinline|(1 + 2)*(3 + 4)| is written in this style.
+Consider the Scheme code snippet below which uses this style to redefine the
+built-in binary addition and multiplication functions of Scheme as ternary
+functions \lstinline|+k| and \lstinline|*k| with an extra argument \verb|k|.
+Also note how the expression \lstinline|(1 + 2)*(3 + 4)| is written in this
+style.
 
 \mylisting{scheme}
 {$(1+2) * (3+4)$ in CPS}
 {cps-arithmetic}
 {../code_examples/cps_arithmetic.scheme}
 
-We see that continuation passing style makes the order of the operations explicit as well as it makes it
-obvious \emph{what} the continuation is. However, writing code in this style is a bit troublesome and hence
-it is mostly used as an intermediate representation of programs in compilers -- not something humans interact with.
+We see that continuation passing style makes the order of the operations
+explicit as well as it makes it obvious \emph{what} the continuation is.
+However, writing code in this style is a bit troublesome and hence CPS is mostly
+used as an intermediate representation of programs in compilers---not
+something humans interact with.
 
 \subsection{Scheme's call/cc}
 
 Scheme is interesting from the point of view of continuations because it has the
-\texttt{call-with-current-continuation} built-in operation which is conventionally referred to as \lstinline|call/cc|
-\footnote{A similarly obscure control operator is Peter Landin's J operator which predates \lstinline{call/cc} by almost a decade.
-It was discovered shortly after Peter Landin described SECD machines for the first time.}.\emph{The call/cc operator takes a single argument. This argument is a function which itself takes a continuation as an argument.}
+\texttt{call-with-current-continuation} built-in operation which is
+conventionally referred to as \lstinline|call/cc|
+\footnote{A similarly obscure control operator is Peter Landin's J operator
+which predates \lstinline{call/cc} by almost a decade. It was discovered shortly
+after Peter Landin described SECD machines for the first time.}.
+\emph{The call/cc operator takes a single argument. This argument is a function
+which itself takes a continuation as an argument.}
 
-If one wished to use continuations as first-class values in a Scheme program one wouldn't have to write everything in
-continuation passing style like above. A similar piece of code can be written with call/cc:
+If one wished to use continuations as first-class values in a Scheme program
+one would not have to write everything in CPS like above. A similar piece of
+code can be written with call/cc:
 
 \mylisting{scheme}
 {Continuations with \lstinline{call/cc} are not delimited}
 {callcc-not-delim}
 {../code_examples/callcc_not_delim.scheme}
 
-But looking at line 7 we see that the continuation
-here returns to the toplevel. Call/cc captures the continuation
-of the \emph{whole} program and \emph{does not} return to the program
-point the continuation was called from. This is different from
-how this is done in Eff.
+Looking at line 7 we see that the continuation here returns to the toplevel.
+Call/cc captures the continuation of the \emph{whole} program and
+\emph{does not} return to the program point the continuation was called from.
+This is different from how this is done in Eff.
 
 \subsection{Delimited continuations}
 
-Eff uses delimited continuations. These continuations \emph{do not} represent the rest of
-the whole program. They represent the continuation \emph{of the computation enclosed by a
-with-handle block}.
+Eff uses delimited continuations. These continuations \emph{do not} represent
+the rest of the whole program. They represent the continuation
+\emph{of the computation enclosed by a with-handle block}.
 
 \mylisting{efflang}
 {In Eff continuations behave like functions}
 {continuations-as-functions}
 {../code_examples/continuations_as_functions.eff}
 
-In the code above \verb|x| takes the value \verb|((), "Hello World")| rather than
-\verb|42| which one would expect with Scheme's call/cc. The fact that continuations
-are delimited also makes it possible to return to the program point a continuation was called
-from. This also allows us to resume continuations in Eff more than once if necessary. Hence,
-in Eff we can think about delimited continuations simply as functions.
+In the code above \lstinline{x} takes the value \lstinline{((), "Hello World")}
+rather than \lstinline{42} which one would expect with Scheme's
+\lstinline|call/cc|. The fact that continuations are delimited also makes it
+possible to return to the program point a continuation was called from. This
+also allows us to resume continuations in Eff more than once if necessary.
+Hence, in Eff we can think about delimited continuations simply as functions.
 
 \section{Eff formally}
 
 \subsection{Syntax}
 
-In the abstract syntax of Eff there is a distinction between pure expressions and computations which are possibly effectful.
-\footnote{The reader familiar with monads might discover some similarities between \emph{val} and \emph{return} as well
-as similarities between monadic type constructors and computations.}
+In the abstract syntax of Eff there is a distinction between pure expressions
+and computations which are possibly effectful.
+\footnote{The reader familiar with monads might discover some similarities
+between \emph{val} and \emph{return} as well as similarities between monadic
+type constructors and computations.}
 
 \begin{myfigure}[.9]{Abstract syntax of Eff}{fig:eff-syntax}
 Effect declarations
@@ -321,21 +349,25 @@ Computations
 \end{align*}
 \end{myfigure}
 
-Most terms should be familiar to the reader by now. However, there are some differences between the concrete and
-the abstract syntax of Eff. Notably, the use of the \emph{val} keyword is omitted many times from the concrete
-syntax because for programmers it might be tiresome if they have to keep track whether they are writing an
-expression or a computation at the moment. The \emph{continue} keyword is missing from the abstract syntax too.
-However, our ability to resume computations did not vanish.
-As we saw in the previous section, delimited continuations are just simply functions reifying a continuation.
-Hence we can handle resumptions as function application. Anyhow, to ease the understanding of the semantic rules
-I use the notation $y.c$ for a delimited continuation which resumes the computation $c$ after receiving $y$.
+Most terms should be familiar to the reader by now. However, there are some
+differences between the concrete and the abstract syntax of Eff. Notably, the
+use of the \emph{val} keyword is omitted many times from the concrete syntax
+because for programmers it might be tiresome if they have to keep track whether
+they are writing an expression or a computation at the moment. The
+\emph{continue} keyword is missing from the abstract syntax too. However, our
+ability to resume computations did not vanish. As we saw in the previous section,
+delimited continuations are just simply functions reifying a continuation. Hence
+we can handle resumptions as function application. Anyhow, to ease the
+understanding of the semantic rules I use the notation $y.c$ for a delimited
+continuations which resume the computation $c$ after receiving $y$.
 
 \subsection{Semantics}
 
-This section presents the small step operational semantics of Eff. The spotlight is on
-possibly effectful computations and on their reduction rules given by the relation $\leadsto$. I focus on the Eff specific
-transition steps here (see \autoref{fig:mini-semantics}). The other transition rules are standard and can be found in
-\autoref{sec:full-semantics}.
+This section presents the small step operational semantics of Eff. The spotlight
+is on possibly effectful computations and on their reduction rules given by the
+relation $\leadsto$. I focus on the Eff specific transition steps here (see
+\autoref{fig:mini-semantics}). The other transition rules are standard and can
+be found in \autoref{sec:full-semantics}.
 
 \begin{myfigure}[1]
   {Eff-specific rules of the small step operational semantics}
@@ -399,8 +431,9 @@ transition steps here (see \autoref{fig:mini-semantics}). The other transition r
     $$
 \end{myfigure}
 
-The explanation of these rules is given by \autoref{tab:semantics-rule-explanation} so that the reader can quickly jump
-between the comments there and the rules on \autoref{fig:mini-semantics}.
+The explanation of these rules is given by \autoref{tab:semantics-rule-explanation}
+so that the reader can quickly jump between the comments there and the rules on
+\autoref{fig:mini-semantics}.
 
 \begin{table}
   \centering
@@ -411,33 +444,44 @@ between the comments there and the rules on \autoref{fig:mini-semantics}.
   Rule & Comment \\
   \midrule
   \textsc{Let-Val} & 
-    If a computation \emph{returns} an expression $e$, it is bound to the identifier $x$ in the computation $c$. \\
+    If a computation \emph{returns} an expression $e$, it is bound to the
+    identifier $x$ in the computation $c$. \\
 
   \textsc{Let-Effect} & 
-    A computation $c$ can also reduce to a \emph{performed effect} $E(e, y.c_1)$, where $e$ is the argument of the effect
-    constructor and $(y.c_1)$ is a delimited continuation representing the program point $c$'s execution was stopped at. This delimited continuation can be
-    used later to resume $c$. \\
+    A computation $c$ can also reduce to a \emph{performed effect} $E(e, y.c_1)$,
+    where $e$ is the argument of the effect constructor and $(y.c_1)$ is a
+    delimited continuation representing the program point $c$'s execution was
+    stopped at. This delimited continuation can be used later to resume $c$. \\
 
   \textsc{Perform} &
-    Whenever we perform an effect, a so-called \emph{effect packet}\footnote{Similar to \emph{exception packets} in SML, see \cite{paulson1996ml}.}
-    $E(e, \kappa)$ is created. Here, $e$ is the argument to the
-    effect and $\kappa$ is the captured delimited continuation which is determined by the with-handle blocks surrounding this computation.
-    Note, that because it isn't guaranteed that there are such with-handle blocks around a $\effPerform$ call, creating such an
-    effect package might not always be possible. \\
+    Whenever we perform an effect, a so-called \emph{effect packet} (similar to
+    \emph{exception packets} in SML, see \cite{paulson1996ml}) $E(e, \kappa)$
+    is created. Here, $e$ is the argument to the effect and $\kappa$ is the
+    captured delimited continuation which is determined by the with-handle
+    blocks surrounding this computation. Note, that because it is not guaranteed
+    that there are such with-handle blocks around a $\effPerform$ call, creating
+    such an effect package might not always be possible. \\
 
   \textsc{Handle-Val} & 
-    If a computation in a with-handle block with handler $h$ reduces to $\effVal e$, then the
-    \emph{value case} of $h$ (i.e., $\effVal x \mapsto c_v$) is invoked by substituting $e$ for $x$ in $c_v$. \\
+    If a computation in a with-handle block with handler $h$ reduces to
+    $\effVal e$, then the \emph{value case} of $h$ (i.e., $\effVal x \mapsto c_v$)
+    is invoked by substituting $e$ for $x$ in $c_v$. \\
 
   \textsc{Handle-Eff-Match} &
-    This rule tells us what happens when there is a \emph{matching effect case} in the current handler.
-    The argument of the effect is bound to $x$ and the delimited continuation $(y.c)$ is bound to $k$. \\
+    This rule tells us what happens when there is a \emph{matching effect case}
+    in the current handler. The argument of the effect is bound to $x$ and the
+    delimited continuation $(y.c)$ is bound to $k$. \\
 
   \textsc{Handle-Eff-Rise} &
-    This rule tells us what happens when the next handler \emph{cannot} handle the effect which was performed.
-    In this case the effect packet is modified which is quite important. The \emph{body} of the delimited continuation
-    is surrounded by the current non-matching with-handle block. This achieves the effect that when the continuation 
-    is resumed we also restore all the handlers we escaped when we were ``searching'' for a matching handler.\\
+    This rule tells us what happens when the next handler \emph{cannot} handle
+    the effect which was performed. In this case the effect packet is modified
+    which is quite important. The \emph{body} of the delimited continuation is
+    surrounded by the current non-matching with-handle block. This achieves the
+    effect that when the continuation is resumed we also \emph{restore all the
+    handlers we escaped} when we were ``searching'' for a matching handler.
+    This is a property of the semantics which we will have to be very careful
+    about when implementing the CEK interpreter and the SHADE VM in the next
+    chapter.\\
 
   \bottomrule
   \end{tabular}
@@ -460,15 +504,18 @@ The types of Eff are as follows:
     A \Rightarrow B$$
   $$ E_i ::= A_i \tto B_i $$
 
-where $b$ stands for built-in types (e.g., my implementation includes built-in types such as ints, reals and strings) which are not
-particularly interesting here.
-In the following section we assume the existence of a set $\Sigma_E$ containing all \emph{effect signatures} of the form $E_i : A_i \tto B_i$.
+where $b$ stands for built-in types (e.g., my implementation includes built-in
+types such as ints, reals and strings) which are not particularly interesting
+here. In the following section we assume the existence of a set $\Sigma_E$
+containing all \emph{effect signatures} of the form $E_i : A_i \tto B_i$.
 
 \subsubsection{Type checking}
 
-Again, I omit standard typing rules and focus on the Eff specific ones. For the sake of completeness \autoref{sec:full-typing} contains the other rules.
-There are two separate typing relations denoted $\vdash_e$ and $\vdash_c$ for expressions and computations respectively.
-Type environments are denoted $\Gamma$ and are maps from variable names to types.
+Again, I omit standard typing rules and focus on the Eff specific ones. For the
+sake of completeness \autoref{sec:full-typing} contains the other rules.
+There are two separate typing relations denoted $\vdash_e$ and $\vdash_c$ for
+expressions and computations respectively. Type environments are denoted
+$\Gamma$ and are maps from variable names to types.
 
 \begin{myfigure}[1]
 {Type checking for Eff-specific expressions and computations}
@@ -517,7 +564,10 @@ $$
   \end{align*}
 \end{myfigure}
 
-Again, explanation of these rules is given in \autoref{tab:typing-rule-explanation} in a similar way to how it was done for the semantics.
+Again, explanation of these rules is given in
+\autoref{tab:typing-rule-explanation} in a similar way to how it was done for
+the semantics.
+
 \begin{table}
   \centering
   {\renewcommand{\arraystretch}{1.3}
@@ -549,10 +599,12 @@ Again, explanation of these rules is given in \autoref{tab:typing-rule-explanati
 
 \lstset{language=efflang}
 
-The attentive reader might have wondered what $\effAbsurd$and the $\emptyType$ type are good for. In the
-tutorial we got away with a slight lie which we will make amends for here. We said that in the absence of
-suitable handlers an effect will behave like an exception (remember \autoref{sub@fig:exception}). This is
+The attentive reader might have wondered what $\effAbsurd$and the $\emptyType$
+type are good for. In the tutorial we got away with a slight lie which we will
+make amends for here. We said that in the absence of suitable handlers an effect
+will behave like an exception (remember \autoref{sub@fig:exception}). This is
 not quite true when typing is introduced, as a computation like
+
 \begin{center}
 \begin{tabular}{c}
 {\begin{lstlisting}[language=caml, numbers=none, frame=none]
@@ -560,8 +612,9 @@ if true then (perform (Error "Lie detected")) else 1337
 \end{lstlisting}}
 \end{tabular}
 \end{center}
-won't be typeable with our rules (there is a type mismatch between $\unitType$ and $\mathtt{int}$),
-although in OCaml or SML one can write
+
+won't be typeable with our rules (there is a type mismatch between $\unitType$
+and $\mathtt{int}$), although in OCaml or SML one can write
 
 \begin{center}
 \begin{tabular}{c}
@@ -570,65 +623,80 @@ if true then (raise (Error "Lie detected!")) else 1337
 \end{lstlisting}}
 \end{tabular}
 \end{center}
-without any problems. We would like to use effects as exceptions -- it would be weird not to,
-as they are a generalisation of them. This is why we need $\effAbsurd$and the $\emptyType$ type.
-We can now say
+
+without any problems. We would like to use effects as exceptions -- it would be
+weird not to, as they are a generalisation of them. This is why we need
+$\effAbsurd$and the $\emptyType$ type. We can now say
 
 \mylisting{efflang}
 {Absurd and empty with exceptions}
 {absurd-and-empty}
 {../code_examples/absurd_empty.eff}
 
-and this will type check if we use (\textsc{T-Absurd}). Note also that the only way one can introduce
-the $\emptyType$ type is by declaring an effect that has an $\emptyType$ output.
+and this will type check if we use (\textsc{T-Absurd}). Note also that the only
+way one can introduce the $\emptyType$ type is by declaring an effect that has
+an $\emptyType$ output.
 
-The distinction between pure expressions and effectful computations allows for the use of an \emph{effect system} with
-these rules. For instance, if one were to extend these rules with \emph{row-typing} one could
-keep track of what kind of side effecting computations occur in different parts of the program. This is can aid
-reasoning about programs, help us to discover more optimisations by using type and effect information and to 
-ensure that programs have certain safety properties.
-These are nice to have features and are outside of the scope of this dissertation.
+The distinction between pure expressions and effectful computations allows for
+the use of an \emph{effect system} with these rules. For instance, if one were
+to extend these rules with \emph{row-typing} one could keep track of what kind
+of side effecting computations occur in different parts of the program. This can
+aid reasoning about programs, help us to discover more optimisations by using
+type and effect information and to ensure that programs have certain safety
+properties. These are nice to have features and are outside of the scope of this
+dissertation.
 
 \section{Abstract machines by example}
 
-A purist would look at rule \textsc{(Perform)} in \autoref{fig:mini-semantics} and would think that the phrasing of the
-hypothesis is troublesome. I actually think that this ambiguity reflects well the challenge in this project. Consider for instance
-implementing an interpreter on the source terms of a language X. One's first instinct is that this is a trivial task: all we need
-to do is to write a recursive evaluator function, something of this sort:
+A purist would look at rule \textsc{(Perform)} in \autoref{fig:mini-semantics}
+and would think that the phrasing of the hypothesis is troublesome. I actually
+think that this ambiguity reflects well the challenge in this project. Consider
+for instance implementing an interpreter on the source terms of a language X.
+One's first instinct is that this is a trivial task: all we need to do is to
+write a recursive evaluator function, something of this sort:
 
 \mylisting{caml}
 {A naïve recursive evaluator function might look like this}
 {naive-implementation}
 {../code_examples/naive_implementation.ml}
 
-Indeed, this works for most programming languages (ones that do not have control operators like continuations) and this was my first
-attempt when writing a \nth{0} prototype in the very early stages of the project. I started to struggle when I reached the point I had to
-deal with continuations, as I needed the ability to access $\kappa$ any time in the evaluation of a program. But evaluators of this kind
-do not lend themselves easily to such maneuvers.
+Indeed, this works for most programming languages (ones that do not have control
+operators like continuations) and this was my first attempt when writing a
+\nth{0} prototype in the very early stages of the project. I started to struggle
+when I reached the point I had to deal with continuations, as I needed the
+ability to access $\kappa$ any time in the evaluation of a program. But
+evaluators of this kind do not lend themselves easily to such maneuvers.
 
-Hence this section is concerned with two types of abstract machines which are capable of doing what is described above. I will illustrate
-how they do this on a toy language and by the end of this section we will be able discover a correspondence between the \emph{runtime representation}
-of continuations in these machines and the CPS Scheme example from \autoref{sec:continuations}.
+Hence this section is concerned with two types of abstract machines which are
+capable of doing what is described above. I will illustrate how they do this on
+a toy language and by the end of this section we will be able discover a
+correspondence between the \emph{runtime representation} of continuations in
+these machines and the CPS Scheme example from \autoref{sec:continuations}.
 
-These two machines are CEK and SECD machines.
-They both interpret source terms directly and this makes it easy to implement them (a CEK implementation of Eff is discussed in the
-Implementation chaper).
+These two machines are CEK and SECD machines. They both interpret source terms
+directly and this makes it easy to implement them (a CEK implementation of Eff
+is discussed in the Implementation chaper).
 
-Consider the following Toy Language (TL), which is the untyped lambda calculus with natural numbers as values and with built-in operations
-like addition and multiplication:
+Consider the following Toy Language (TL), which is the untyped lambda calculus
+with natural numbers as values and with built-in operations like addition and
+multiplication:
 $$ t ::= x \mid n \mid \lambda x. t \mid t_0\ t_1 \mid t_0 + t_1 \mid t_0 * t_1.$$
 Our dummy example from \autoref{sec:continuations} in TL will be:
 $$ \mathtt{plus} = \lambda x. \lambda y.\ x + y $$
 $$ \mathtt{times} = \lambda x. \lambda y.\ x * y $$
 $$ \mathtt{times}\ (\mathtt{plus}\ 1\ 2)\ (\mathtt{plus}\ 3\ 4).$$
-What follows is a brief description of CEK and SECD machines for TL illustrated on this example.
+What follows is a brief description of CEK and SECD machines for TL illustrated
+on this example.
 
 \subsection{CEK machines}
 
-As the name suggests, the state of CEK machines consists of three components: \emph{control} (C), \emph{environment} (E) and \emph{kontinuation} (K).
-Control is simply the program to be evaluated in its abstract syntax tree form. Environment is a mapping from variable names to values (in our case, the
-natural numbers) and kontinuation is a \emph{stack of closures} representing the rest of the program to be interpreted at any given time.
-Hence a configuration of the machine is characterised by a three-tuple $\cek{C, E, K}$.
+As the name suggests, the state of CEK machines consists of three components:
+\emph{control} (C), \emph{environment} (E) and \emph{kontinuation} (K). Control
+is simply the program to be evaluated in its abstract syntax tree form.
+Environment is a mapping from variable names to values (in our case, the natural
+numbers) and kontinuation is a \emph{stack of closures} representing the rest
+of the program to be interpreted at any given time. Hence a configuration of the
+machine is characterised by a three-tuple $\cek{C, E, K}$.
 
 \begin{myfigure}[.9]
 {CEK machine transition rules for TL.}
@@ -652,23 +720,32 @@ $$ \cek{x, E, nil} \to E(x) $$
 $$ \cek{v, E, nil} \to v $$
 \end{myfigure}
 
-We see (at (*)) that whenever we reduce a term to a value $v$, a continuation $(y.t)$ is popped off the K stack, $v$ is bound to the
-variable $y$ in $E'$ (this is the environment we need to restore to be able to interpret $t$ in the same context we stopped
-evaluating its parent expression) and then $t$ is resumed. We need to use two types of continuations for TL as it has
-binary operators $+$ and $*$. The name \texttt{CONT1} denotes that one of the operands is reduced to a value and one
-remains to be reduced before the actual operation can be performed. \texttt{CONT2} is used to represent the state when
-both of the operand are values and the operation \texttt{op} can be performed (be that the built-in \texttt{add} or \texttt{mult}).
+We see (at (*)) that whenever we reduce a term to a value $v$, a continuation
+$(y.t)$ is popped off the K stack, $v$ is bound to the variable $y$ in $E'$
+(this is the environment we need to restore to be able to interpret $t$ in the
+same context we stopped evaluating its parent expression) and then $t$ is
+resumed. We need to use \emph{two} types of continuations for TL as it has
+\emph{binary} operators $+$ and $*$. The name \texttt{CONT1} denotes that one
+of the operands is reduced to a value and one remains to be reduced before the
+actual operation can be performed. \texttt{CONT2} is used to represent the state
+when both of the operands are values and the operation \texttt{op} can be
+performed (be that the built-in \texttt{add} or \texttt{mult}).
 
-We see that a $\effPerform$ operation would be easier to implement in this representation than in the naïve way. Furthermore,
-we should notice that a CPS transformation is done on the terms ``on the fly'' during the evaluation and we benefit from this
-because this avoids us (programmers) having to make the continuations explicit in our programs by writing them in CPS.
+We see that a $\effPerform$ operation would be easier to implement in this
+representation than in the naïve way. Furthermore, we should notice that a CPS
+transformation is done on the terms ``on the fly'' during the evaluation and we
+benefit from this because this avoids us (programmers) having to make the
+continuations explicit in our programs by writing them in CPS.
 
 \subsection{The SECD machine}
 
-SECD machines originate from Landin's famous \emph{The mechanical evaluation of expressions} \cite{landin-secd}.
-Their state is characterised by four components, namely: a \emph{stack} (S), an \emph{environment} (E), a \emph{control} (C) and a \emph{dump} (D).
-The first three components are standard. Here the rôle of dump is similar to the rôle of K in the CEK machine. It is a list of
-three tuples, each three tuple consisting of the other three components, i.e., it has the form $(S, E, C)$. The dump
+SECD machines originate from Landin's famous
+\emph{The mechanical evaluation of expressions} \cite{landin-secd}. Their state
+is characterised by four components, namely: a \emph{stack} (S),
+an \emph{environment} (E), a \emph{control} (C) and a \emph{dump} (D). The first
+three components are standard. Here the rôle of dump is similar to the rôle of
+$K$ in the CEK machine. It is a list of three tuples, each three tuple consisting
+of the other three components (i.e., it has the form $(S, E, C)$). The dump
 embodies a list of saved execution contexts we can return to if we wish.
 
 \begin{myfigure}
@@ -689,12 +766,15 @@ Termination:
 $$ \secd{v :: S, E, nil, nil} \to v $$
 \end{myfigure}
 
-We see that although this machine works on abstract syntax trees, it is still a bit lower level than the CEK machine in that
-it makes a stack explicit and the way it processes (disassembles) the tree is very similar to compiling. In control, we end
-up with a list of smaller trees and SECD instructions. With just another step we can turn this into a stack machine and this
-is what I will do in the Implementation chapter. 
+We see that although this machine works on abstract syntax trees, it is still a
+bit lower level than the CEK machine in that it makes a stack explicit and the
+way it processes (disassembles) the tree is very similar to compiling. In
+control, we end up with a list of smaller trees and SECD instructions. With 
+just another step we can turn this into a stack machine and this is what I will
+do in the Implementation chapter. 
 
-Finally, \autoref{fig:naive-cek-secd} summarises this section and why it is relevant.
+Finally, \autoref{fig:naive-cek-secd} summarises this section and why it is
+relevant.
 
 \begin{figure}
   \begin{subfigure}{\textwidth}
@@ -702,7 +782,8 @@ Finally, \autoref{fig:naive-cek-secd} summarises this section and why it is rele
     \resizebox{1\textwidth}{!}{
       \subimport{../figures/}{naive.tex}
     }
-    \caption{\emph{Naïve approach.} Imagine that a $\effPerform$ operation is issued at position 2 in the tree. As the naïve approach only keeps track of
+    \caption{\emph{Naïve approach.} Imagine that a $\effPerform$ operation is
+    issued at position 2 in the tree. As the naïve approach only keeps track of
     the continuations implicitly we cannot represent the red arrow easily.}
     \label{fig:naive}
   \end{subfigure}
@@ -711,8 +792,9 @@ Finally, \autoref{fig:naive-cek-secd} summarises this section and why it is rele
     \resizebox{1\textwidth}{!}{
       \subimport{../figures/}{cek.tex}
     }
-    \caption{\emph{A CEK machine.} The content of K in the CEK machine. The CEK machine represents the continuation the same way our continuations were nested in each other
-    in the Scheme example.}
+    \caption{\emph{A CEK machine.} The content of K in the CEK machine. The CEK
+    machine represents the continuation the same way our continuations were
+    nested in each other in the Scheme example.}
     \label{fig:naive}
   \end{subfigure}
   \begin{subfigure}{\textwidth}
@@ -720,13 +802,17 @@ Finally, \autoref{fig:naive-cek-secd} summarises this section and why it is rele
     \resizebox{1\textwidth}{!}{
       \subimport{../figures/}{secd.tex}
     }
-    \caption{\emph{An SECD machine.} The SECD machine does not need to pass values around between closures. The input values for all the closures will already reside on
-    the stack when the execution gets to the point where it needs to invoke the continuation. This is why the representation of a continuation here
-    looks much more like an instruction stream---this is great when our task is to compile a language like Eff!}
+    \caption{\emph{An SECD machine.} The SECD machine does not need to pass
+    values around between closures. The input values for all the closures will
+    already reside on the stack when the execution gets to the point where it
+    needs to invoke the continuation. This is why the representation of a
+    continuation here looks much more like an instruction stream---this is great
+    when our task is to compile a language like Eff!}
     \label{fig:naive}
   \end{subfigure}
 
-  \caption{Where is the continuation? Illustration of how different evaluators represent them.}
+  \caption{Where is the continuation? Illustration of how different evaluators
+  represent them.}
   \label{fig:naive-cek-secd}
 \end{figure}
 
@@ -734,8 +820,8 @@ Finally, \autoref{fig:naive-cek-secd} summarises this section and why it is rele
 
 \subsection{Licensing}
 
-It is important to mention that the project fulfills licensing criteria. The dependencies of this project are
-listed below with their licenses:
+It is important to mention that the project fulfills licensing criteria. The
+dependencies of this project are listed below with their licenses:
 \begin{itemize}
 \item The OCaml toplevel, version 4.06.0, GNU Lesser General Public License (LGPL) version 2.1
 \item \emph{menhir} parser generator, version 20190924, GNU Library General Public License version 2
@@ -743,44 +829,52 @@ listed below with their licenses:
 \item OPAM (OCaml Package Manager), version 2.0.4, GNU Lesser General Public License (LGPL) version 2.1
 \item \emph{Core} standard library by Jane Street, v0.11.3, MIT license
 \end{itemize}
-To the best of my knowledge these licenses allow the way I am using the software mentioned above.
+To the best of my knowledge these licenses allow the way I am using the software
+mentioned above.
 
 \subsection{Starting point}
 
-The starting point of my project didn't change since the writing of the project proposal (see \autoref{proposal}):
+The starting point of my project did not change since the writing of the
+project proposal (see \autoref{sec:proposal}):
 \begin{itemize}
-  \item I read briefly about Eff and algebraic effect handlers before starting my project.
-  \item I used SML and OCaml before to implement simple interpreters for toy programming languages
-    and to experiment with functional programming. This is my first big project where I use functional programming.
-  \item I also had a look at the OCaml ecosystem to check if it has a stable build system, if testing frameworks are available
-    and whether lexer and parser generators exist.
+  \item I read briefly about Eff and algebraic effect handlers before starting
+  my project.
+  \item I used SML and OCaml before to implement simple interpreters for toy
+  programming languages and to experiment with functional programming. This is
+  my first big project where I use functional programming.
+  \item I also had a look at the OCaml ecosystem to check if it has a stable
+  build system, if testing frameworks are available and whether lexer and parser
+  generators exist.
 \end{itemize}
 
 \subsection{Development methodology}
 
-I chose \emph{test-driven development} (TDD) \cite{beck2003test} as my project's software development methodology.
-The essence of TDD is that programmers work in quick iterative cycles whereby they write failing tests first and then
-implement the next feature that makes the failing test cases pass.
-Always having an \emph{automated} test suite at hand avoids trial and error testing which would be both error prone and
-time consuming.
-The reasons for choosing this methodology was three-fold.
+I chose \emph{test-driven development} (TDD) \cite{beck2003test} as my project's
+software development methodology. The essence of TDD is that programmers work in
+quick iterative cycles whereby they write failing tests first and then implement
+the next feature that makes the failing test cases pass. Always having an
+\emph{automated} test suite at hand avoids trial and error testing which would
+be both error prone and time consuming. The reasons for choosing this
+methodology was three-fold.
 
-Firstly, the nature of my project is such that the
-correctness of any code written is very well-defined as I can take the semantics of Eff
-as a baseline and given a piece of code it is always possible to tell whether it is
+Firstly, the nature of my project is such that the correctness of any code
+written is very well-defined as I can take the semantics of Eff as a baseline
+and given a piece of code it is always possible to tell whether it is
 interpreted correctly or not. This makes it possible to write tests upfront.
 
-Second, the structure of my project imposed an order on the parts to be delivered. This is
-because every module of my project (apart from the front end) depends on a previous one and
-hence on its correctness. As TDD is also known as 
-``a way of managing fear during programming'' it came handy that I could write code with confidence knowing
-that the code I have written before is tested. Other advantages were the ability to notice
-quickly if a code change broke some already implemented feature and the ability to refactor
-code with confidence (which I had to do frequently---from summer internships I knew that my coding style
-is such that this will be unavoidable if I want to work with a maintainable codebase).
+Second, the structure of my project imposed an order on the parts to be
+delivered. This is because every module of my project (apart from the front end)
+depends on a previous one and hence on its correctness. As TDD is also known as 
+``a way of managing fear during programming'' it came handy that I could write
+code with confidence knowing that the code I have written before is tested.
+Other advantages were the ability to notice quickly if a code change broke some
+already implemented feature and the ability to refactor code with confidence
+(which I had to do frequently---from summer internships I knew that my coding
+style is such that this will be unavoidable if I want to work with a
+maintainable codebase).
 
-Third, my success criterion was a correct working implementation of a compiler, so tests were
-crucial to demonstrate that success criteria were fulfilled.
+Third, my success criterion was a correct working implementation of a compiler,
+so tests were crucial to demonstrate that success criteria were fulfilled.
 
 % \begin{figure}[htb]
 %   \centering
@@ -806,120 +900,37 @@ crucial to demonstrate that success criteria were fulfilled.
 % \end{figure}
 
 \section{Summary}
-This section summed up the theoretical background which was needed to complete this dissertation.
-It also shows the preparation I undertook in the software engineering aspects of the project.
+This section summed up the theoretical background which was needed to complete
+this dissertation. It also shows the preparation I undertook in the software
+engineering aspects of the project.
 
 \begin{itemize}
-  \item I briefly introduced the programming language Eff and talked about its characteristic features. I showed
-    code examples demonstrating how handlers can be used.
-  \item I explained the idea of a continuation, how it represents an arbitrary program point in the
-    execution of a program and how it allows advanced control flow to be implemented.
-  \item I talked about the small-step operational semantics of core Eff as well as the typing of Eff terms.
-  \item I mentioned two abstract machines which can implement the structured \emph{non-local
-    flow of control} continuations make possible. The key challenge these machines solve is that
-    they can \emph{save and restore} execution contexts in an appropriate way whenever non-local control flow occurs.
+  \item I briefly introduced the programming language Eff and talked about its
+      characteristic features. I showed code examples demonstrating how handlers
+      can be used.
 
-    A CEK machine does this by keeping a stack of continuations (K), while the SECD machine does this by using
-    a so-called dump (D). The importance of these machines will become clearer in the Implementation section where I describe the
-    SHADE virtual machine for Eff which has similarities with both of these abstract machines.
-  \item I stated my starting point and discussed the development methodology used
-    to write the code and the testing strategy to assess its correctness.
+  \item I explained the idea of a continuation, how it represents an arbitrary
+      program point in the execution of a program and how it allows advanced
+      control flow to be implemented.
+
+  \item I talked about the small-step operational semantics of core Eff as well
+      as the typing of Eff terms.
+
+  \item I mentioned two abstract machines which can implement the structured
+      \emph{non-local flow of control} continuations make possible. The key
+      challenge these machines solve is that they can \emph{save and restore}
+      execution contexts in an appropriate way whenever non-local control flow
+      occurs.
+
+    A CEK machine does this by keeping a stack of continuations (K), while the
+    SECD machine does this by using a so-called dump (D). The importance of
+    these machines will become clearer in the Implementation section where I
+    describe the SHADE virtual machine for Eff which has similarities with both
+    of these abstract machines.
+
+  \item I stated my starting point and discussed the development methodology
+    used to write the code and the testing strategy to assess its correctness.
 \end{itemize}
-
-
-\begin{comment}
-\subsection{Eff}
-
-This subsection gives a short introduction to Eff with some code examples.
-The precise syntax and semantics of the language will be defined later,
-we aim for an intuitive introduction here.
-
-\subsubsection{Effects}
-
-There is an important distinction between syntactic and semantic elements in the language. Effect declarations belong to syntax.
-
-An effect in Eff is declared using the \verb|effect| keyword together with a type signature which forms the effect signature. One would define a \verb|Print| effect for printing strings as follows:
-
-
-
-This tells us two things. To invoke the \verb|Print| effect we must provide a string as an argument and what we get back is something of type \verb|unit| after the effect is performed. We get to know no extra information about \verb|Print|.
-
-Now that we have a \verb|Print| effect we can write down the mandatory Hello World example:
-\begin{verbatim}
-perform (Print "Hello World!")
-\end{verbatim}
-
-The \verb|perform| keyword is used to perform already declared effects. However, if we think about it, this piece of code still does
-not make any sense as we don't know how to interpret \verb|Print "Hello World!"|.
-
-\subsubsection{Handlers}
-
-Handlers are used to assign meaning to effects. A handler is just a list of rules. A rule can be of three different types: a value rule, an effect rule or a finally rule.
-
-\textbf{Value and effect rules}
-
-The following handler provides an interpretation for the \verb|Print| effect. This handler converts the result of a computation to a 2-tuple where the first element is the original result and the second
-element is a concatenation of the strings from all the \verb|Print| effects from the computation.
-
-We use the value rule \verb|v -> (v, "")| to say what happens ``by default''. If the computation didn't print anything then we simply say that it printed the empty string.
-
-\begin{verbatim}
-let collect = handler
-| v -> (v, "")
-| effect (Print str) k ->
-    (* Find out what the rest of the computation would print out *)
-    let (result, s) = continue k () in
-    (* Prefix the string printed by the rest of the computation 
-       with `str` from this effect *)
-    (result, str ^ s)
-\end{verbatim}
-
-The effect rule is a bit more involved. Effect rules have the form \verb|effect E(args) k| where \verb|k| is always bound to the ``rest of the computation'' which we call a continuation (and by convention
-usually use the letter $k$ or $\kappa$ to denote it). The arguments of the effect \verb|E| are bound to \verb|args| via pattern matching. In the example above we first resume the computation by resuming the
-computation via \verb|continue|. After we find out what the rest of the computation would print out, we prepend our current string to it.
-
-Note that when we handle an effect of type $\alpha \to \beta$ we get a continuation of type $\beta \to \gamma$ where $\gamma$ is the type of the computation being enclosed in a \verb|with ... handle| block.
-
-Value rules can be omitted in handler definitions, in which case they are assumed to be identities.
-
-\textbf{Finally rules}
-
-Finally rules are just syntactic sugar for \verb|let| wrappers around \verb|with ... handle| statements that act on the result of a handled computation, i.e.,
-\begin{verbatim}
-let h = handler
-    | finally x -> x + x
-in 
-    with h handle c
-\end{verbatim}
-would be syntactic sugar for
-\begin{verbatim}
-let x = with h handle c in x + x.
-\end{verbatim}
-
-I would like to point out that this syntax is added only for convenience as it happens many times that the same transformations must be performed after a \verb|with ... handle| block \cite{bauer2015programming}. Hence \verb|finally| here does not provide the Java-like semantics where the computation in a finally block is ``guaranteed'' to be executed.
-
-Finally rules can be omitted in handler definitions, in which case they are assumed to be identities.
-
-\textbf{Handler types}
-
-Handlers handling a computation of type $\alpha$ and giving a result of type $\beta$ are given the type $\alpha \Rightarrow \beta$.
-\end{comment}
-
-\begin{comment}
-\subsection{TODOs}
-\begin{itemize}
-\item I haven't said anything about shallow and deep handlers
-\item Comparing to haskell monads/monad transformers is risky -- need to explain these
-\end{itemize}
-
-\section{Papers}
-\begin{itemize}
-\item Delimited control \cite{kiselyov2010delimited}
-\item Eff Directly in OCaml \cite{Kiselyov_2018}
-\item Very good article about CPS compilation \cite{flanagan1993essence}
-\item Bauer tutorial \cite{bauer2018algebraic}
-\end{itemize}
-\end{comment}
 
 \ifstandalone
 \bibliography{../bibliography}{}
