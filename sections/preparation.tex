@@ -3,7 +3,6 @@
 \usepackage{import}
 \usepackage{ebproof}
 \usepackage[utf8]{inputenc}
-\usepackage[table]{xcolor}
 \usepackage{hyperref}
 \usepackage{amsmath}
 \usepackage{amssymb}
@@ -12,6 +11,9 @@
 \usepackage{subcaption}
 \usepackage{booktabs}
 \usepackage[margin=1in]{geometry}
+\usepackage{tabularx}
+\usepackage[table]{xcolor}
+\usepackage{cleveref}
 
 \ifstandalone
 \input{../src/listing.tex}
@@ -21,14 +23,22 @@
 \input{../src/macros.tex}
 \fi
 
+% Magic to fix colouring with tabularx
+\newcounter{tblerows}
+\expandafter\let\csname c@tblerows\endcsname\rownum
+
+% TODO: Ismetled a ``We see''-t
 \begin{document}
 
-% TODO: necessary to understand these things in order to appreciate what follows; hence the tutorial style.
-% TODO: took me X time to understand this; for the benefit of the next person blah blah,... tutorial
-This chapter of my dissertation contains a tutorial introduction to the
-programming language Eff. It also discusses continuations and their
-relationships with two abstract machines, and talks about some of the software
-engineering aspects of the project.
+This chapter contains an introduction to the programming language Eff.  It also
+discusses continuations and their relationships with two abstract machines
+(CEK and SECD machines) which is \emph{necessary} to understand in order to
+appreciate what follows in this dissertation.
+
+It took me more than a month to understand the concepts described here and the
+relationships between them.
+Therefore this chapter is witten in a tutorial style for the benefit of the next
+person attempting a similar dissertation.
 
 \section{A quick Eff tutorial}
 
@@ -85,7 +95,7 @@ given to an effect handler (this would be an exception handler in OCaml or Java)
 or the program will terminate with an exception if no handler can handle the
 effect.
 
-% REPHRASE DO NOT BE CONFUSED
+% TODO: REPHRASE DO NOT BE CONFUSED
 Do not be confused by how an effect is constructed. Effects are not values in
 the Eff language. That is, \lstinline{Print "Hello World"} would be meaningless
 in itself, just like the exception \lstinline{Failure "hd"} would be meaningless
@@ -176,8 +186,9 @@ case is invoked after the computation in a with-handle block has finished
 evaluating and after all other handler cases finished evaluating.
 
 Finally cases are just syntactic sugar for let wrappers around with-handle blocks.
-That is, $\textbf{finally } res \to fin$ does the same as
-$\textbf{let } res \leftarrow \textbf{with } h \textbf{ handle } c \textbf{ in } fin$.
+That is, $\textbf{finally } \mathit{res} \to \mathit{fin}$ does the same as
+$\textbf{let } \mathit{res} \leftarrow \textbf{with } h \textbf{ handle } c
+\textbf{ in } \mathit{fin}$.
 Finally rules were introduced to avoid having to use such inconvenient let
 wrappers \cite{bauer2015programming}. To see the use case of this feature,
 compare the following two code snippets below, where the result of a physics
@@ -185,14 +196,14 @@ simulation is returned in Kelvin but we wish to convert this result to
 Fahrenheit every time we want to display it on some user interface.
 
 \begin{figure}
-  \begin{minipage}{.48\textwidth}
+  \begin{minipage}{.5\textwidth}
     \lstinputlisting[
     caption={Handler without finally},
     label=handler-keyword,
     language=efflang]
     {../code_examples/celsius_fahrenheit.eff}
   \end{minipage}%
-  \begin{minipage}{.45\textwidth}
+  \begin{minipage}{.5\textwidth}
     \lstinputlisting[
     caption={Handler with finally},
     label=handler-keyword, 
@@ -272,7 +283,7 @@ something humans interact with.
 \subsection{Scheme's call/cc}
 
 Scheme is interesting from the point of view of continuations because it has the
-\texttt{call-with-current-continuation} built-in operation which is
+\lstinline|call-with-current-continuation| built-in operation which is
 conventionally referred to as \lstinline|call/cc|
 \footnote{A similarly obscure control operator is Peter Landin's J operator
 which predates \lstinline{call/cc} by almost a decade. It was discovered shortly
@@ -361,7 +372,7 @@ they are writing an expression or a computation at the moment. The
 ability to resume computations did not vanish. As we saw in the previous section,
 delimited continuations are just simply functions reifying a continuation. Hence
 we can handle resumptions as function application. Anyhow, to ease the
-understanding of the semantic rules I use the notation $y.c$ for a delimited
+understanding of the semantic rules I use the notation $y.c$ for delimited
 continuations which resume the computation $c$ after receiving $y$.
 
 \subsection{Semantics}
@@ -506,7 +517,7 @@ The types of Eff are as follows:
     A \to B \mid
     A \Rightarrow B$$
   $$ E_i ::= A_i \tto B_i $$
-
+%
 where $b$ stands for built-in types (e.g., my implementation includes built-in
 types such as ints, reals and strings) which are not particularly interesting
 here. In the following section we assume the existence of a set $\Sigma_E$
@@ -566,7 +577,7 @@ $$
     \text{ and } \\ \forall i.\ E_i : A_i \tto B_i \in \Sigma_E
   \end{align*}
 \end{myfigure}
-
+%
 Again, explanation of these rules is given in
 \autoref{tab:typing-rule-explanation} in a similar way to how it was done for
 the semantics.
@@ -574,8 +585,8 @@ the semantics.
 \begin{table}
   \centering
   {\renewcommand{\arraystretch}{1.3}
-  \rowcolors{2}{gray!17}{white}
-  \begin{tabular}{lp{10cm}}
+  \rowcolors{3}{gray!17}{white}
+  \begin{tabularx}{\textwidth}{lX}
   \toprule
   Rule & Comment \\
   \midrule
@@ -594,7 +605,7 @@ the semantics.
     As applying handlers happens with with-handle blocks this rule is similar to
     the function application typing too. \\
   \bottomrule
-  \end{tabular}
+  \end{tabularx}
   \caption{Explanation of the Eff specific typing rules}
   \label{tab:typing-rule-explanation}
   }
@@ -607,7 +618,7 @@ type are good for. In the tutorial we got away with a slight lie which we will
 make amends for here. We said that in the absence of suitable handlers an effect
 will behave like an exception (remember \autoref{sub@fig:exception}). This is
 not quite true when typing is introduced, as a computation like
-
+%
 \begin{center}
 \begin{tabular}{c}
 {\begin{lstlisting}[language=caml, numbers=none, frame=none]
@@ -615,10 +626,10 @@ if true then (perform (Error "Lie detected")) else 1337
 \end{lstlisting}}
 \end{tabular}
 \end{center}
-
+%
 won't be typeable with our rules (there is a type mismatch between $\unitType$
 and $\mathtt{int}$), although in OCaml or SML one can write
-
+%
 \begin{center}
 \begin{tabular}{c}
 {\begin{lstlisting}[language=caml, numbers=none, frame=none]
@@ -626,16 +637,16 @@ if true then (raise (Error "Lie detected!")) else 1337
 \end{lstlisting}}
 \end{tabular}
 \end{center}
-
+%
 without any problems. We would like to use effects as exceptions -- it would be
 weird not to, as they are a generalisation of them. This is why we need
 $\effAbsurd$and the $\emptyType$ type. We can now say
-
+\\
 \mylisting{efflang}
 {Absurd and empty with exceptions}
 {absurd-and-empty}
 {../code_examples/absurd_empty.eff}
-
+%
 and this will type check if we use (\textsc{T-Absurd}). Note also that the only
 way one can introduce the $\emptyType$ type is by declaring an effect that has
 an $\emptyType$ output.
@@ -672,7 +683,7 @@ evaluators of this kind do not lend themselves easily to such maneuvers.
 
 Hence this section is concerned with two types of abstract machines which are
 capable of doing what is described above. I will illustrate how they do this on
-a toy language and by the end of this section we will be able discover a
+a toy language and by the end of this section we will be able to discover a
 correspondence between the \emph{runtime representation} of continuations in
 these machines and the CPS Scheme example from \autoref{sec:continuations}.
 
@@ -723,12 +734,12 @@ $$ \cek{x, E, nil} \to E(x) $$
 $$ \cek{v, E, nil} \to v $$
 \end{myfigure}
 
-We see (at (*)) that whenever we reduce a term to a value $v$, a continuation
+We see at $(*)$ that whenever we reduce a term to a value $v$, a continuation
 $(y.t)$ is popped off the K stack, $v$ is bound to the variable $y$ in $E'$
 (this is the environment we need to restore to be able to interpret $t$ in the
 same context we stopped evaluating its parent expression) and then $t$ is
 resumed. We need to use \emph{two} types of continuations for TL as it has
-\emph{binary} operators $+$ and $*$. The name \texttt{CONT1} denotes that one
+\emph{binary} operators $+$ and $*$. The name \texttt{CONT1} suggests that one
 of the operands is reduced to a value and one remains to be reduced before the
 actual operation can be performed. \texttt{CONT2} is used to represent the state
 when both of the operands are values and the operation \texttt{op} can be
@@ -775,49 +786,54 @@ way it processes (disassembles) the tree is very similar to compiling. In
 control, we end up with a list of smaller trees and SECD instructions. With 
 just another step we can turn this into a stack machine and this is what I will
 do in the Implementation chapter. 
-
-Finally, \autoref{fig:naive-cek-secd} summarises this section and why it is
-relevant.
-
+%
+%
 \begin{figure}
-  \begin{subfigure}{\textwidth}
-    \centering
-    \resizebox{1\textwidth}{!}{
-      \subimport{../figures/}{naive.tex}
+  \begin{subfigure}{.5\textwidth}
+    \subcaptionbox{
+        \emph{Naïve approach.} Imagine that a $\effPerform$ operation is
+        issued at position 2 in the tree. As the naïve approach only keeps track
+        of the continuations implicitly we cannot represent the red arrow easily.
     }
-    \caption{\emph{Naïve approach.} Imagine that a $\effPerform$ operation is
-    issued at position 2 in the tree. As the naïve approach only keeps track of
-    the continuations implicitly we cannot represent the red arrow easily.}
-    \label{fig:naive}
+    [8cm][c]
+    {\resizebox{\textwidth}{!}{\subimport{../figures/}{naive.tex}}}
+    \label{fig:continuation-naive}
   \end{subfigure}
+  %
+  \begin{subfigure}{.5\textwidth}
+    \subcaptionbox{
+        \emph{SECD machine.} The stack of the SECD machine is a
+        representation of the red arrow from (\subref{fig:continuation-naive}).
+        However, SECD does not need to pass values around between closures like
+        (\subref{fig:continuation-cek}) does.
+    }
+    [8cm][c]
+    {\resizebox{\textwidth}{!}{\subimport{../figures/}{secd.tex}}}
+    \label{fig:continuation-secd}
+  \end{subfigure}
+  %
   \begin{subfigure}{\textwidth}
     \centering
-    \resizebox{1\textwidth}{!}{
+    \resizebox{\textwidth}{!}{
       \subimport{../figures/}{cek.tex}
     }
-    \caption{\emph{A CEK machine.} The content of K in the CEK machine. The CEK
-    machine represents the continuation the same way our continuations were
-    nested in each other in the Scheme example.}
-    \label{fig:naive}
+    \caption{\emph{CEK machine.} The $K$ component of the CEK machine represents
+    continuations with closures the same way our continuations were nested in each other in the
+    Scheme example.}
+    \label{fig:continuation-cek}
   \end{subfigure}
-  \begin{subfigure}{\textwidth}
-    \centering
-    \resizebox{1\textwidth}{!}{
-      \subimport{../figures/}{secd.tex}
-    }
-    \caption{\emph{An SECD machine.} The SECD machine does not need to pass
-    values around between closures. The input values for all the closures will
-    already reside on the stack when the execution gets to the point where it
-    needs to invoke the continuation. This is why the representation of a
-    continuation here looks much more like an instruction stream---this is great
-    when our task is to compile a language like Eff!}
-    \label{fig:naive}
-  \end{subfigure}
-
-  \caption{Where is the continuation? Illustration of how different evaluators
-  represent them.}
+  %
+  \caption{Where is the continuation?}
   \label{fig:naive-cek-secd}
 \end{figure}
+%
+\autoref{fig:naive-cek-secd} sums up why this section is important. It is an
+illustration of how different evaluators represent continuations. Note that the
+representation of a continuation in \autoref{fig:naive-cek-secd}\subref{fig:continuation-secd} looks
+very similar to an instruction stream. It is as if CEK did a CPS translation on
+the fly while SECD did both a CPS and a ``sort of compilation'' while
+interpreting a program---this is a precious insight to possess when our task is to
+compile a language like Eff!
 
 \section{Software engineering}
 
@@ -829,7 +845,7 @@ dependencies of this project are listed below with their licenses:
 \item The OCaml toplevel, version 4.06.0, GNU Lesser General Public License (LGPL) version 2.1
 \item \emph{menhir} parser generator, version 20190924, GNU Library General Public License version 2
 \item \emph{Alcotest}, version 0.8.5, ISC license
-\item OPAM (OCaml Package Manager), version 2.0.4, GNU Lesser General Public License (LGPL) version 2.1
+\item \emph{OCaml Package Manager}, version 2.0.4, GNU Lesser General Public License (LGPL) version 2.1
 \item \emph{Core} standard library by Jane Street, v0.11.3, MIT license
 \end{itemize}
 To the best of my knowledge these licenses allow the way I am using the software
@@ -879,29 +895,7 @@ maintainable codebase).
 Third, my success criterion was a correct working implementation of a compiler,
 so tests were crucial to demonstrate that success criteria were fulfilled.
 
-% \begin{figure}[htb]
-%   \centering
-%   \resizebox{0.85\textwidth}{!}{
-%   \begin{tikzpicture}
-%     \node[draw,inner sep=10pt] (LEX) at (0,6) {Lexer};
-%     \node[draw,inner sep=10pt] (PAR) at (0,4) {Parser};
-%     \node[draw,inner sep=10pt] (TYPE) at (0,2) {Type and effect checking};
-%     \node[draw,inner sep=10pt] (MID) at (5, 2) {Middle-end};
-%     \node[draw,inner sep=10pt] (COMP) at (9,2) {Compiler};
-%     \node[draw,inner sep=10pt] (CEK) at (0,0) {CEK interpreter};
-%     \node[draw,inner sep=10pt] (YOYO) at (9,0) {YoYo machine};
-    
-%     \draw[->] (LEX) -- (PAR);
-%     \draw[->] (PAR) -- (TYPE) node[midway, right] {Parse trees};
-%     \draw[->] (TYPE) -- (CEK) node[midway, right] {ASTs};
-%     \draw[->] (TYPE) -- (MID) node[midway, above] {ASTs};
-%     \draw[->] (MID) -- (COMP) node[midway, above] {IR};
-%     \draw[->] (COMP) -- (YOYO) node[midway, right] {byte code};
-%   \end{tikzpicture}}
-%   \caption{Structure of the project}
-%   \label{fig:project-structure}
-% \end{figure}
-
+% TODO: rewrite
 \section{Summary}
 This section summed up the theoretical background which was needed to complete
 this dissertation. It also shows the preparation I undertook in the software
