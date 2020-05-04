@@ -6,24 +6,28 @@
 
 \begin{document}
 
-% TODO: remind reader what success criterion was
+The project was a success. My success criterion was to implement a 
+syntax-level interpreter for Eff, to design a low-level byte code for Eff,
+to implement a compiler which can transform Eff programs into a linearised
+representation and finally to implement a virtual machine which is capable of
+interpreting that byte code. Furthermore, the above components had to be
+reasonably efficient when compared to existing solutions.
 
-The project was a success. This dissertation is actually a story about a journey
+The work described above was carried out and all components were successfully
+implemented. The Evaluation chapter justifies the success of the project.
+Both my CEK interpreter and my SHADE VM outperformed Eff on various
+benchmarks and the performance of SHADE VM was often comparable to that of
+Multicore OCaml.
+
+\section{Travel Diary}
+
+This dissertation is actually a story about a journey
 which starts in the theoretical valleys of Mathematics, leads through the more
 practical (but still quite theoretical) areas of Computer Science and finally
 ends in the realms of practical Systems Programming.
 
-In the Introduction we saw how we needed the proper mathematical foundations
-(by Moggi, Plotkin and Power) to be able to think about programming language
-semantics. In the Preparation chapter we thought about various evaluators and
-abstract machines and how they could be used to interpret Eff (in particular,
-the handling of continuations presented a challenge). Once it was clear what
-properties we desire from our abstract machines we could think about how we
-implement them and realise them as virtual machines\footnote{An abstract machine
-has no instruction set and does not require compilation, while a virtual machine
-has an instruction set and does require programs to be compiled to such an
-instruction set before they can be interpreted.}.
-
+% motivated by ...
+% requires side effects, effects, Eff, designed, compiled, VM, returning 
 In the Implementation chapter an implementation of a higher level CEK evaluator
 (interpreting source terms) was described along with its abstract machine
 semantics. Furthermore, the SECD-like SHADE VM is derived for Eff as well as
@@ -33,13 +37,13 @@ similar to how Multicore OCaml implements algebraic effect handlers
 \footnote{In particular, shadows and fibres seem to be almost the same.}.
 
 The Evaluation chapter was concerned with comparing the CEK evaluator and the
-SHADE VM to other existing solutions, namely Multicore OCaml and the official
+SHADE VM to existing solutions, namely Multicore OCaml and the official
 Eff interpreter. We found that the SHADE VM is reasonably efficient even without
 implementing any optimisations. It was also shown how algebraic effects and
 their handlers could be used for systems programming by exhibiting a toy web
 server implementation in Eff.
 
-\paragraph{Further work}
+\section{Further work}
 
 The fact that there are algebraic theories behind algebraic effects and their
 handlers allows us to prove certain compiler transformations correct by
@@ -64,7 +68,9 @@ implement in a low-level language such as C.
 The project is packaged up as an OPAM package and I intend to make it available
 on Github for other programming language enthusiasts.
 
-\paragraph{Self-reflection}
+% FURTHER WORK ON SYSTEMS PROGRAMMING
+
+\section{Self-reflection}
 
 If I were to start the project again I would try to be less ambitious. I vastly
 underestimated the intellectual challenge behind continuations, handlers and

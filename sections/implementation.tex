@@ -608,8 +608,22 @@ This is an inefficiency but is necessary for correctness.
 
 \section{Software engineering}
 
-Now that the theory is sorted out I can present my OCaml implementation of the
-project.
+\subsection{Requirements analysis and choice of tools}
+
+Knowing that my project would be theory based and that I would devote a lot of
+time to experiment with interpreters and their transition rules, it made sense
+to choose a functional language like OCaml to ease the implementation.
+The OCaml ecosystem looked mature enough to support a bigger project. I knew
+that I could use the \lstinline|ocamllex| and \lstinline|menhir| libraries to
+generate parsers and I knew about the existence of convenient build systems
+(like \lstinline|dune|) and test libraries (like \lstinline|alcotest|)
+which ease the development.
+
+I was following OCaml forums before and I was aware of the ways I could seek
+quick help from the online communities in case that was needed.
+I knew that my evaluation will potentially involve measurements against
+Multicore OCaml's virtual machine and that it will be convenient to obtain and
+switch between different OCaml switches using \lstinline|opam|.
 
 \subsection{Repository structure}
 
@@ -686,7 +700,9 @@ tests.
 \end{table}
 
 There was a further 800 lines of OCaml code and 500 lines of Eff code written
-for testing.
+for testing as well as around a few hundred lines of extra OCaml, Eff, Python
+and shell scripts to automate the evaluation process and the (re-)plotting of
+data.
 
 \mylisting{caml}
 {Getting abstractions right can lead to beautiful and concise functional
@@ -713,8 +729,8 @@ I used Git together with GitHub
 to version control my project and used many branches to organise development
 better. The project comprises 168 commits and 12 branches.
 My main branch was \verb|master| which always contained a stable (in
-the sense that it passed all the tests) version. Additionally, I would
-categorise the other branches into 3 other categories.
+the sense that it passed all the tests) version. I categorised the other
+branches into 3 other categories.
 
 \begin{itemize}
 \item
@@ -753,20 +769,29 @@ process for other hobbyist language enthusiasts wishing to contribute to the
 project were I to publish this package on GitHub.
 
 \subsection{Time management}
-% TODO: complete this
+
+Time management is another important aspect of software engineering. The original
+timeline proved to be extra-ambitious but there was enough time set aside for
+potential delays and unforeseeable complications. I also allocated enough time
+for my other academic responsibilities (such as completing Units of Assessments
+and doing supervision work) and hence these did not interfere much with the
+workflow of my project during the year.
 
 \subsection{Backups}
-% TODO: complete this
 
-\subsection{Build system}
-
-\subsection{Choice of tools}
-% TODO: complete this
-
-\subsection{Requirements analysis}
-% TODO: complete this
+My strategy for saving my work and creating backups happened as per it is
+described in the Project Proposal. I only had to use backups once when I
+re-installed my computer.
 
 \section{Summary}
-% TODO: complete this
+\begin{itemize}
+\item The design of a syntax-level CEK interpreter was described in this chapter.
+\item The design of the SHADE virtual machine which interprets \emph{linearised}
+byte code was explained.
+\item SHADEcode was introduced.
+\item The software engineering practices used to carry out the work were discussed.
+It was explained why I chose the different tools I used in respect of the
+requirements of my project.
+\end{itemize}
 
 \end{document}
