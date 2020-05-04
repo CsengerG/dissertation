@@ -23,30 +23,17 @@
 
 \begin{document}
 
-This chapter is concerned with the implementation of a CEK interpreter and an
-SECD-like virtual machine for Eff. 
+This chapter is concerned with the implementation of a CEK interpreter, the
+design of a byte code for Eff (SHADEcode), a virtual machine capable of
+interpreting this linearised byte code (SHADE VM) and a compiler to this byte
+code.
 
-% TODO: theory implementation
-% TODO: say LINEARISED byte code
-% TODO: continuation vs kontinuation
-% TODO: cite ZINC machine
-% TODO: sort out somethings
-% TODO: say what the colorful code snippets return
-% TODO: point out throw 1 --- 1 is the effect id, same as makehlosure
-% TODO: arrow no. 8 to the LHS or make it more visible
+% TODO: arrows
 % TODO: include a Requirements Analysis
-% TODO: documentation is for myself and for other people ---- OCAML programmers are used to this documentation that's the point not the HTML
 
-% TODO: chapter is split into 2
-As the project is theory-based, I will start
-this chapter by continuing the topics discussed in the Preparation chapter
-introducing a CEK machine for Eff and then my SECD-like SHADE virtual machine.
-
-Following this I discuss my OCaml implementation of the above and finally I
-write about the various software engineering practices I used to carry out the
-work.
-
-% backups as said in the proposal
+The chapter is split into two sections: the first part is concerned with the
+theory behind the CEK and SHADE machines while the second part is more
+practice-oriented.
 
 \section{A CEK machine for Eff}
 
@@ -100,7 +87,7 @@ much more efficient (we will unwind handlers and not continuations one by one).
 
 I will call such a structure a \emph{hlosure frame}. Hlosure frames will be the
 new entries in the $K$ stack of the CEK machine. They consist of a hlosure and
-a \emph{kontinuation stack} as can be seen in
+a \emph{continuation stack} as can be seen in
 \autoref{lst:parameterised handlers}.
 
 %  LINE NUMBERS
@@ -122,7 +109,7 @@ form $(x.c, \gamma)$. Hlosures are written as $\mathcal{H}(h, \gamma)$ and the
 runtime representation of recursive functions $\effRec f\ x = c$ happens with
 recursive closures $\mathcal{R}(f, x.c, \gamma)$ which differ from normal
 closures in that they also include the name of the function represented.
-The kontinuation stack in hlosure frames is written as $\mathcal{C}$.
+The continuation stack in hlosure frames is written as $\mathcal{C}$.
 
 \subsubsection{Function and continuation application}
 
@@ -182,7 +169,7 @@ manage the handler stack separately: the handler stack is managed
 
 The remaining two features of Eff can be conveniently implemented with hlosure
 frames too. The rule for with-handle blocks simply prepends $([], \mathcal{H})$
-to $K$, where $[]$ is an empty kontinuation stack and $\mathcal{H}$ is a
+to $K$, where $[]$ is an empty continuation stack and $\mathcal{H}$ is a
 hlosure representing the handler from the with-handle block.
 
 Performing effects is a little bit more difficult due to the unwinding of the
@@ -388,7 +375,6 @@ because by resuming a continuation we are also restoring shadows and therefore
 we lose the access to the current stack. The same goes for returning values.
 Hence we must use the accumulator.
 
-% TODO: get rid of somethings
 % TODO: split table
 \begin{table}
 \centering
@@ -433,15 +419,22 @@ Hence we must use the accumulator.
         Return from a value or effect case with the value in A. Destroy the top
         shadow and increment the program counter of the new top shadow. &
         see \autoref{fig:shade-machine} \\
+    \vmThrow \mathtt{effid} &
+        Throw an effect. \texttt{effid} is an integer denoting the type of the
+        effect being thrown. The argument to the effect resides in the
+        accumulator. &
+        see \autoref{fig:shade-machine} \\
     \vmFin &
-        Something &
-        something \\
+        Invoke the finally case of the hlosure on the top of the stack as a
+        function call using the accumulator as the argument. Pop the hlosure
+        from the stack. &
+        see \autoref{fig:shade-machine} \\
     \vmCastShadow &
-        Something &
-        someting \\
+        Cast a new shadow. &
+        see \autoref{fig:shade-machine} \\
     \vmKillShadow &
-        Something &
-        something \\
+        Kill a shadow. &
+        see \autoref{fig:shade-machine} \\
     \vmMakeBox{$t$}{$n$} &
         Create a box with tag $t$ using $A$ and the top $n-1$ elements of S. & \\
     \vmGetField{$n$} &
@@ -463,10 +456,13 @@ Hence we must use the accumulator.
         \end{tabular} \\
     \begin{tabular}[t]{@{}l@{}}
         \textbf{makehlosure} $N$, $L_v$ \\
-        $L_f$, $L_{e_1}$, $L_{e_2}, ...$
+        $L_f$, $[\overline{L_{e_i}, \mathtt{effid}]$ 
     \end{tabular} &
         Similar to \vmMakeClosure{$L$}{$N$} but with many locations each
-        corresponding to a handler case. &
+        corresponding to a handler case. Effect cases are represented with
+        pairs $(L, \mathtt{effid})$ where $L$ is a code pointer of the effect
+        case and \mathtt{effid} is an integer identifier of the type of the
+        effect being handled.&
         \begin{tabular}[t]{@{}l@{}}
             \verb|E = [A, S[0:N-1]];| \\
             \verb|S.pop(N-1);| \\
@@ -509,9 +505,9 @@ SHADE makes sense for Eff. In this section I will show how the byte code can
 implement the various flow of control algebraic effect handlers allow.
 
 It is clear that when no new shadow is cast (no with-handle is used) then the
-SHADE machine is essentially a Zinc machine with all effects behaving like
-exceptions. The next page contains various examples and should give a good
-insight into how everything fits together.
+SHADE machine is essentially a Zinc \cite{leroy1990zinc} machine with all
+effects behaving like exceptions. The next page contains various examples and
+should give a good insight into how everything fits together.
 
 \begin{figure}
     \centering
@@ -548,7 +544,7 @@ exception-like behaviour. This case is different from the previous one in that
 the \vmKillShadow\ instruction is never executed. However, the \vmRett\
 instruction at the end of the effect case of handler $h$ will still destroy the
 shadow and return to the \vmFin\ instruction which is executed before the
-machine halts as we would expect.
+machine halts as we would expect. The result of the program is \lstinline|86|.
 
 \autoref{fig:shadecode-one-resume} shows an example where the continuation is
 resumed in the effect case (this is actually our beloved Hello World again!).
@@ -557,14 +553,16 @@ with-handle block, continuations are resumed, the \vmKillShadow\ instruction is
 executed and the \vmRett\ of the value case \emph{returns to an effect case}
 which then returns to another effect case and finally the top shadow is
 destroyed by the \vmRett\ of an effect case just as we saw in the previous
-example.
+example. The program returns with the string
+\lstinline|"Error: got exception oops!"|.
 
 The red dots next to the \vmApply\ instruction are there to show that the dump
 is essentially a separate call stack for continuations and effect cases.
 Two separate \vmRett\ instructions return to the same \vmApply\ instruction
 but first the effect case handling \lstinline{Print "not to be"} is given
 control and only after that effect case is finished can the effect case handling
-\lstinline{Print "Try"} resume.
+\lstinline{Print "Try"} resume. This program returns the tuple
+\lstinline|("confused!", "Try not to be")|.
 
 \begin{figure}
     \centering
@@ -622,8 +620,8 @@ generated, the \verb|lib| directory contains the collection of modules making
 up the project. The \verb|test| directory contains unit tests and regression
 tests.
 
-% TODO: coloring on this graph
-% TODO: code audit
+% TODO: coloring on this graph + Tikz it
+% TODO: code audit -- complete LoC
 \begin{figure}
     \centering
     %\includegraphics[width=\textwidth]{../figures/dependencies.pdf}
@@ -637,35 +635,53 @@ tests.
     \rowcolors{2}{gray!17}{white}
     \begin{tabular}{p{3cm}p{10cm}}
     \toprule
-    \textbf{Module name} & \textbf{Description} \\
+    \textbf{Module name} & \textbf{Purpose} & LoC \\
     \midrule
     \textbf{Stx} & 
         Specifies Eff syntax trees. The \verb|ocamllex| and the Menhir parser
-        generator uses this module to generate a parser for Eff.  \\
+        generator uses this module to generate a parser for Eff. &
+        X \\
     \textbf{Preprocess} &
         Implements preprocessing functionalities on ASTs. At this stage all
         identifiers are given unique integer De Bruijn indices
-        and some syntactic sugars are removed.  \\
+        and some syntactic sugars are removed.  &
+        X \\
     \textbf{Translate} &
         Implements various translation functionalities. Erases the distinctions
         between computations and expressions and implements translations from
-        ASTs to various intermediate representations. \\
+        ASTs to various intermediate representations. &
+        X \\
     \textbf{Cek\_types} & Contains the specification of the CEK machine
-        discussed in this chapter. \\
-    \textbf{Cek} & Implementation of the CEK machine. \\
+        discussed in this chapter. &
+        X \\
+    \textbf{Cek} &
+        Implementation of the CEK machine. &
+        X \\
     \textbf{Ir} &
         Specification of an intermediate representation close to \emph{A-normal
         form}. The \verb|Compile| module generates SHADE byte code from this
-        representation. \\
+        representation. &
+        X \\
     \textbf{Freevars} &
-        Implements analysis of free variables on the IR. \\
-    \textbf{Compile} & Implements the compilation from IR to SHADE byte code. \\
-    \textbf{Shade\_types} & Contains the specification of the SHADE machine. \\
-    \textbf{Display} & Implements pretty printing of VM results and contains
-        printers used for the debugging of the SHADE VM. \\
-    \textbf{Builtins} & Contains the implementation of built-in effects of the
-        SHADE runtime system. \\
-    \textbf{Shade} & Implements the SHADE machine. \\
+        Implements analysis of free variables on the IR. &
+        X \\
+    \textbf{Compile} &
+        Implements the compilation from IR to SHADE byte code. &
+        X \\
+    \textbf{Shade\_types} &
+        Contains the specification of the SHADE machine. &
+        X \\
+    \textbf{Display} &
+        Implements pretty printing of VM results and contains printers used for
+        the debugging of the SHADE VM. &
+        X \\
+    \textbf{Builtins} &
+        Contains the implementation of built-in effects of the SHADE runtime
+        system. &
+        X \\
+    \textbf{Shade} &
+        Implements the SHADE machine. &
+        X \\
     \bottomrule
     \end{tabular}}
     \caption{Description of the modules in \texttt{lib}}
@@ -678,9 +694,6 @@ programs}
 {lst:impl-shade-modular}
 {../code_examples/shade.ml}
 
-% TODO: git commit numbers
-% TODO: talk about backup
-% TODO: write about time management
 \subsection{Testing}
 
 As stated in the Introduction correctness and hence testing were crucial for
@@ -689,16 +702,17 @@ Alcotest library to run my test suites. In total there are a 104 tests covering
 the project. Appendix X contains a screenshot of a typical output Alcotest
 produces when testing the Virtual Machine.
 
-% TODO: spell out TDD
-As I used TDD as my development methodology I wrote most of my tests upfront.
-However, when a bug was discovered later I added regression tests too.
+As I used test driven development as my development methodology I wrote most of
+my tests upfront. However, when a bug was discovered later I added regression
+tests too.
 
 \subsection{Version control}
 
 I used Git together with GitHub
 \footnote{\url{https://github.com/}}
 to version control my project and used many branches to organise development
-better. My main branch was \verb|master| which always contained a stable (in
+better. The project comprises 168 commits and 12 branches.
+My main branch was \verb|master| which always contained a stable (in
 the sense that it passed all the tests) version. Additionally, I would
 categorise the other branches into 3 other categories.
 
@@ -723,28 +737,23 @@ intend to publish this project as an OCaml package.
 \subsection{Coding style and documentation}
 
 I tried to stick to OCaml best-practices while developing, such as always
-having corresponding signature/interface \verb|.mli| files for all my modules.
+having interface \verb|.mli| files for all my modules.
 In these I used \verb|(**| style comments to document my code. This proved very
-useful later. The \verb|odoc| OCaml tool can generate browsable HTML
-documentation from the \verb|mli| interfaces. I often found myself reading
-this documentation when I was implementing a complex part of the software.
-Documentation can also speed up the learning process for other hobbyist language
-enthusiasts wishing to contribute to the project were I to publish this package
-on GitHub.
-
-% familiar to other OCaml programmers
-% idiomatic
-% time management
+useful later as the \verb|odoc| OCaml tool can generate browsable HTML
+documentation from these \verb|mli| interfaces---an idiomatic format OCaml
+programmers are familiar with.
+I often found myself reading this documentation when I was implementing a complex
+part of the software. Documentation can also speed up the learning
+process for other hobbyist language enthusiasts wishing to contribute to the
+project were I to publish this package on GitHub.
 
 \subsection{Time management}
+% TODO: complete this
+
+\subsection{Backups}
+% TODO: complete this
 
 \section{Summary}
-
-\begin{itemize}
-    \item CEK machine was described
-    \item SHADE VM was described
-    \item OCaml implementation was discussed
-    \item I summarised my software engineering practices.
-\end{itemize}
+% TODO: complete this
 
 \end{document}

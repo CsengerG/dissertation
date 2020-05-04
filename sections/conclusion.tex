@@ -8,14 +8,11 @@
 
 % TODO: don't write a diary
 % TODO: remind reader what success criterion was
-% TODO: you mean ASSIGN and not SET
 
 The project was a success. This dissertation is actually a story about a journey
 which starts in the theoretical valleys of Mathematics, leads through the more
 practical (but still quite theoretical) areas of Computer Science and finally
-ends in the realms of Software Engineering.
-
-% TODO: what you mean here is realms of practical systems programming
+ends in the realms of practical Systems Programming.
 
 In the Introduction we saw how we needed the proper mathematical foundations
 (by Moggi, Plotkin and Power) to be able to think about programming language
@@ -45,20 +42,22 @@ server implementation in Eff.
 
 \paragraph{Further work}
 
-% TODO: citation
-
 The fact that there are algebraic theories behind algebraic effects and their
 handlers allows us to prove certain compiler transformations correct by
 equational reasoning. This gives us the opportunity to take a set of effect
-equations (for instance, the equation $\mathtt{set}(x,y); \mathtt{set}(x,z) =
-\mathtt{set}(x, z)$ would show that the first \texttt{set} can be optimised
+equations (for instance, the equation $\mathtt{assign}(x,y); \mathtt{assign}(x,z) =
+\mathtt{assign}(x, z)$ would show that the first \texttt{assign} can be optimised
 away) and generate new optimisations (perhaps entirely new ones no-one has
 thought about yet or ones that are dependent on the semantics of some effects).
+
+% TODO: cite optimisations
 
 Type and effect systems admit to even more optimisations and the opportunity to
 parallelise independent parts of programs. As hardware is getting increasingly
 parallel such optimisations can help us to get the most out of our multicore
 machines.
+
+% TODO: cite type and effect systems
 
 My implementation was concerned with only the core features of Eff. There would
 be countless ways to improve the compiler or the virtual machine. One of the
@@ -85,13 +84,12 @@ design a smaller minimal viable product first, build a very minimal but working
 (and tested!) pipeline and then iterate more on improvements. This was my
 strategy when developing, but I could do it better the next time.
 
-Furthermore, I think there is a lack of elementary material concerning this
-topic on the web. 
-
 \paragraph{Closing thoughts}
 
-I am hoping that my Preparation chapter and this dissertation as a whole will
-in some ways help popularise algebraic effects and their handlers and that
-readers of this document will find them less cryptic than I first did.
+Furthermore, I think there is a lack of elementary material concerning this
+topic on the web. I am hoping that my Preparation chapter and this dissertation
+as a whole will in some ways help popularise algebraic effects and their
+handlers and that readers of this document will find them less cryptic than I
+first did.
 
 \end{document}

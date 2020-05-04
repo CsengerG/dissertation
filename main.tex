@@ -10,29 +10,37 @@
 \usepackage[table]{xcolor}
 \usepackage[utf8]{inputenc}
 \usepackage[english]{babel}
-\usepackage{import}
 \usepackage{listings}
-\usepackage{caption}
 \usepackage[toc,page]{appendix}
-\usepackage{booktabs}
+%\usepackage{booktabs}
 \usepackage{tikz}
-\usepackage{parskip}
 \usepackage[absolute,overlay]{textpos}
-\usepackage{pdfpages}
-\usepackage{tabularx}
+\usepackage{etoolbox}
+\makeatletter
+% \patchcmd{<cmd>}{<search>}{<replace>}{<success>}{<failure>}
+% --- Patch \chapter
+\patchcmd{\@makechapterhead}{50\p@}{\chapheadtopskip}{}{}% Space from top of page to CHAPTER X
+\patchcmd{\@makechapterhead}{20\p@}{\chapheadsep}{}{}% Space between CHAPTER X and CHAPTER TITLE
+\patchcmd{\@makechapterhead}{40\p@}{\chapheadbelowskip}{}{}% Space between CHAPTER TITLE and text
+% --- Patch \chapter*
+\patchcmd{\@makeschapterhead}{50\p@}{\chapheadtopskip}{}{}% Space from top of page to CHAPTER TITLE
+\patchcmd{\@makeschapterhead}{40\p@}{\chapheadbelowskip}{}{}% SPace between CHAPTER TITLE and text
+\makeatother
+% Set new lengths
+\newlength{\chapheadtopskip}\setlength{\chapheadtopskip}{0pt}
+\newlength{\chapheadsep}\setlength{\chapheadsep}{0pt}
+\newlength{\chapheadbelowskip}\setlength{\chapheadbelowskip}{15pt}
 
-% Chapter formatting
 \usepackage{titlesec, blindtext, color}
-
-%\renewcommand{\chapterheadstartvskip}{}
+\definecolor{gray75}{gray}{0.75}
+\newcommand{\hsp}{\hspace{20pt}}
+\titleformat{\chapter}[hang]{\Huge\bfseries}{\thechapter\hsp\textcolor{gray75}{\textbar}\hsp}{0pt}{\Huge\bfseries}
 
 \input{./src/macros.tex}
 \input{./src/listing.tex}
 
 \begin{document}
 \input titlepage
-% TODO: put CRSID to first page
-% TODO: ask from candidate number from college
 
 \frontmatter
 

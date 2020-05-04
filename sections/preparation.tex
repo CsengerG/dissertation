@@ -27,7 +27,6 @@
 \newcounter{tblerows}
 \expandafter\let\csname c@tblerows\endcsname\rownum
 
-% TODO: Ismetled a ``We see''-t
 \begin{document}
 
 This chapter contains an introduction to the programming language Eff.  It also
@@ -95,9 +94,8 @@ given to an effect handler (this would be an exception handler in OCaml or Java)
 or the program will terminate with an exception if no handler can handle the
 effect.
 
-% TODO: REPHRASE DO NOT BE CONFUSED
-Do not be confused by how an effect is constructed. Effects are not values in
-the Eff language. That is, \lstinline{Print "Hello World"} would be meaningless
+Effects are not values in the Eff language. That is,
+\lstinline{Print "Hello World"} would be meaningless
 in itself, just like the exception \lstinline{Failure "hd"} would be meaningless
 in OCaml if we did not raise it. The situation is similar here but effects are
 \emph{performed} and not raised.
@@ -762,7 +760,7 @@ $K$ in the CEK machine. It is a list of three tuples, each three tuple consistin
 of the other three components (i.e., it has the form $(S, E, C)$). The dump
 embodies a list of saved execution contexts we can return to if we wish.
 
-\begin{myfigure}
+\begin{myfigure}[.8]
 {SECD machine transition rules for TL.}
 {fig:secd-transitions}
 Initialisation:
@@ -895,29 +893,23 @@ maintainable codebase).
 Third, my success criterion was a correct working implementation of a compiler,
 so tests were crucial to demonstrate that success criteria were fulfilled.
 
-% TODO: rewrite
 \section{Summary}
 This section summed up the theoretical background which was needed to complete
-this dissertation. It also shows the preparation I undertook in the software
-engineering aspects of the project.
+this project. It also shows the preparation I undertook in the software
+engineering aspects.
 
 \begin{itemize}
-  \item I briefly introduced the programming language Eff and talked about its
-      characteristic features. I showed code examples demonstrating how handlers
-      can be used.
+\item Eff was introduced in a brief tutorial.
+\item It was explained how continuations represent arbitrary program points
+        in the execution of a program. Therefore they can be used to implement
+        advanced control flow.
+\item \emph{Core Eff} was formally introduced.
 
-  \item I explained the idea of a continuation, how it represents an arbitrary
-      program point in the execution of a program and how it allows advanced
-      control flow to be implemented.
-
-  \item I talked about the small-step operational semantics of core Eff as well
-      as the typing of Eff terms.
-
-  \item I mentioned two abstract machines which can implement the structured
-      \emph{non-local flow of control} continuations make possible. The key
-      challenge these machines solve is that they can \emph{save and restore}
-      execution contexts in an appropriate way whenever non-local control flow
-      occurs.
+\item Two abstract machines (CEK and SECD machines) were introduced.
+    These can implement the structured \emph{non-local flow of control}
+    continuations make possible. The key challenge these machines solve is that
+    they can \emph{save and restore} execution contexts in an appropriate way
+    whenever non-local control flow has to occur.
 
     A CEK machine does this by keeping a stack of continuations (K), while the
     SECD machine does this by using a so-called dump (D). The importance of
@@ -925,7 +917,7 @@ engineering aspects of the project.
     describe the SHADE virtual machine for Eff which has similarities with both
     of these abstract machines.
 
-  \item I stated my starting point and discussed the development methodology
+\item I stated my starting point and discussed the development methodology
     used to write the code and the testing strategy to assess its correctness.
 \end{itemize}
 

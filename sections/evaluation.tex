@@ -238,29 +238,23 @@ one can implement a toy webserver using one's own runtime system written from
 scratch in less than a year justifies the second claim (the cited paper is a
 result of the collaboration of 6 people).
 
-% TODO: rephrase wonderful
+I load tested this web server with the \lstinline|wrk2| load testing tool
+\cite{wrk2-website} using 4 threads and gradually increasing the number of
+connections until the p90 time fell below the 5s threshold (this happened at
+around 100 connections as the red numbers indicate this on
+\autoref{fig:hello-online-world}.
+
 \begin{figure}
     \centering
     \includegraphics[width=30em]{eval_plots/webserver.png}
-    \caption{Although the performance of the webserver is not wonderful, it is
-    my own runtime system that implements it and it can still handle ~100
+    \caption{Although the performance of the webserver is not at all impressive,
+    it is my own runtime system that implements it and it can still handle ~100
     connections with a p90 time of 5 seconds with a throughput of 25 requests
     per second.}
     \label{fig:hello-online-world}
 \end{figure}
 
-% TODO: use EXACT numbers
-% TODO: webserver was load tested with wrk2 -t=4 -R=100 -c=20
+% TODO: rewrite + use EXACT numbers
 \section{Summary}
-
-\begin{itemize}
-    \item The performance of the CEK machine and the SHADE VM was compared to
-    other existing solutions
-    \item It was found that my implementations beat the current Eff interpreter
-    \item SHADE VM's performance is comparable to that of Multicore OCaml which
-    is an industrial-strength compiler and runtime
-    \item A webserver was written in Eff to highlight the benefits of using
-    effect handlers in concurrent systems programming
-\end{itemize}
 
 \end{document}
