@@ -20,10 +20,6 @@
 
 \begin{document}
 
-% TODO: talk in numbers---take X% of the time it takes Y to do this
-% TODO: exponential BS in queens
-% TODO: evaluation vulnerable to....
-
 This chapter of is concerned with comparing the performance of my CEK interpreter
 and my SHADE VM with other existing solutions implementing algebraic effect handlers.
 The comparison is split into two parts: to evaluate the performance of the
@@ -282,7 +278,25 @@ around 100 connections as the red numbers indicate this on
     \label{fig:hello-online-world}
 \end{figure}
 
-% TODO: rewrite + use EXACT numbers
 \section{Summary}
+The following sums up this chapter and reports its findings.
+\begin{itemize}
+\item The performance of the syntax-level CEK interpreter and the SHADE VM was
+compared to Eff and Multicore OCaml.
+\item My CEK interpreter was 20x quicker on the exception benchmarks and 10x
+quicker on the state benchmarks than the Eff interpreter. However, it was also
+15x slower on both the exception and state benchmarks than the OCaml interpreter.
+\item My SHADE VM was consistently quicker than all the interpreters and
+performed well on the exception (SHADE is 2\% slower) and state benchmarks
+(SHADE is 17\% quicker) against the VM of Multicore OCaml. However,
+it remained around 35x slower than the VM of Multicore OCaml on the $N$-queens
+benchmark.
+\item The reason of this slowdown on the $N$-queens benchmark
+was determined and it was found that the cause is inherent in Eff. Eff supports
+multi-shot continuations, whereas Multicore OCaml only support one-shot continuations
+and therefore the copy overhead in the SHADE VM is bigger.
+\item As a qualitative evaluation of SHADE a toy webserver was presented and
+load tested.
+\end{itemize}
 
 \end{document}
