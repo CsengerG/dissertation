@@ -1,0 +1,13 @@
+let say_hello port =
+  let rec run () =
+    let error = perform (HTTPHello port) in
+    
+    match error with
+    | 0 -> () (* On success *)
+    | -1 -> () (* If connection closed *)
+
+    (* Try again if not ready *)
+    | _ -> perform Yield (); run ()
+
+  in run
+;;

@@ -1,0 +1,13 @@
+let start_server () =
+  let rec run () =
+    let port = perform Accept () in
+    match port with
+    (* Yield if no incoming connection *)
+    | -1 -> perform Yield ()
+
+    (* Spawn thread for new connection *)
+    | _ -> perform Spawn (say_hello port);
+    run ()
+  in
+    run ()
+;;

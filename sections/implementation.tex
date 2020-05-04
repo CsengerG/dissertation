@@ -25,15 +25,12 @@
 
 This chapter is concerned with the implementation of a CEK interpreter, the
 design of a byte code for Eff (SHADEcode), a virtual machine capable of
-interpreting this linearised byte code (SHADE VM) and a compiler to this byte
+interpreting this \emph{linearised} byte code (SHADE VM) and a compiler to this byte
 code.
 
-% TODO: arrows
-% TODO: include a Requirements Analysis
-
 The chapter is split into two sections: the first part is concerned with the
-theory behind the CEK and SHADE machines while the second part is more
-practice-oriented.
+\emph{theory implementation} of the CEK and SHADE machines while the second part
+is more practice oriented.
 
 \section{A CEK machine for Eff}
 
@@ -622,7 +619,6 @@ generated, the \verb|lib| directory contains the collection of modules making
 up the project. The \verb|test| directory contains unit tests and regression
 tests.
 
-% TODO: code audit -- complete LoC
 \begin{figure}
     \centering
     \includegraphics[width=30em]{../figures/dependency-graph.pdf}
@@ -760,6 +756,14 @@ project were I to publish this package on GitHub.
 % TODO: complete this
 
 \subsection{Backups}
+% TODO: complete this
+
+\subsection{Build system}
+
+\subsection{Choice of tools}
+% TODO: complete this
+
+\subsection{Requirements analysis}
 % TODO: complete this
 
 \section{Summary}

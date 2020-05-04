@@ -1,0 +1,7 @@
+(* Concurrency for green threads *)
+effect Yield : unit -->> unit;;
+effect Spawn : (unit -> unit) -->> unit;;
+
+(* Asynchronous effects in SHADE *)
+effect HTTPHello : int -->> unit;;
+effect Accept : unit -->> int;;

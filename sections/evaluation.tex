@@ -20,31 +20,28 @@
 
 \begin{document}
 
-% TODO: reference figures
-% TODO: baselines on the plots?
 % TODO: talk in numbers---take X% of the time it takes Y to do this
-% TODO: explain O(N^2), blahblah
 % TODO: exponential BS in queens
 % TODO: evaluation vulnerable to....
 
-This chapter of my dissertation is concerned with comparing my CEK interpreter
-implementation of Eff and my SHADE virtual machine with other existing solutions
-implementing algebraic effect handlers. Specifically, the comparison is split
-into two parts: to evaluate the performance of the CEK interpreter I compare
-against the Eff interpreter and against the interpreter of Multicore OCaml.
-The SHADE virtual machine is compared to Multicore OCaml's byte code interpreter.
+This chapter of is concerned with comparing the performance of my CEK interpreter
+and my SHADE VM with other existing solutions implementing algebraic effect handlers.
+The comparison is split into two parts: to evaluate the performance of the
+CEK interpreter I compare against the Eff interpreter and against the interpreter
+of Multicore OCaml. The SHADE virtual machine is compared to Multicore OCaml's
+byte code interpreter.
 
 At the end of this chapter a proof of concept web server is described. This is
-more of a qualitative evaluation and is supposed to show what is possible to do
+more of a qualitative evaluation and is supposed to show what can be done 
 with effect handlers in the real-world.
 
 \paragraph{Evaluation strategy and technical details.}
 
 I will run multiple benchmarks each of which uses effect handlers in a different
 way. Each benchmark is run 10 times and on the plots the arithmetic average of
-the execution times is reported and the standard deviation as error bars. Data is
-collected using GNU's \verb|time| command. During the measurements my laptop was
-connected to the power supply and I tried to minimise noise in the measurements
+the execution times is reported (the standard deviation is displayed as error
+bars). Data is collected using GNU's \verb|time| command. During the measurements
+my laptop was connected to the power supply and I tried to minimise noise in the measurements
 by not running any other process (apart from a terminal) and turning off
 unnecessary functionalities like WiFi, Ethernet, Bluetooth, etc.
 
@@ -75,10 +72,12 @@ resumable at all).
     \label{fig:exception-interpreters}
 \end{figure}
 
-Athough the OCaml interpreter beats the CEK interpreter in this benchmark, the
-performance of the SHADE VM is comparable to MultiCaml's VM even though the
+\autoref{fig:exception-interpreters} shows that the OCaml interpreter beats
+the CEK interpreter in this benchmark. However, we can see on
+\autoref{fig:exception-bytecode} that the performance of SHADE VM is
+comparable to Multicore OCaml's VM even though the
 execution time for SHADE includes the compilation time to SHADEcode,
-but the times for MultiCaml do not include compilation. I did not implement
+but the times for Multicore OCaml do not include compilation. I did not implement
 serialization for my byte code and the compilation time is less and less
 significant as we increase the number of exceptions.
 
@@ -96,15 +95,22 @@ with 5000 exceptions, whereas this takes only 3.5 seconds for the CEK
 interpreter. For SHADE VM the same takes around 200 milliseconds
 (with compilation included), which is a 300-fold improvement!
 
+The $y$-axis is logarithmic and the plots show a linear slowdown when we
+increase the number of exceptions linearly. This suggests an $\mathcal{O}(n)$
+time complexity for performing and catching $n$ exceptions which suggests that
+my implementation does not contain bugs or inefficiencies which would depend
+on the number of effects performed in a program.
+
 \section{State and I/O}
 
-The state benchmark implements an integer state and increments it every time the
-\verb|Incr| effect is performed. The handler of the \verb|Incr| effect resumes
-the continuation exactly once. The reason why I chose such a simple
-computationally cheap operation as integer addition was that I wanted to measure
+The state benchmark implements an integer state and which gets incremented every
+time an \verb|Incr| effect is performed. The handler of the \verb|Incr| effect
+resumes a continuation exactly once. The reason why I chose such a simple
+computationally cheap operation as integer addition is that I wanted to measure
 the performance of performing effects and resuming continuations. As $N$
 increases we can be confident that the cost of performing effects and resuming
-continuations will dominate the execution time.
+continuations will dominate the execution time and that we are measuring what
+we want.
 
 \begin{figure}
     \centering
@@ -121,16 +127,28 @@ continuations will dominate the execution time.
     \label{fig:state-bytecode}
 \end{figure}
 
+The results are displayed on \autoref{fig:state-interpreters} and
+\autoref{fig:state-bytecode}. The interpretation of these results is similar to
+the exception case although they reveal a \emph{very important property} of the implementation.
+
+In the exception case the size of the dump in SHADE VM remained constant.
+However, in this case the size of the dump grows
+linearly with $N$. As the dump is essentially a linked list of shadows residing
+in the heap it is reassuring to see that the performance does not degrade
+rapidly with $N$. In fact, we see an $\mathcal{O}(N)$ slowdown again, which is
+what one would expect from any efficient implementation (but we would not want a
+solution where the cost of performing an effect or resuming a continuation grows
+like $\mathcal{O}(N^2)$ for instance).
+
 \section{Non-determinism -- Solving the N-queens problem}
 
 The $N$-queens
 \footnote{The N-queens problem is concerned with finding the positions of $N$
 queens on an $N \times N$ chessboard such that no two queens attack each other.}
 benchmark is a backtracking program which resumes continuations more than once.
-Here I don't compare against the CEK interpreter for the bigger benchmarks
+Here I do not compare against the CEK interpreter for the bigger benchmarks
 because due to its naïve implementation it slows down significantly after
-$N > 14$. However, the performance of SHADE VM remains acceptable, although
-worse than the VM of Multicore OCaml.
+$N > 14$. 
 
 \begin{figure}
     \centering
@@ -140,15 +158,56 @@ worse than the VM of Multicore OCaml.
     \label{fig:n-queens}
 \end{figure}
 
-The reason why Multicore OCaml performs so much better than SHADE VM is what I
-already mentioned in the Implementation chapter. Multicore OCaml implements
-one-shot continuations and relies on the user to specify when a continuation
+The performance of SHADE VM remains acceptable, although worse than the VM of
+Multicore OCaml as \autoref{fig:n-queens} shows.
+
+The reason why Multicore OCaml performs so much better than SHADE VM was
+already mentioned briefly in the Implementation chapter. Multicore OCaml implements
+\emph{one-shot continuations} and relies on the user to specify when a continuation
 should be cloned.
 
 \mylisting{caml}
 {Cloning continuations must be done explicitly in Multicore OCaml}
 {lst:multicaml-cloning}
 {../code_examples/multicaml_cloning.ml}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=35em]{eval_plots/extra_cloning.png}
+    \caption{Investigating the effect of cloning on performance and memory usage}
+    \label{fig:extra-copying}
+\end{figure}
+
+\autoref{fig:extra-copying} reveals the extent at which this extra cloning
+affects SHADE VM's performance. I added a counter to my runtime system just for
+this benchmark to measure how many times were continuations cloned (the original
+benchmark did not have such a counter as I did not want performance monitoring
+to interfere with my results, i.e., the two metrics were measured in separate
+runs). We see that there is a good correlation between the number of extra
+clone calls and the memory used in the program. It is also possible to determine
+the average size of a continuation from the raw data. It turns out that the typical
+size of continuations is between 1 and 2 Kbytes (based on the bigger test cases, i.e.,
+where $N$ is 16, 18 or 20).
+
+\subsection{Vulnerability of the evaluation}
+
+A subtlety must be pointed out here. The $N$-queens benchmark traverses a huge
+search space of all $N$-queen configurations on an $N\times N$ chessboard. The
+order in which we inspect the configurations \textbf{does} matter here.
+
+If one were to repeat this experiment one would have to ensure that their
+backtracking strategy is the same if they wish to compare their results to this
+evaluation. I used the same strategy in all my measurements and although this is
+a popular benchmark I do not compare my results with benchmarks from other papers
+as the papers often do not mention what strategy they use.
+
+An even subtler point is that $N$ matters too. One must not fall in the pitfall
+of comparing the results for cases with different sizes (\autoref{fig:extra-copying}
+reveals for instance that the $N=10$ case is actually ``easier'' than the $N=8$
+case) as $N$ does not represent the complexity of the problem, it is merely the
+identifier of a big search space. Interestingly, the $N=8$ and $N=10$ cases are
+nearly always reported in papers whereas the $N=17$ is consistently left out as
+it is an obvious outlier.
 
 \section{Concurrency -- Hello Online World!}
 
@@ -157,16 +216,14 @@ handlers too. We can realise \emph{green threads} as $\unitType \to \unitType$
 functions which can be \lstinline|Spawn|ed and which are capable
 of \lstinline|Yield|ing control. The reader might correctly suspect that
 these operations will correspond to algebraic effects with the following types:
-\begin{verbatim}
-effect Yield : unit -->> unit;;
-effect Spawn : (unit -> unit) -->> unit;;
-\end{verbatim}
-I built in two additional asynchronous effects in the runtime system of SHADE VM.
-These are:
-\begin{verbatim}
-effect HTTPHello : int -->> unit;;
-effect Accept : unit -->> int;;
-\end{verbatim}
+
+\mylisting{efflang}
+{Effects for implementing a Hello World webserver}
+{label}
+{../code_examples/yield_spawn.eff}
+
+I built in two additional asynchronous effects in the runtime system of
+SHADE VM: \verb|Accept| and \verb|HTTPHello|.
 Both effects use non-blocking Unix system calls under the hood.
 \verb|Accept| can accept an incoming network connection on port 8080 and returns
 the new port number that can be used for further communication with a client.
@@ -179,64 +236,32 @@ accepts connections on the port 8080. If there is a new connection then a new
 green thread is spawned for that connection, otherwise control is given to other
 threads.
 
+\mylisting{efflang}
+{Main green thread of the web server}
+{label}
+{../code_examples/start_server.eff}
+
 The \lstinline{say_hello} function takes a port number and
 \emph{returns a green thread}: a $\unitType \to \unitType$ function that will
 send the ``Hello World'' message on the port given but only if the underlying
 socket is ready. If this is not the case it yields control and will retry later.
 
-\begin{figure}
-\begin{minipage}{0.6\textwidth}
-\begin{verbatim}
-let start_server () =
-  let rec run () =
-    let port = perform Accept () in
-    match port with
-    (* Yield if no incoming connection *)
-    | -1 -> perform Yield ()
-
-    (* Spawn thread for new connection *)
-    | _ -> perform Spawn (say_hello port);
-    run ()
-  in
-    run ()
-;;
-\end{verbatim}
-\end{minipage}%
-\begin{minipage}{.4\textwidth}
-\begin{verbatim}
-let say_hello port =
-  let rec run () =
-    let error = perform (HTTPHello port) in
-    
-    match error with
-    | 0 -> () (* exit on success *)
-    | -1 -> () (* exit if conn. closed *)
-
-    (* try again if not ready *)
-    | _ -> perform Yield (); run ()
-
-  in run
-;;
-\end{verbatim}
-\end{minipage}
-\caption{Lightweight green threads}
-\label{fig:green-threads}
-\end{figure}
+\mylisting{efflang}
+{Green thread handling a connection}
+{label}
+{../code_examples/say_hello.eff}
 
 As effect handlers can simulate state it is possible to implement thread
-scheduling with handlers too. The web server
-thus can be started with something like:
-\begin{verbatim}
-with thread_scheduler handle
-    start_server ()
-\end{verbatim}
+scheduling with handlers too. The web server thus can be started with something
+like \lstinline{with thread_scheduler handle start_server ()}.
+
 Based on the work of Dolan et al. \autoref{dolan2017concurrent} I claimed in
 the Introduction that effect handlers give flexibility to programmers to
 implement their own concurrency models which suits their application the most
 while they reduce the complexity of runtime systems. This is a justification of
 that claim (it is actually a simplified experiment from their paper). We see
-that \verb|thread_scheduler| could implement any kind of scheduling policy by
-handling the \verb|Yield| and \verb|Spawn| effects appropriately. The fact that
+that \lstinline|thread_scheduler| could implement any kind of scheduling policy by
+handling the \lstinline|Yield| and \lstinline|Spawn| effects appropriately. The fact that
 one can implement a toy webserver using one's own runtime system written from
 scratch in less than a year justifies the second claim (the cited paper is a
 result of the collaboration of 6 people).

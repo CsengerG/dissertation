@@ -6,7 +6,6 @@
 
 \begin{document}
 
-% TODO: don't write a diary
 % TODO: remind reader what success criterion was
 
 The project was a success. This dissertation is actually a story about a journey
@@ -50,22 +49,17 @@ equations (for instance, the equation $\mathtt{assign}(x,y); \mathtt{assign}(x,z
 away) and generate new optimisations (perhaps entirely new ones no-one has
 thought about yet or ones that are dependent on the semantics of some effects).
 
-% TODO: cite optimisations
-
-Type and effect systems admit to even more optimisations and the opportunity to
-parallelise independent parts of programs. As hardware is getting increasingly
-parallel such optimisations can help us to get the most out of our multicore
-machines.
-
-% TODO: cite type and effect systems
+Type and effect systems \cite{bauer2013effect} allow for even more optimisations
+and the opportunity to parallelise independent parts of programs. As hardware is
+getting increasingly parallel such optimisations can help us to get the most out
+of our multicore machines.
 
 My implementation was concerned with only the core features of Eff. There would
 be countless ways to improve the compiler or the virtual machine. One of the
 most interesting improvements would be to design a custom garbage collector for
 Eff which might be another Part II project. The rules of SHADE VM are simple
 enough that a byte code interpreter for SHADEcode should not be too hard to
-implement in a low-level language such as C. This is something I will
-potentially try to do.
+implement in a low-level language such as C.
 
 The project is packaged up as an OPAM package and I intend to make it available
 on Github for other programming language enthusiasts.
