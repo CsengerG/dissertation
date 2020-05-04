@@ -20,7 +20,8 @@ reversed diagonal fill/.style 2 args={fill=#2, path picture={
 
 \begin{document}
 \begin{tikzpicture}
-\draw[step=1cm,yellow,very thin] (0,0) grid (20,20);
+% Grid for drafting
+%\draw[step=1cm,yellow,very thin] (0,0) grid (20,20);
 
 % Coordinates
 \coordinate (stx_top) at (6.5,1);
@@ -46,6 +47,8 @@ reversed diagonal fill/.style 2 args={fill=#2, path picture={
 \coordinate (translate_right) at (7.5,5.5);
 \coordinate (ir_left) at (9.5,4.5);
 \coordinate (translate_left) at (5.5,5.5);
+\coordinate (builtins_bottom) at (1,8.5);
+\coordinate (shade_types_left) at (6,7.5);
 
 % Boxes
 \draw[black,thick,fill=blue!20] (6,0) rectangle (7,1) node[pos=.5] {Stx};
@@ -77,6 +80,7 @@ reversed diagonal fill/.style 2 args={fill=#2, path picture={
 \draw[-{Stealth[length=3mm]}] (compile_left) to [bend right] (shade_types_top2);
 \draw[-{Stealth[length=3mm]}] (translate_right) to [bend left] (ir_top2);
 \draw[-{Stealth[length=3mm]}] (translate_left) to [bend right] (cek_types_top2);
+\draw[-{Stealth[length=3mm]}] (builtins_bottom) to [bend right] (shade_types_left);
 
 \end{tikzpicture}
 
