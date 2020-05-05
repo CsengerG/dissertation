@@ -47,7 +47,7 @@ dependent on the context. In Eff, handlers are similar in this respect
 as they too can have free variables.
 
 \mylisting{efflang}
-{A handler parameterised by a free variable $n$}
+{[A parameterised handler]A handler parameterised by a free variable $n$}
 {lst:parameterised handlers}
 {../code_examples/hlosures.eff}
 
@@ -78,7 +78,7 @@ handler, because that will make the \emph{unwind} operation on the $K$ component
 much more efficient (we will unwind handlers and not continuations one by one).
 
 \mylisting{caml}
-{The structure of a CEK machine for Eff}
+{[A CEK machine for Eff]The structure of a CEK machine for Eff}
 {lst:cek-structure-types}
 {../code_examples/cek_structure.ml}
 
@@ -476,7 +476,7 @@ Hence we must use the accumulator.
         \end{tabular} \\
     \bottomrule
 \end{tabular}}
-\caption{SHADEcode, the instruction set of the SHADE machine}
+\caption[SHADEcode]{SHADEcode, the instruction set of the SHADE machine}
 \label{tab:shade-bytecode}
 \end{table}
 
@@ -601,7 +601,7 @@ This is an inefficiency but is necessary for correctness.
     \begin{figure}
         \centering
         \includegraphics[width=\paperwidth]{../figures/impl-two-resume.pdf}
-        \caption{Non-determinism: multi-shot continuations can be resumed more than once in Eff}
+        \caption[Implementation of multi-shot continuations]{Non-determinism: multi-shot continuations can be resumed more than once in Eff}
         \label{fig:shadecode-two-resume}
     \end{figure}
 \end{landscape}
@@ -695,7 +695,7 @@ tests.
         576 \\
     \bottomrule
     \end{tabular}}
-    \caption{The modules of \texttt{lib}}
+    \caption[OCaml modules and their purpose]{The modules of \texttt{lib}}
     \label{tab:lib-modules}
 \end{table}
 
@@ -705,7 +705,7 @@ and shell scripts to automate the evaluation process and the (re-)plotting of
 data.
 
 \mylisting{caml}
-{Getting abstractions right can lead to beautiful and concise functional
+{[The beauties of OCaml]Getting abstractions right can lead to beautiful and concise functional
 programs}
 {lst:impl-shade-modular}
 {../code_examples/shade.ml}

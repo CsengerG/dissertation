@@ -33,30 +33,14 @@ of side effects functionally. However, efficient runtime systems often work
 with low-level bytecodes rather than with syntax-level representations of
 programs. Designing appropriate bytecodes and ways to realise algebraic effect
 handlers closer to the hardware is necessary if we are ever
-going to use them in the real world. To show a real world appliaction
+going to use them in the real world. The existence of Multicore OCaml and SHADE VM
+proves that this is possible. To show a real world systems programming application
 I exhibited a simple concurrent system (a toy webserver) which was executed
 in the runtime system I designed. 
 
-\begin{comment}
-In the Implementation chapter an implementation of a higher level CEK evaluator
-(interpreting source terms) was described along with its abstract machine
-semantics. Furthermore, the SECD-like SHADE VM is derived for Eff as well as
-its instruction set (SHADEcode). A compiler is designed from Eff to SHADEcode.
-The SHADE machine is my own ``invention'', although it turned out to be rather
-similar to how Multicore OCaml implements algebraic effect handlers
-\footnote{In particular, shadows and fibres seem to be almost the same.}.
-
-The Evaluation chapter was concerned with comparing the CEK evaluator and the
-SHADE VM to existing solutions, namely Multicore OCaml and the official
-Eff interpreter. We found that the SHADE VM is reasonably efficient even without
-implementing any optimisations. It was also shown how algebraic effects and
-their handlers could be used for systems programming by exhibiting a toy web
-server implementation in Eff.
-\end{comment}
-
 \section{Further work}
 
-\paragraph{Optimisations.}
+\paragraph{Optimisations}
 The fact that there are algebraic theories behind algebraic effects and their
 handlers allows us to prove certain compiler transformations correct by
 equational reasoning. This gives us the opportunity to take a set of effect
@@ -71,11 +55,11 @@ and the opportunity to parallelise independent parts of programs. As hardware is
 getting increasingly parallel such optimisations can help us to get the most out
 of our multicore machines.
 
-\paragraph{Open source.}
+\paragraph{Open source}
 The project is packaged up as an OPAM package and I intend to make it available
 on Github for other programming language enthusiasts.
 
-\paragraph{Part II project.}
+\paragraph{Part II project}
 My implementation was concerned with only the core
 features of Eff. There would be countless ways to improve the compiler or the
 virtual machine. The rules of SHADE VM are simple enough that a byte code interpreter
@@ -83,11 +67,11 @@ for SHADEcode should not be too hard to implement in a low-level language such a
 However, this would have to involve designing a custom garbage collector for SHADE
 which might prove interesting.
 
-\paragraph{Masters or PhD.}
+\paragraph{Masters or PhD}
 As the size of continuations is not too big it might make sense to think about
 these control operators in the context of distributed systems too.
 For instance, imagine the following situation where the communication overhead
-lost in the network might be reduced.
+in the network might be reduced.
 
 Alice and Bob are communicating. Alice sends a message $M_1$ to Bob and Bob
 replies with $M_2$. Based on the contents of $M_2$ Alice performs some kind of
@@ -95,7 +79,7 @@ computation $c$ and replies with $M_3$. If $c$ can be realised as a continuation
 resumed with $M_2$ as its argument and given that shadows/continuations can be
 serialised using a convenient byte code representation, would it make sense to
 \emph{package up a decision as a continuation} and attach it to the original
-message $M_1$? This would get rid of the need of exchanging $M_2$ and $M_3$
+message $M_1$? This would eliminate the need to exchange $M_2$ and $M_3$
 over the network as Bob could resume the continuation using $M_1$ and obtain
 the result \emph{locally}.
 

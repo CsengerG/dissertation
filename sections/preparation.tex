@@ -84,7 +84,7 @@ using the \lstinline{perform} keyword and by providing an argument of type $A$.
 The type of the resulting expression is $B$.
 
 \mylisting{efflang}
-{Printing is an effect taking a string as its argument and returning unit as the result.}
+{[Printing as an Eff effect]Printing is an effect taking a string as its argument and returning unit as the result.}
 {first-example}
 {../code_examples/first_program.eff}
 
@@ -130,7 +130,7 @@ with SML's \lstinline|case| statement. A handler can be declared with the
 \lstinline|handler| keyword and by specifying so-called \emph{cases}:
 
 \mylisting{efflang}
-{A handler definition consisting of 2 cases: a value case and an effect case.}
+{[Defining handlers in Eff]A handler definition consisting of 2 cases: a value case and an effect case.}
 {prepending-print-handler}
 {../code_examples/print_handler.eff}
 
@@ -138,7 +138,7 @@ To complete our Hello World example we must be able to \emph{apply} this handler
 This is done using a \emph{with-handle block} as illustrated below.
 
 \mylisting{efflang}
-{The Hello World example in Eff.}
+{Hello World in Eff.}
 {hello-world}
 {../code_examples/hello_world.eff}
 
@@ -310,7 +310,7 @@ the rest of the whole program. They represent the continuation
 \emph{of the computation enclosed by a with-handle block}.
 
 \mylisting{efflang}
-{In Eff continuations behave like functions}
+{[Delimited continuations in Eff are functions]In Eff continuations behave like functions}
 {continuations-as-functions}
 {../code_examples/continuations_as_functions.eff}
 
@@ -497,7 +497,7 @@ so that the reader can quickly jump between the comments there and the rules on
 
   \bottomrule
   \end{tabular}
-  \caption{Explanation of the Eff specific rules of the small step semantics}
+  \caption[Small step operational semantics of Eff]{Explanation of the Eff specific rules of the small step semantics}
   \label{tab:semantics-rule-explanation}
   }
 \end{table}
@@ -604,7 +604,7 @@ the semantics.
     the function application typing too. \\
   \bottomrule
   \end{tabularx}
-  \caption{Explanation of the Eff specific typing rules}
+  \caption[Eff typing]{Explanation of the Eff specific typing rules}
   \label{tab:typing-rule-explanation}
   }
 \end{table}
@@ -668,7 +668,7 @@ One's first instinct is that this is a trivial task: all we need to do is to
 write a recursive evaluator function, something of this sort:
 
 \mylisting{caml}
-{A naïve recursive evaluator function might look like this}
+{[A naïve recursive evaluator] A naïve recursive evaluator function might look like this}
 {naive-implementation}
 {../code_examples/naive_implementation.ml}
 

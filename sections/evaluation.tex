@@ -63,7 +63,7 @@ resumable at all).
 \begin{figure}
     \centering
     \includegraphics[width=40em]{eval_plots/interp_exception.png}
-    \caption{The CEK interpreter performs better than Eff but worse than
+    \caption[Exception benchmark with interpreters]{The CEK interpreter performs better than Eff but worse than
     Multicore OCaml}
     \label{fig:exception-interpreters}
 \end{figure}
@@ -81,7 +81,7 @@ as we increase the number of exceptions.
 \begin{figure}
     \centering
     \includegraphics[width=35em]{eval_plots/comp_exception.png}
-    \caption{The peformance of SHADE is comparable to Multicore OCaml's}
+    \caption[Exception benchmark with compilers]{The peformance of SHADE is comparable to Multicore OCaml's}
     \label{fig:exception-bytecode}
 \end{figure}
 
@@ -112,7 +112,7 @@ and that we are measuring what we want.
 \begin{figure}
     \centering
     \includegraphics[width=35em]{eval_plots/interp_state.png}
-    \caption{Again, the CEK interpreter performs better than Eff but worse than
+    \caption[State benchmark with interpreters]{Again, the CEK interpreter performs better than Eff but worse than
     the interpreter of Multicore OCaml}
     \label{fig:state-interpreters}
 \end{figure}
@@ -120,7 +120,7 @@ and that we are measuring what we want.
 \begin{figure}
     \centering
     \includegraphics[width=35em]{eval_plots/comp_state.png}
-    \caption{SHADE VM's performance is still head-to-head with Multicore OCaml}
+    \caption[State benchmark with compilers]{SHADE VM's performance is still head-to-head with Multicore OCaml}
     \label{fig:state-bytecode}
 \end{figure}
 
@@ -150,7 +150,7 @@ $N > 14$.
 \begin{figure}
     \centering
     \includegraphics[width=35em]{eval_plots/comp_queens.png}
-    \caption{SHADE VM loses against Multicore OCaml here but is still more
+    \caption[N-queens benchmark]{SHADE VM loses against Multicore OCaml here but is still more
     performant than the Eff interpreter}
     \label{fig:n-queens}
 \end{figure}
@@ -164,14 +164,14 @@ already mentioned briefly in the Implementation chapter. Multicore OCaml impleme
 should be cloned.
 
 \mylisting{caml}
-{Cloning continuations must be done explicitly in Multicore OCaml}
+{[Explicit continuation cloning in Multicore OCaml]Cloning continuations must be done explicitly in Multicore OCaml}
 {lst:multicaml-cloning}
 {../code_examples/multicaml_cloning.ml}
 
 \begin{figure}
     \centering
     \includegraphics[width=35em]{eval_plots/extra_cloning.png}
-    \caption{Investigating the effect of cloning on performance and memory usage}
+    \caption[Correlation between extra cloning and memory usage]{Investigating the effect of cloning on performance and memory usage}
     \label{fig:extra-copying}
 \end{figure}
 
@@ -274,7 +274,7 @@ around 100 connections as the red numbers indicate this on
 \begin{figure}
     \centering
     \includegraphics[width=30em]{eval_plots/webserver.png}
-    \caption{Although the performance of the webserver is not at all impressive,
+    \caption[Load testing a toy webserver]{Although the performance of the webserver is not at all impressive,
     it is my own runtime system that implements it and it can still handle 100
     connections with a p90 time of 5 seconds with a throughput of 25 requests
     per second.}
