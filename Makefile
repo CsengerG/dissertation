@@ -1,5 +1,7 @@
 main:
 	pdflatex main.tex
+	bibtex main
+	pdflatex main.tex
 	pdflatex main.tex
 
 junk = *.aux *.log *.lol *.lot *.sta *.toc *.out *.lof

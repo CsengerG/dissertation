@@ -54,8 +54,6 @@ identifier of the OPAM switch was \verb|4.06.1+multicore|.
 
 \section{Exceptions}
 
-% TODO: what is n?
-
 The exception benchmark raises and catches exception-like effects (the
 continuation is never resumed). I must add that in the OCaml benchmark I used
 effects simulating exceptions rather than \emph{actual} OCaml exceptions. Actual
@@ -95,8 +93,8 @@ interpreter. For SHADE VM the same takes around 200 milliseconds
 (with compilation included), which is a 300-fold improvement!
 
 The $y$-axis is logarithmic and the plots show a linear slowdown when we
-increase the number of exceptions linearly. This suggests an $\mathcal{O}(n)$
-time complexity for performing and catching $n$ exceptions which suggests that
+increase the number of exceptions linearly. This suggests an $\mathcal{O}(N)$
+time complexity for performing and catching $N$ exceptions which suggests that
 my implementation does not contain bugs or inefficiencies that accumulate
 as more effects are performed in a program.
 
@@ -111,7 +109,6 @@ of performed effects $N$ increases we can be confident that the cost of
 performing effects and resuming continuations will dominate the execution time
 and that we are measuring what we want.
 
-% TODO: REPLOT PLOTS
 \begin{figure}
     \centering
     \includegraphics[width=35em]{eval_plots/interp_state.png}
@@ -211,10 +208,10 @@ it is an obvious outlier.
 
 \section{Concurrency -- Hello Online World!}
 
-% TODO: say what a green thread is
-
 Cooperative multitasking can be implemented with algebraic effects and their
-handlers too. We can realise \emph{green threads} as $\unitType \to \unitType$
+handlers too. We can realise \emph{green threads}\footnote{Green threads are
+lightweight user space threads usually scheduled by runtime systems rather
+than the operating system.} as $\unitType \to \unitType$
 functions which can be \lstinline|Spawn|ed and which are capable
 of \lstinline|Yield|ing control. The reader might correctly suspect that
 these operations will correspond to algebraic effects with the following types:

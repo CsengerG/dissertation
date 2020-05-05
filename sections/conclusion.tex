@@ -1,6 +1,7 @@
 \documentclass[class=article, crop=false]{standalone}
 \usepackage[utf8]{inputenc}
 \usepackage{hyperref}
+\usepackage{comment}
 
 \usepackage[margin=1in]{geometry}
 
@@ -10,24 +11,33 @@ The project was a success. My success criterion was to implement a
 syntax-level interpreter for Eff, to design a low-level byte code for Eff,
 to implement a compiler which can transform Eff programs into a linearised
 representation and finally to implement a virtual machine which is capable of
-interpreting that byte code. Furthermore, the above components had to be
+interpreting the designed byte code. Furthermore, the above components had to be
 reasonably efficient when compared to existing solutions.
 
 The work described above was carried out and all components were successfully
-implemented. The Evaluation chapter justifies the success of the project.
-Both my CEK interpreter and my SHADE VM outperformed Eff on various
+implemented. Both my CEK interpreter and my SHADE VM outperformed Eff on various
 benchmarks and the performance of SHADE VM was often comparable to that of
 Multicore OCaml.
 
-\section{Travel Diary}
+\paragraph{Travel Diary}
 
 This dissertation is actually a story about a journey
 which starts in the theoretical valleys of Mathematics, leads through the more
 practical (but still quite theoretical) areas of Computer Science and finally
 ends in the realms of practical Systems Programming.
 
-% motivated by ...
-% requires side effects, effects, Eff, designed, compiled, VM, returning 
+This work was partly motivated by the desire to explore how algebraic effect
+handlers could be used in systems programming. The use of algebraic effect
+handlers is appealing as they provide a convenient abstraction for the handling
+of side effects functionally. However, efficient runtime systems often work
+with low-level bytecodes rather than with syntax-level representations of
+programs. Designing appropriate bytecodes and ways to realise algebraic effect
+handlers closer to the hardware is necessary if we are ever
+going to use them in the real world. To show a real world appliaction
+I exhibited a simple concurrent system (a toy webserver) which was executed
+in the runtime system I designed. 
+
+\begin{comment}
 In the Implementation chapter an implementation of a higher level CEK evaluator
 (interpreting source terms) was described along with its abstract machine
 semantics. Furthermore, the SECD-like SHADE VM is derived for Eff as well as
@@ -42,9 +52,11 @@ Eff interpreter. We found that the SHADE VM is reasonably efficient even without
 implementing any optimisations. It was also shown how algebraic effects and
 their handlers could be used for systems programming by exhibiting a toy web
 server implementation in Eff.
+\end{comment}
 
 \section{Further work}
 
+\paragraph{Optimisations.}
 The fact that there are algebraic theories behind algebraic effects and their
 handlers allows us to prove certain compiler transformations correct by
 equational reasoning. This gives us the opportunity to take a set of effect
@@ -53,22 +65,40 @@ equations (for instance, the equation $\mathtt{assign}(x,y); \mathtt{assign}(x,z
 away) and generate new optimisations (perhaps entirely new ones no-one has
 thought about yet or ones that are dependent on the semantics of some effects).
 
-Type and effect systems \cite{bauer2013effect} allow for even more optimisations
+\paragraph{Type and effect systems}
+\cite{bauer2013effect} allow for even more optimisations
 and the opportunity to parallelise independent parts of programs. As hardware is
 getting increasingly parallel such optimisations can help us to get the most out
 of our multicore machines.
 
-My implementation was concerned with only the core features of Eff. There would
-be countless ways to improve the compiler or the virtual machine. One of the
-most interesting improvements would be to design a custom garbage collector for
-Eff which might be another Part II project. The rules of SHADE VM are simple
-enough that a byte code interpreter for SHADEcode should not be too hard to
-implement in a low-level language such as C.
-
+\paragraph{Open source.}
 The project is packaged up as an OPAM package and I intend to make it available
 on Github for other programming language enthusiasts.
 
-% FURTHER WORK ON SYSTEMS PROGRAMMING
+\paragraph{Part II project.}
+My implementation was concerned with only the core
+features of Eff. There would be countless ways to improve the compiler or the
+virtual machine. The rules of SHADE VM are simple enough that a byte code interpreter
+for SHADEcode should not be too hard to implement in a low-level language such as C.
+However, this would have to involve designing a custom garbage collector for SHADE
+which might prove interesting.
+
+\paragraph{Masters or PhD.}
+As the size of continuations is not too big it might make sense to think about
+these control operators in the context of distributed systems too.
+For instance, imagine the following situation where the communication overhead
+lost in the network might be reduced.
+
+Alice and Bob are communicating. Alice sends a message $M_1$ to Bob and Bob
+replies with $M_2$. Based on the contents of $M_2$ Alice performs some kind of
+computation $c$ and replies with $M_3$. If $c$ can be realised as a continuation
+resumed with $M_2$ as its argument and given that shadows/continuations can be
+serialised using a convenient byte code representation, would it make sense to
+\emph{package up a decision as a continuation} and attach it to the original
+message $M_1$? This would get rid of the need of exchanging $M_2$ and $M_3$
+over the network as Bob could resume the continuation using $M_1$ and obtain
+the result \emph{locally}.
+
 
 \section{Self-reflection}
 

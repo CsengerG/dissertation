@@ -12,10 +12,12 @@
 \usepackage[english]{babel}
 \usepackage{listings}
 \usepackage[toc,page]{appendix}
-%\usepackage{booktabs}
 \usepackage{tikz}
 \usepackage[absolute,overlay]{textpos}
 \usepackage{etoolbox}
+\usepackage{pdfpages}
+
+
 \makeatletter
 % \patchcmd{<cmd>}{<search>}{<replace>}{<success>}{<failure>}
 % --- Patch \chapter
@@ -101,8 +103,7 @@ or minimising the copy overhead from the use of continuations.
 
 \paragraph{Work completed}
 
-% TODO: DONT MENTION CEK... you mean syntax level interpreter here
-A CEK machine interpreting Eff was implemented. A byte code for Eff (SHADEcode)
+A syntax-level Eff interpreter was implemented. A byte code for Eff (SHADEcode)
 was designed. A compiler from Eff to SHADEcode was implemented as well as a
 virtual machine (SHADE) interpreting SHADEcode. As far as I know, SHADE and
 SHADEcode are the first virtual machine and byte code designed
@@ -221,8 +222,7 @@ None.
 \chapter{Project Proposal}
 \setcounter{page}{1}
 The project proposal starts on the next page.
-% TODO: proposal include here
-%\includepdf[pages=-]{sections/proposal.pdf}
+\includepdf[pages=-]{sections/proposal.pdf}
 
 \end{appendices}
 
