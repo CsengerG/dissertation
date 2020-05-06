@@ -2,7 +2,6 @@
 *.fdb_latexmk
 *.fls
 *.log
-*.pdf
 *.sta
 *.synctex.gz
 *.toc
