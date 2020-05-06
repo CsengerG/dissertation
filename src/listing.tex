@@ -18,7 +18,8 @@
         finally,
         match,
         exception,
-        of
+        of,
+        open,
     },
     sensitive=false,
     morecomment=[s]{(*}{*)},
@@ -37,8 +38,8 @@
 }
 
 \lstset{
-  basicstyle=\small\ttfamily, % Default font
-  numberstyle=\small,          % Style of line numbers
+  basicstyle=\scriptsize\ttfamily, % Default font
+  numberstyle=\scriptsize,          % Style of line numbers
   numbersep=5pt,              % Margin between line numbers and text
   tabsize=2,                  % Size of tabs
   extendedchars=true,
@@ -64,13 +65,11 @@
 
 \newcommand{\mylisting}[4]{%
 \noindent
-\begin{minipage}{\textwidth}
 \lstinputlisting[
   language=#1,
   caption={#2},
   label=#3
   ]{#4}
-\end{minipage}
-  }
+}
 
 \lstset{language=efflang}

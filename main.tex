@@ -16,27 +16,16 @@
 \usepackage[absolute,overlay]{textpos}
 \usepackage{etoolbox}
 \usepackage{pdfpages}
+\usepackage{tabularx}
+\usepackage{hyperref}
+\usepackage{import}
 
-
-\makeatletter
-% \patchcmd{<cmd>}{<search>}{<replace>}{<success>}{<failure>}
-% --- Patch \chapter
-\patchcmd{\@makechapterhead}{50\p@}{\chapheadtopskip}{}{}% Space from top of page to CHAPTER X
-\patchcmd{\@makechapterhead}{20\p@}{\chapheadsep}{}{}% Space between CHAPTER X and CHAPTER TITLE
-\patchcmd{\@makechapterhead}{40\p@}{\chapheadbelowskip}{}{}% Space between CHAPTER TITLE and text
-% --- Patch \chapter*
-\patchcmd{\@makeschapterhead}{50\p@}{\chapheadtopskip}{}{}% Space from top of page to CHAPTER TITLE
-\patchcmd{\@makeschapterhead}{40\p@}{\chapheadbelowskip}{}{}% SPace between CHAPTER TITLE and text
-\makeatother
-% Set new lengths
-\newlength{\chapheadtopskip}\setlength{\chapheadtopskip}{0pt}
-\newlength{\chapheadsep}\setlength{\chapheadsep}{0pt}
-\newlength{\chapheadbelowskip}\setlength{\chapheadbelowskip}{15pt}
-
+% Chapter formatting
 \usepackage{titlesec, blindtext, color}
 \definecolor{gray75}{gray}{0.75}
 \newcommand{\hsp}{\hspace{20pt}}
 \titleformat{\chapter}[hang]{\Huge\bfseries}{\thechapter\hsp\textcolor{gray75}{\textbar}\hsp}{0pt}{\Huge\bfseries}
+\titlespacing*{\chapter}{0pt}{-40pt}{30pt}
 
 \input{./src/macros.tex}
 \input{./src/listing.tex}
@@ -152,7 +141,7 @@ None.
 \setcounter{page}{1}
 \import{sections/}{eff-formally}
 
-\begin{myfigure}[1]{Compilation from IR to SHADE bytecode}{fig:compilation}
+\begin{myfigure}[1]{t}{Compilation from IR to SHADE bytecode}{fig:compilation}
     $$ \interp{\irId\ x}_s^\gamma = \text{where\_is}\ (x, s, \gamma) $$
     $$ \interp{\irConst\ c} = \textbf{const } c $$
     $$ \interp{\irBox\ (t, v_1 \dots v_n)}_s ^ \gamma = \interp{v_n}_s^\gamma; \vmPush; \interp{v_{n-1}}_{s+1}^\gamma; \vmPush; \dots \interp{v_1}_{s+n-1}^\gamma; \vmMakeBox{t}{n} $$

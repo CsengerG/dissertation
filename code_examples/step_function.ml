@@ -10,4 +10,3 @@ match state.c with
     e = state.e;
     k = push_continuation continuation state.k
   }
-...

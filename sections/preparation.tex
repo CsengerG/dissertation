@@ -84,7 +84,7 @@ using the \lstinline{perform} keyword and by providing an argument of type $A$.
 The type of the resulting expression is $B$.
 
 \mylisting{efflang}
-{[Printing as an Eff effect]Printing is an effect taking a string as its argument and returning unit as the result.}
+{[Printing as an Eff effect]Printing is a \lstinline|string -->> unit| effect}
 {first-example}
 {../code_examples/first_program.eff}
 
@@ -331,7 +331,7 @@ and computations which are possibly effectful.
 between \emph{val} and \emph{return} as well as similarities between monadic
 type constructors and computations.}
 
-\begin{myfigure}[.9]{Abstract syntax of Eff}{fig:eff-syntax}
+\begin{myfigure}[.9]{htb}{Abstract syntax of Eff}{fig:eff-syntax}
 Effect declarations
 $$ \effEffect E : A \tto B $$
 %
@@ -381,7 +381,7 @@ relation $\leadsto$. I focus on the Eff specific transition steps here (see
 \autoref{fig:mini-semantics}). The other transition rules are standard and can
 be found in \autoref{sec:full-semantics}.
 
-\begin{myfigure}[1]
+\begin{myfigure}[1]{htb}
   {Eff-specific rules of the small step operational semantics}
   {fig:mini-semantics}
   $$
@@ -448,10 +448,11 @@ so that the reader can quickly jump between the comments there and the rules on
 \autoref{fig:mini-semantics}.
 
 \begin{table}
+  \small
   \centering
   {\renewcommand{\arraystretch}{1.3}
   \rowcolors{2}{gray!17}{white}
-  \begin{tabular}{lp{10cm}}
+  \begin{tabularx}{\textwidth}{lX}
   \toprule
   Rule & Comment \\
   \midrule
@@ -496,7 +497,7 @@ so that the reader can quickly jump between the comments there and the rules on
     chapter.\\
 
   \bottomrule
-  \end{tabular}
+  \end{tabularx}
   \caption[Small step operational semantics of Eff]{Explanation of the Eff specific rules of the small step semantics}
   \label{tab:semantics-rule-explanation}
   }
@@ -529,7 +530,7 @@ There are two separate typing relations denoted $\vdash_e$ and $\vdash_c$ for
 expressions and computations respectively. Type environments are denoted
 $\Gamma$ and are maps from variable names to types.
 
-\begin{myfigure}[1]
+\begin{myfigure}[1]{htb}
 {Type checking for Eff-specific expressions and computations}
 {fig:type-checking-expressions}
 
@@ -581,6 +582,7 @@ Again, explanation of these rules is given in
 the semantics.
 
 \begin{table}
+  \small
   \centering
   {\renewcommand{\arraystretch}{1.3}
   \rowcolors{3}{gray!17}{white}
@@ -710,7 +712,7 @@ numbers) and kontinuation is a \emph{stack of closures} representing the rest
 of the program to be interpreted at any given time. Hence a configuration of the
 machine is characterised by a three-tuple $\cek{C, E, K}$.
 
-\begin{myfigure}[.9]
+\begin{myfigure}[.9]{htb}
 {CEK machine transition rules for TL.}
 {fig:cek-tl}
 %
@@ -760,7 +762,7 @@ $K$ in the CEK machine. It is a list of three tuples, each three tuple consistin
 of the other three components (i.e., it has the form $(S, E, C)$). The dump
 embodies a list of saved execution contexts we can return to if we wish.
 
-\begin{myfigure}[.8]
+\begin{myfigure}[.8]{htb}
 {SECD machine transition rules for TL.}
 {fig:secd-transitions}
 Initialisation:
@@ -786,7 +788,7 @@ just another step we can turn this into a stack machine and this is what I will
 do in the Implementation chapter. 
 %
 %
-\begin{figure}
+\begin{figure}[t]
   \begin{subfigure}{.5\textwidth}
     \subcaptionbox{
         \emph{Naïve approach.} Imagine that a $\effPerform$ operation is
@@ -840,10 +842,10 @@ compile a language like Eff!
 It is important to mention that the project fulfills licensing criteria. The
 dependencies of this project are listed below with their licenses:
 \begin{itemize}
-\item The OCaml toplevel, version 4.06.0, GNU Lesser General Public License (LGPL) version 2.1
-\item \emph{menhir} parser generator, version 20190924, GNU Library General Public License version 2
+\item The OCaml toplevel, version 4.06.0, GNU LGPL version 2.1
+\item \emph{menhir} parser generator, version 20190924, GNU GPL version 2
 \item \emph{Alcotest}, version 0.8.5, ISC license
-\item \emph{OCaml Package Manager}, version 2.0.4, GNU Lesser General Public License (LGPL) version 2.1
+\item \emph{OCaml Package Manager}, version 2.0.4, GNU LGPL version 2.1
 \item \emph{Core} standard library by Jane Street, v0.11.3, MIT license
 \end{itemize}
 To the best of my knowledge these licenses allow the way I am using the software

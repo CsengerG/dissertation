@@ -130,7 +130,7 @@ effect was raised from. This means that there is no extra effort needed to
 manage the handler stack separately: the handler stack is managed
 \emph{automagically} by the use of continuations.
 
-\begin{myfigure}[0.9]{A CEK machine interpreting Eff}{fig:cek-machine}
+\begin{myfigure}[0.9]{t}{A CEK machine interpreting Eff}{fig:cek-machine}
     Initialisation:
     $$ c \longrightarrow \cek{c, \{\}, []} $$
     %
@@ -151,15 +151,15 @@ manage the handler stack separately: the handler stack is managed
     $$ \cek{ \effPerform E(e,k), \gamma, K } \longrightarrow \cek{ \effPerform E(e,k), \gamma, K, [] }_{\text{unwind}} $$
     $$ \cek{ \textbf{with } \hlosure \textbf{ handle } c, \gamma, K } \longrightarrow \cek{ c, \gamma, ([], \hlosure) :: K } $$
     %
-    Other standard rules:
-    $$ \cek{ \textbf{let } x \leftarrow c_1 \textbf{ in } c_2, \gamma, (\konts, \hlosure) :: K} \longrightarrow 
-    \cek{ c_1, \gamma, ((x. c_2, \gamma) :: \konts, \hlosure) :: K } $$
-    $$ \cek{\effLet \effRec f\ x = c_1 \effIn c_2, \gamma, K} \longrightarrow
-    \cek{c_2, \gamma[f \mapsto \mathcal{R}(f, x.c_1, \gamma)], K} $$
-    \begin{align*}
-    \cek{ \textbf{if } e \textbf{ then } c_1 \textbf{ else } c_2, \gamma, K } \longrightarrow \cek{ c, \gamma, K } \\
-    \text{ where $c = c_1$ if $\interp{e} \gamma = \textbf{true}$; and $c = c_2$ otherwise}
-    \end{align*}
+    Other standard rules: (see TODO)
+    %$$ \cek{ \textbf{let } x \leftarrow c_1 \textbf{ in } c_2, \gamma, (\konts, \hlosure) :: K} \longrightarrow 
+    %\cek{ c_1, \gamma, ((x. c_2, \gamma) :: \konts, \hlosure) :: K } $$
+    %$$ \cek{\effLet \effRec f\ x = c_1 \effIn c_2, \gamma, K} \longrightarrow
+    %\cek{c_2, \gamma[f \mapsto \mathcal{R}(f, x.c_1, \gamma)], K} $$
+    %\begin{align*}
+    %\cek{ \textbf{if } e \textbf{ then } c_1 \textbf{ else } c_2, \gamma, K } \longrightarrow \cek{ c, \gamma, K } \\
+    %\text{ where $c = c_1$ if $\interp{e} \gamma = \textbf{true}$; and $c = c_2$ otherwise}
+    %\end{align*}
 \end{myfigure}
 
 \subsubsection{Perform and with-handle}
@@ -186,7 +186,7 @@ $\mathcal{H}'s$ (!) environment. Otherwise, the current hlosure frame is
 removed from the CEK state and is appended to $\kappa$ and the unwinding
 continues.
 
-\begin{myfigure}[.95]{Unwinding of the K component in the CEK machine}{fig:cek-k-unwind}
+\begin{myfigure}[.95]{b}{Unwinding of the K component in the CEK machine}{fig:cek-k-unwind}
     \begin{align*}
         \cek{ \effPerform E(e,k), \gamma, (\konts, \hlosure) :: K, \kappa}_\text{unwind} \longrightarrow
         \cek{ \effPerform E(e,k), \gamma, K, \kappa@[(\konts, \hlosure)] }_\text{unwind} \\
@@ -229,7 +229,7 @@ with a description of this machine using its transition rules.
 \Cref{sec:shade-illustration} will give an overview of how the byte code
 implements the different aspects of the Eff language.
 
-\paragraph{Configuration.}
+\paragraph{Configuration}
 The state of the machine can be characterised with a two-tuple
 $\langle A, D \rangle$ where $A$ is the accumulator and $D$ is a dump. I call
 the elements of $D$ \emph{shadows}. Shadows are the SHADE equivalent of CEK
@@ -275,8 +275,7 @@ chapter will show how can one implement a web server in Eff by defining 2
 built-in effects which interact with the Linux kernel.}.
 The machine terminates when it reaches the \vmHalt\ instruction.
 
-\paragraph{Communication between shadows.}
-
+\paragraph{Communication between shadows}
 I will start to introduce the SHADE byte code and the SHADE transition rules.
 Unfortunately, there is a circular dependency between the concepts in this
 section. I apologise in advance for starting to talk about the compilation
@@ -300,7 +299,7 @@ with-handle block and therefore we cannot make the invocation of finally cases
 a feature of the \vmRett\ instruction. This is the responsibility of the same
 shadow a with-handle block resides in.
 
-\begin{myfigure}[0.95]
+\begin{myfigure}[0.95]{t}
 {SHADE machine transition rules}
 {fig:shade-machine}
 %
@@ -353,7 +352,7 @@ same way it was done in the CEK machine. The \vmThrow\ instruction is used to
 perform an effect. When this happens the dump has to be unwound the same way
 the $K$ component of the CEK machines needed to be unwound.
 
-\begin{myfigure}[1]{Dump unwinding in SHADE}{fig:shade-stack-unwind}
+\begin{myfigure}[1]{t}{Dump unwinding in SHADE}{fig:shade-stack-unwind}
     $$ \shade{A, \underbrace{(pc, E, H, S)}_d, D, \kappa }_\text{unwind}^{id} \text{ and } H \uparrow id \to \begin{cases}
         \text{Runtime exception} & \text{if } D = [] \\
     \shade{A, d, D', \kappa @ [d]}_\text{unwind}^{id} & \text{if } D = d' :: D' \end{cases} $$
@@ -375,7 +374,8 @@ because by resuming a continuation we are also restoring shadows and therefore
 we lose the access to the current stack. The same goes for returning values.
 Hence we must use the accumulator.
 
-\begin{table}
+\begin{table}[htb]
+\footnotesize
 \centering
 {\renewcommand{\arraystretch}{1.3}
 \rowcolors{2}{gray!17}{white}
@@ -383,31 +383,31 @@ Hence we must use the accumulator.
     \toprule
     Instruction & Description & Action \\
     \midrule
-    \vmPush & 
-        Push the accumulator to the stack. &
-        \verb|S := A :: S| \\
-    \vmPop  &
-        Remove the top element of the stack. &
-        \verb|S := S.tail| \\
-    \vmAcc{$n$} &
-        Copy the $n^\text{th}$ element (0 indexed) of the stack in the accumulator. &
-        \verb|A := S[n]| \\
-    \vmConst{$c$} &
-        Load the constant $c$ to the accumulator. &
-        \verb|A := c| \\
-    \vmHalt &
-        Halt the SHADE machine with the value in A. &
-        terminate with A \\
-    \vmJump{$L$} &
-        Jump to location L. &
-        \verb|pc := adress of L| \\
-    \vmBranchIfNot{$L$} & 
-        If A = false then jump to location L. Otherwise continue with the next
-        instruction. &
-        \begin{tabular}[t]{@{}l@{}}
-            if \verb|A| then \verb|pc := pc + 1|\\
-            else \verb|pc := L|
-        \end{tabular} \\
+    %\vmPush & 
+    %    Push the accumulator to the stack. &
+    %    \verb|S := A :: S| \\
+    %\vmPop  &
+    %    Remove the top element of the stack. &
+    %    \verb|S := S.tail| \\
+    %\vmAcc{$n$} &
+    %    Copy the $n^\text{th}$ element (0 indexed) of the stack in the accumulator. &
+    %    \verb|A := S[n]| \\
+    %\vmConst{$c$} &
+    %    Load the constant $c$ to the accumulator. &
+    %    \verb|A := c| \\
+    %\vmHalt &
+    %    Halt the SHADE machine with the value in A. &
+    %    terminate with A \\
+    %\vmJump{$L$} &
+    %    Jump to location L. &
+    %    \verb|pc := adress of L| \\
+    %\vmBranchIfNot{$L$} & 
+    %    If A = false then jump to location L. Otherwise continue with the next
+    %    instruction. &
+    %    \begin{tabular}[t]{@{}l@{}}
+    %        if \verb|A| then \verb|pc := pc + 1|\\
+    %        else \verb|pc := L|
+    %    \end{tabular} \\
     \vmApply &
         Apply the top of the stack to the accumulator. &
         see \autoref{fig:shade-machine} \\
@@ -435,17 +435,17 @@ Hence we must use the accumulator.
     \vmKillShadow &
         Kill a shadow. &
         see \autoref{fig:shade-machine} \\
-    \vmMakeBox{$t$}{$n$} &
-        Create a box with tag $t$ using $A$ and the top $n-1$ elements of S. & \\
-    \vmGetField{$n$} &
-        Load field $n$ (0 indexed) of a box to A. &
-        \verb|A := A[n]|\\
-    \vmListHead &
-        Load the head of a list to A. &
-        \verb|A := A.head| \\
-    \vmListTail &
-        Load the tail of a list to A. &
-        \verb|A := A.tail| \\
+    %\vmMakeBox{$t$}{$n$} &
+    %    Create a box with tag $t$ using $A$ and the top $n-1$ elements of S. & \\
+    %\vmGetField{$n$} &
+    %    Load field $n$ (0 indexed) of a box to A. &
+    %    \verb|A := A[n]|\\
+    %\vmListHead &
+    %    Load the head of a list to A. &
+    %    \verb|A := A.head| \\
+    %\vmListTail &
+    %    Load the tail of a list to A. &
+    %    \verb|A := A.tail| \\
     \vmMakeClosure{$L$}{$n$} &
         Form an environment of A and the top $n-1$ elements of S and create a
         closure with this environment of location L. &
@@ -468,12 +468,12 @@ Hence we must use the accumulator.
             \verb|S.pop(N-1);| \\
             \verb|A := hlosure (...)|
         \end{tabular} \\
-        binary operators \textbf{intadd}, \textbf{floatadd}, etc. &
-        Perform a binary operation with A and S.top. &
-        \begin{tabular}[t]{@{}l@{}}
-            \verb|A := bop(A, S.top())| \\
-            \verb|S.pop()|
-        \end{tabular} \\
+    %binary operators \textbf{intadd}, \textbf{floatadd}, etc. &
+    %    Perform a binary operation with A and S.top. &
+    %    \begin{tabular}[t]{@{}l@{}}
+    %        \verb|A := bop(A, S.top())| \\
+    %        \verb|S.pop()|
+    %    \end{tabular} \\
     \bottomrule
 \end{tabular}}
 \caption[SHADEcode]{SHADEcode, the instruction set of the SHADE machine}
@@ -508,9 +508,9 @@ SHADE machine is essentially a Zinc \cite{leroy1990zinc} machine with all
 effects behaving like exceptions. The next page contains various examples and
 should give a good insight into how everything fits together.
 
-\begin{figure}
+\begin{figure}[t]
     \centering
-    \scalebox{.75}{
+    \scalebox{.55}{
         \subimport{../figures/}{impl-no-perform.tex}
     }
     \caption{No effect is performed.}
@@ -529,9 +529,9 @@ The \vmRet\ instruction at the end of the finally case simply returns as if it
 was a function call and execution halts as the program counter now points to
 \vmHalt.
 
-\begin{figure}
+\begin{figure}[t]
     \centering
-    \scalebox{.75}{
+    \scalebox{.45}{
         \subimport{../figures/}{impl-exception.tex}
     }
     \caption{An effect is performed but its continuation is not resumed.}
@@ -563,15 +563,16 @@ control and only after that effect case is finished can the effect case handling
 \lstinline{Print "Try"} resume. This program returns the tuple
 \lstinline|("confused!", "Try not to be")|.
 
-\begin{figure}
+\begin{figure}[t]
     \centering
-    \scalebox{.75}{
+    \scalebox{.55}{
         \subimport{../figures/}{impl-one-resume.tex}
     }
     \caption{An effect is performed and its continuation is resumed.}
     \label{fig:shadecode-one-resume}
 \end{figure}
  
+
 \autoref{fig:shadecode-two-resume} shows what happens when we take everything to
 the next level and use multi-shot continuations (i.e., we resume the same
 continuation more than once). This is a typical non-determinism example where
@@ -585,6 +586,7 @@ the black arrows are just there to show where we are in the execution.
 The blue \vmRett\ instructions are those of the value case's and they are only
 invoked ``at depth 4'' in the diagram.
 
+\begin{landscape}
 Continuations are highlighted with shades of orange. Because all continuations
 are invoked twice these must be cloned which can add a significant copy overhead.
 This is one way Eff differs from Multicore OCaml. Multicore OCaml only supports
@@ -597,13 +599,14 @@ in this respect, the SHADE machine always keeps a clean copy of every
 continuation which can be cloned on demand when it is resumed.
 This is an inefficiency but is necessary for correctness.
 
-\begin{landscape}
     \begin{figure}
         \centering
         \includegraphics[width=\paperwidth]{../figures/impl-two-resume.pdf}
         \caption[Implementation of multi-shot continuations]{Non-determinism: multi-shot continuations can be resumed more than once in Eff}
         \label{fig:shadecode-two-resume}
     \end{figure}
+
+
 \end{landscape}
 
 \section{Software engineering}
@@ -633,18 +636,24 @@ generated, the \verb|lib| directory contains the collection of modules making
 up the project. The \verb|test| directory contains unit tests and regression
 tests.
 
-\begin{figure}
+\begin{figure}[h]
     \centering
-    \includegraphics[width=30em]{../figures/dependency-graph.pdf}
-    \caption{Dependency graph of the modules residing in \texttt{lib}}
-    \label{fig:dependencies}
+\begin{minipage}{.5\textwidth}
+    \includegraphics[height=18em]{../figures/dependency-graph.pdf}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}
+\lstinputlisting[basicstyle=\small\ttfamily,language=efflang, caption={[The beauties of OCaml]SHADE VM's pipeline}]{../code_examples/shade.ml}
+\end{minipage}
+\caption{Dependency graph of the modules residing in \texttt{lib} and the way
+they are used to build the SHADE VM pipeline}
 \end{figure}
 
-\begin{table}
+\begin{table}[ht]
+    \small
     \centering
     {\renewcommand{\arraystretch}{1.3}
     \rowcolors{2}{gray!17}{white}
-    \begin{tabular}{p{3cm}p{10cm}l}
+    \begin{tabular}{lp{10cm}l}
     \toprule
     \textbf{Module name} & \textbf{Purpose} & \textbf{LoC} \\
     \midrule
@@ -704,13 +713,9 @@ for testing as well as around a few hundred lines of extra OCaml, Eff, Python
 and shell scripts to automate the evaluation process and the (re-)plotting of
 data.
 
-\mylisting{caml}
-{[The beauties of OCaml]Getting abstractions right can lead to beautiful and concise functional
-programs}
-{lst:impl-shade-modular}
-{../code_examples/shade.ml}
 
-\subsection{Testing}
+\subsection{Techniques}
+\paragraph{Testing}
 
 As stated in the Introduction correctness and hence testing were crucial for
 the success of this project. Hence I took testing very seriously. I used the
@@ -722,7 +727,7 @@ As I used test driven development as my development methodology I wrote most of
 my tests upfront. However, when a bug was discovered later I added regression
 tests too.
 
-\subsection{Version control}
+\paragraph{Version control}
 
 I used Git together with GitHub
 \footnote{\url{https://github.com/}}
@@ -750,12 +755,12 @@ code or added documentation/comments.
 \emph{Benchmarking.} I used a separate branch for evaluation.
 \end{itemize}
 
-\subsection{OPAM}
+\paragraph{OPAM}
 
 The project is packaged as an OCaml package. After further refactoring I
 intend to publish this project as an OCaml package.
 
-\subsection{Coding style and documentation}
+\paragraph{Coding style and documentation}
 
 I tried to stick to OCaml best-practices while developing, such as always
 having interface \verb|.mli| files for all my modules.
@@ -768,7 +773,7 @@ part of the software. Documentation can also speed up the learning
 process for other hobbyist language enthusiasts wishing to contribute to the
 project were I to publish this package on GitHub.
 
-\subsection{Time management}
+\paragraph{Time management}
 
 Time management is another important aspect of software engineering. The original
 timeline proved to be over-ambitious but there was enough time set aside for
@@ -777,7 +782,7 @@ for my other academic responsibilities (such as completing Units of Assessments
 and doing supervision work) and hence these did not interfere much with the
 workflow of my project during the year.
 
-\subsection{Backups}
+\paragraph{Backups}
 
 My strategy for saving my work and creating backups happened as per it is
 described in the Project Proposal. I only had to use backups once when I
