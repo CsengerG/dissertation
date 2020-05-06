@@ -95,13 +95,13 @@
 \providecommand{\hlosure}{\mathcal{H}}
 \providecommand{\konts}{\mathcal{C}}
 
-\newenvironment{myfigure}[3][0.75]{
+\newenvironment{myfigure}[4][0.75]{
     \def\mywidth{#1}
-    \def\mycaption{#2}
-    \def\mylabel{#3}
+    \def\mycaption{#3}
+    \def\mylabel{#4}
     \definecolor{shadecolor}{rgb}{0.95,0.95,0.95}
 
-    \begin{figure}[p]
+    \begin{figure}[#2]
     \centering
     \begin{minipage}{\mywidth\textwidth}
     \begin{shaded*}

@@ -10,7 +10,7 @@
 \usepackage[super]{nth}
 \usepackage{subcaption}
 \usepackage{booktabs}
-\usepackage[margin=1in]{geometry}
+\usepackage[margin=2cm]{geometry}
 \usepackage{tabularx}
 \usepackage[table]{xcolor}
 \usepackage{cleveref}
@@ -130,15 +130,15 @@ with SML's \lstinline|case| statement. A handler can be declared with the
 \lstinline|handler| keyword and by specifying so-called \emph{cases}:
 
 \mylisting{efflang}
-{[Defining handlers in Eff]A handler definition consisting of 2 cases: a value case and an effect case.}
+{[Defining handlers in Eff]A handler definition consisting of 2 cases: a value case and an effect case}
 {prepending-print-handler}
 {../code_examples/print_handler.eff}
 
 To complete our Hello World example we must be able to \emph{apply} this handler.
-This is done using a \emph{with-handle block} as illustrated below.
+This is done using a \emph{with-handle block} as illustrated in \autoref{hello-world}.
 
 \mylisting{efflang}
-{Hello World in Eff.}
+{Hello World in Eff}
 {hello-world}
 {../code_examples/hello_world.eff}
 
@@ -181,7 +181,7 @@ $\alpha \Rightarrow \alpha \times \mathtt{string}$.
 
 There is an extra case we did not mention, the \emph{finally case}. A finally
 case is invoked after the computation in a with-handle block has finished
-evaluating and after all other handler cases finished evaluating.
+evaluating and after all other handler cases have finished evaluating.
 
 Finally cases are just syntactic sugar for let wrappers around with-handle blocks.
 That is, $\textbf{finally } \mathit{res} \to \mathit{fin}$ does the same as
@@ -189,7 +189,7 @@ $\textbf{let } \mathit{res} \leftarrow \textbf{with } h \textbf{ handle } c
 \textbf{ in } \mathit{fin}$.
 Finally rules were introduced to avoid having to use such inconvenient let
 wrappers \cite{bauer2015programming}. To see the use case of this feature,
-compare the following two code snippets below, where the result of a physics
+compare the following two code snippets in \autoref{handler-without-fin} and \autoref{handler-with-fin}, where the result of a physics
 simulation is returned in Kelvin but we wish to convert this result to
 Fahrenheit every time we want to display it on some user interface.
 
@@ -197,14 +197,14 @@ Fahrenheit every time we want to display it on some user interface.
   \begin{minipage}{.5\textwidth}
     \lstinputlisting[
     caption={Handler without finally},
-    label=handler-keyword,
+    label=handler-without-fin,
     language=efflang]
     {../code_examples/celsius_fahrenheit.eff}
   \end{minipage}%
   \begin{minipage}{.5\textwidth}
     \lstinputlisting[
     caption={Handler with finally},
-    label=handler-keyword, 
+    label=handler-with-fin, 
     language=efflang]
     {../code_examples/celsius_fahrenheit2.eff}
   \end{minipage}%
@@ -226,17 +226,15 @@ The aim of the following illustration is to help with this.
 \begin{figure}[ht]
 \begin{subfigure}{.5\textwidth}
   \centering
-  \resizebox{.6\linewidth}{!}{
-    \subimport{../figures/}{exception_control_flow.tex}
-  }
+  \includegraphics[width=.625\linewidth]{../figures/exception_control_flow.pdf}
+
   \caption{Crash without a handler.}
   \label{fig:exception}
 \end{subfigure}
 \begin{subfigure}{.5\textwidth}
   \centering
-  \resizebox{1\linewidth}{!}{
-    \subimport{../figures/}{handler_hello_world.tex}
-  }
+  \includegraphics[width=\linewidth]{../figures/handler_hello_world.pdf}
+
   \caption{Effects and resumed continuations.}
   \label{fig:exception}
 \end{subfigure}
@@ -244,7 +242,7 @@ The aim of the following illustration is to help with this.
 \end{figure}
 
 \section{Continuations and control operators}
-\label{sec:continuations}
+\label{section-continuations}
 
 Although continuations came up briefly in the previous section I did not
 explain what they are in detail. This section is devoted to this because
@@ -261,7 +259,7 @@ passing style} (CPS) is a style of programming where every function of $n$
 arguments is rewritten to an extended version taking $n+1$ arguments, the last
 of which is commonly named $k$ and represents a continuation.
 
-Consider the Scheme code snippet below which uses this style to redefine the
+Consider the Scheme code snippet in \autoref{cps-arithmetic} which uses this style to redefine the
 built-in binary addition and multiplication functions of Scheme as ternary
 functions \lstinline|+k| and \lstinline|*k| with an extra argument \verb|k|.
 Also note how the expression \lstinline|(1 + 2)*(3 + 4)| is written in this
@@ -282,15 +280,14 @@ something humans interact with.
 
 Scheme is interesting from the point of view of continuations because it has the
 \lstinline|call-with-current-continuation| built-in operation which is
-conventionally referred to as \lstinline|call/cc|
-\footnote{A similarly obscure control operator is Peter Landin's J operator
+conventionally referred to as \lstinline|call/cc|\footnote{A similarly obscure control operator is Peter Landin's J operator
 which predates \lstinline{call/cc} by almost a decade. It was discovered shortly
 after Peter Landin described SECD machines for the first time.}.
-\emph{The call/cc operator takes a single argument. This argument is a function
-which itself takes a continuation as an argument.}
+\emph{The call/cc operator takes a single argument. This argument is a \emph{function}
+which itself takes a \emph{continuation} as an argument.}
 
 If one wished to use continuations as first-class values in a Scheme program
-one would not have to write everything in CPS like above. A similar piece of
+one would not have to write everything in CPS like in \autoref{cps-arithmetic}. A similar piece of
 code can be written with call/cc:
 
 \mylisting{scheme}
@@ -314,7 +311,7 @@ the rest of the whole program. They represent the continuation
 {continuations-as-functions}
 {../code_examples/continuations_as_functions.eff}
 
-In the code above \lstinline{x} takes the value \lstinline{((), "Hello World")}
+In \autoref{continuations-as-functions} \lstinline{x} takes the value \lstinline{((), "Hello World")}
 rather than \lstinline{42} which one would expect with Scheme's
 \lstinline|call/cc|. The fact that continuations are delimited also makes it
 possible to return to the program point a continuation was called from. This
@@ -326,10 +323,9 @@ Hence, in Eff we can think about delimited continuations simply as functions.
 \subsection{Syntax}
 
 In the abstract syntax of Eff there is a distinction between pure expressions
-and computations which are possibly effectful.
-\footnote{The reader familiar with monads might discover some similarities
+and computations which are possibly effectful\footnote{The reader familiar with monads might discover some similarities
 between \emph{val} and \emph{return} as well as similarities between monadic
-type constructors and computations.}
+type constructors and computations.}.
 
 \begin{myfigure}[.9]{htb}{Abstract syntax of Eff}{fig:eff-syntax}
 Effect declarations
@@ -370,7 +366,7 @@ they are writing an expression or a computation at the moment. The
 ability to resume computations did not vanish. As we saw in the previous section,
 delimited continuations are just simply functions reifying a continuation. Hence
 we can handle resumptions as function application. Anyhow, to ease the
-understanding of the semantic rules I use the notation $y.c$ for delimited
+understanding of the semantic rules I use the notation $(y.c)$ for delimited
 continuations which resume the computation $c$ after receiving $y$.
 
 \subsection{Semantics}
@@ -379,7 +375,7 @@ This section presents the small step operational semantics of Eff. The spotlight
 is on possibly effectful computations and on their reduction rules given by the
 relation $\leadsto$. I focus on the Eff specific transition steps here (see
 \autoref{fig:mini-semantics}). The other transition rules are standard and can
-be found in \autoref{sec:full-semantics}.
+be found in Appendix \ref{app:theory}.
 
 \begin{myfigure}[1]{htb}
   {Eff-specific rules of the small step operational semantics}
@@ -472,7 +468,7 @@ so that the reader can quickly jump between the comments there and the rules on
     is created. Here, $e$ is the argument to the effect and $\kappa$ is the
     captured delimited continuation which is determined by the with-handle
     blocks surrounding this computation. Note, that because it is not guaranteed
-    that there are such with-handle blocks around a $\effPerform$ call, creating
+    that there are such with-handle blocks around a $\effPerform$call, creating
     such an effect package might not always be possible. \\
 
   \textsc{Handle-Val} & 
@@ -525,7 +521,7 @@ containing all \emph{effect signatures} of the form $E_i : A_i \tto B_i$.
 \subsubsection{Type checking}
 
 Again, I omit standard typing rules and focus on the Eff specific ones. For the
-sake of completeness \autoref{sec:full-typing} contains the other rules.
+sake of completeness Appendix \autoref{app:theory} contains the other rules.
 There are two separate typing relations denoted $\vdash_e$ and $\vdash_c$ for
 expressions and computations respectively. Type environments are denoted
 $\Gamma$ and are maps from variable names to types.
@@ -616,12 +612,13 @@ the semantics.
 The attentive reader might have wondered what $\effAbsurd$and the $\emptyType$
 type are good for. In the tutorial we got away with a slight lie which we will
 make amends for here. We said that in the absence of suitable handlers an effect
-will behave like an exception (remember \autoref{sub@fig:exception}). This is
+will behave like an exception (remember \autoref{first-example}). This is
 not quite true when typing is introduced, as a computation like
 %
 \begin{center}
 \begin{tabular}{c}
-{\begin{lstlisting}[language=caml, numbers=none, frame=none]
+{\begin{lstlisting}[language=efflang, numbers=none, frame=none]
+effect Error of string -->> unit;;
 if true then (perform (Error "Lie detected")) else 1337
 \end{lstlisting}}
 \end{tabular}
@@ -633,12 +630,13 @@ and $\mathtt{int}$), although in OCaml or SML one can write
 \begin{center}
 \begin{tabular}{c}
 {\begin{lstlisting}[language=caml, numbers=none, frame=none]
+exception Error of string;;
 if true then (raise (Error "Lie detected!")) else 1337
 \end{lstlisting}}
 \end{tabular}
 \end{center}
 %
-without any problems. We would like to use effects as exceptions -- it would be
+without any problems. We would like to use effects as exceptions---it would be
 weird not to, as they are a generalisation of them. This is why we need
 $\effAbsurd$and the $\emptyType$ type. We can now say
 \\
@@ -685,7 +683,7 @@ Hence this section is concerned with two types of abstract machines which are
 capable of doing what is described above. I will illustrate how they do this on
 a toy language and by the end of this section we will be able to discover a
 correspondence between the \emph{runtime representation} of continuations in
-these machines and the CPS Scheme example from \autoref{sec:continuations}.
+these machines and the CPS Scheme example from \Cref{section-continuations}.
 
 These two machines are CEK and SECD machines. They both interpret source terms
 directly and this makes it easy to implement them (a CEK implementation of Eff
@@ -695,7 +693,7 @@ Consider the following Toy Language (TL), which is the untyped lambda calculus
 with natural numbers as values and with built-in operations like addition and
 multiplication:
 $$ t ::= x \mid n \mid \lambda x. t \mid t_0\ t_1 \mid t_0 + t_1 \mid t_0 * t_1.$$
-Our dummy example from \autoref{sec:continuations} in TL will be:
+Our dummy example from \Cref{section-continuations} in TL will be:
 $$ \mathtt{plus} = \lambda x. \lambda y.\ x + y $$
 $$ \mathtt{times} = \lambda x. \lambda y.\ x * y $$
 $$ \mathtt{times}\ (\mathtt{plus}\ 1\ 2)\ (\mathtt{plus}\ 3\ 4).$$
@@ -712,10 +710,10 @@ numbers) and kontinuation is a \emph{stack of closures} representing the rest
 of the program to be interpreted at any given time. Hence a configuration of the
 machine is characterised by a three-tuple $\cek{C, E, K}$.
 
-\begin{myfigure}[.9]{htb}
-{CEK machine transition rules for TL.}
+\begin{myfigure}[.9]{t}
+{CEK machine transition rules for TL}
 {fig:cek-tl}
-%
+\small
 Initialisation:
 $$ t \to \cek{t, \{\}, nil} $$
 %
@@ -734,7 +732,7 @@ $$ \cek{x, E, nil} \to E(x) $$
 $$ \cek{v, E, nil} \to v $$
 \end{myfigure}
 
-We see at $(*)$ that whenever we reduce a term to a value $v$, a continuation
+We see at $(*)$ in \autoref{fig:cek-tl} that whenever we reduce a term to a value $v$, a continuation
 $(y.t)$ is popped off the K stack, $v$ is bound to the variable $y$ in $E'$
 (this is the environment we need to restore to be able to interpret $t$ in the
 same context we stopped evaluating its parent expression) and then $t$ is
@@ -763,8 +761,9 @@ of the other three components (i.e., it has the form $(S, E, C)$). The dump
 embodies a list of saved execution contexts we can return to if we wish.
 
 \begin{myfigure}[.8]{htb}
-{SECD machine transition rules for TL.}
+{SECD machine transition rules for TL}
 {fig:secd-transitions}
+\small
 Initialisation:
 $$ t \to \secd{nil, \{\}, [t], nil} $$
 %
@@ -780,15 +779,7 @@ Termination:
 $$ \secd{v :: S, E, nil, nil} \to v $$
 \end{myfigure}
 
-We see that although this machine works on abstract syntax trees, it is still a
-bit lower level than the CEK machine in that it makes a stack explicit and the
-way it processes (disassembles) the tree is very similar to compiling. In
-control, we end up with a list of smaller trees and SECD instructions. With 
-just another step we can turn this into a stack machine and this is what I will
-do in the Implementation chapter. 
-%
-%
-\begin{figure}[t]
+\begin{figure}[htb]
   \begin{subfigure}{.5\textwidth}
     \subcaptionbox{
         \emph{Naïve approach.} Imagine that a $\effPerform$ operation is
@@ -826,7 +817,15 @@ do in the Implementation chapter.
   \caption{Where is the continuation?}
   \label{fig:naive-cek-secd}
 \end{figure}
-%
+
+We see that although this machine works on abstract syntax trees, it is still a
+bit lower level than the CEK machine in that it makes a stack explicit and the
+way it processes (disassembles) the tree is very similar to compiling. In
+control, we end up with a list of smaller trees and SECD instructions.
+With just another step we can turn this into a stack machine and this is what I will
+do in the Implementation chapter.
+
+\paragraph{Importance}
 \autoref{fig:naive-cek-secd} sums up why this section is important. It is an
 illustration of how different evaluators represent continuations. Note that the
 representation of a continuation in \autoref{fig:naive-cek-secd}\subref{fig:continuation-secd} looks
@@ -854,7 +853,7 @@ mentioned above.
 \subsection{Starting point}
 
 The starting point of my project did not change since the writing of the
-project proposal (see \autoref{sec:proposal}):
+project proposal (see Appendix \ref{project-proposal}):
 \begin{itemize}
   \item I read briefly about Eff and algebraic effect handlers before starting
   my project.

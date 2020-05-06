@@ -8,7 +8,7 @@
 \usepackage{listings}
 \usepackage[super]{nth}
 
-\usepackage[margin=1in]{geometry}
+\usepackage[margin=2cm]{geometry}
 
 \ifstandalone
 \input{../src/listing.tex}
@@ -62,7 +62,7 @@ resumable at all).
 
 \begin{figure}[htb]
     \centering
-    \includegraphics[width=40em]{eval_plots/interp_exception.png}
+    \includegraphics[width=.9\linewidth]{eval_plots/interp_exception.png}
     \caption[Exception benchmark with interpreters]{The CEK interpreter performs better than Eff but worse than
     Multicore OCaml}
     \label{fig:exception-interpreters}
@@ -80,7 +80,7 @@ as we increase the number of exceptions.
 
 \begin{figure}[htb]
     \centering
-    \includegraphics[height=15em]{eval_plots/comp_exception.png}
+    \includegraphics[width=.8\linewidth]{eval_plots/comp_exception.png}
     \caption[Exception benchmark with compilers]{The peformance of SHADE is comparable to Multicore OCaml's}
     \label{fig:exception-bytecode}
 \end{figure}
@@ -109,22 +109,24 @@ of performed effects $N$ increases we can be confident that the cost of
 performing effects and resuming continuations will dominate the execution time
 and that we are measuring what we want.
 
-\begin{figure}[htb]
+\begin{figure}
 \begin{subfigure}{.5\textwidth}
     \centering
-    \includegraphics[width=.8\linewidth]{eval_plots/interp_state.png}
-    \caption[State benchmark with interpreters]{Again, the CEK interpreter performs better than Eff but worse than
-    the interpreter of Multicore OCaml}
+    \subcaptionbox{The CEK interpreter performs better than Eff but worse than the interpreter of Multicore OCaml}
+    [7cm][c]
+    {\includegraphics[width=\linewidth]{eval_plots/interp_state.png}}
     \label{fig:state-interpreters}
 \end{subfigure}
 \begin{subfigure}{.5\textwidth}
     \centering
-    \includegraphics[width=.8\linewidth]{eval_plots/comp_state.png}
-    \caption[State benchmark with compilers]{SHADE VM's performance is still head-to-head with Multicore OCaml}
+    \subcaptionbox{SHADE VM's performance is still head-to-head with Multicore OCaml}
+    [9cm][c]
+    {\includegraphics[width=\linewidth]{eval_plots/comp_state.png}}
     \label{fig:state-bytecode}
 \end{subfigure}
-\caption{Some caption}
-\label{fig:state}
+
+\caption{State benchmarks}
+\label{fig:state-benchmarks}
 \end{figure}
 
 The results are displayed on \autoref{fig:state-interpreters} and
@@ -150,24 +152,20 @@ Here I do not compare against the CEK interpreter for the bigger benchmarks
 because due to its naïve implementation it slows down significantly after
 $N > 14$. 
 
-\begin{figure}[hbt]
-\begin{subfigure}{.5\textwidth}
+\begin{figure}
     \centering
-    \includegraphics[width=.8\linewidth]{eval_plots/comp_queens.png}
+    \includegraphics[width=.9\linewidth]{eval_plots/comp_queens.png}
     \caption[N-queens benchmark]{SHADE VM loses against Multicore OCaml here but is still more
     performant than the Eff interpreter}
     \label{fig:n-queens}
-\end{subfigure}
-\begin{subfigure}{.5\textwidth}
+\end{figure}
+
+\begin{figure}
     \centering
     \includegraphics[width=.8\linewidth]{eval_plots/extra_cloning.png}
     \caption[Correlation between extra cloning and memory usage]{Investigating the effect of cloning on performance and memory usage}
     \label{fig:extra-copying}
-\end{subfigure}
-
-\caption{Some caption}
 \end{figure}
-
 
 The performance of SHADE VM remains acceptable, although worse than the VM of
 Multicore OCaml as \autoref{fig:n-queens} shows.
@@ -242,22 +240,15 @@ accepts connections on the port 8080. If there is a new connection then a new
 green thread is spawned for that connection, otherwise control is given to other
 threads.
 
-\begin{figure}[htb]
-\begin{minipage}{.5\textwidth}
 \mylisting{efflang}
 {Main green thread of the web server}
 {label}
 {../code_examples/start_server.eff}
-\end{minipage}%
-\begin{minipage}{.5\textwidth}
+
 \mylisting{efflang}
 {Green thread handling a connection}
 {label}
 {../code_examples/say_hello.eff}
-\end{minipage}
-
-\caption{Lightweight green threads}
-\end{figure}
 
 The \lstinline{say_hello} function takes a port number and
 \emph{returns a green thread}: a $\unitType \to \unitType$ function that will
@@ -268,7 +259,7 @@ socket is ready. If this is not the case it yields control and will retry later.
 As effect handlers can simulate state it is possible to implement thread
 scheduling with handlers too. The web server thus can be started with something
 like \lstinline{with thread_scheduler handle start_server ()}.
-
+%
 Based on the work of Dolan et al. \autoref{dolan2017concurrent} I claimed in
 the Introduction that effect handlers give flexibility to programmers to
 implement their own concurrency models which suits their application the most
@@ -288,7 +279,7 @@ around 100 connections as the red numbers indicate this on
 
 \begin{figure}[htb]
     \centering
-    \includegraphics[height=15em]{eval_plots/webserver.png}
+    \includegraphics[width=.8\linewidth]{eval_plots/webserver.png}
     \caption[Load testing a toy webserver]{Although the performance of the webserver is not at all impressive,
     it is my own runtime system that implements it and it can still handle 100
     connections with a p90 time of 5 seconds with a throughput of 25 requests

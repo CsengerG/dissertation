@@ -11,7 +11,7 @@
 \usepackage{booktabs}
 \usepackage{cleveref}
 
-\usepackage[margin=1in]{geometry}
+\usepackage[margin=2cm]{geometry}
 
 \ifstandalone
 \input{../src/listing.tex}
@@ -508,12 +508,11 @@ SHADE machine is essentially a Zinc \cite{leroy1990zinc} machine with all
 effects behaving like exceptions. The next page contains various examples and
 should give a good insight into how everything fits together.
 
-\begin{figure}[t]
+\begin{figure}[htb]
     \centering
-    \scalebox{.55}{
-        \subimport{../figures/}{impl-no-perform.tex}
-    }
-    \caption{No effect is performed.}
+    \includegraphics[width=.8\linewidth]{../figures/impl-no-perform.pdf}
+
+    \caption{No effect is performed}
     \label{fig:shadecode-no-effect}
 \end{figure}
 
@@ -529,13 +528,20 @@ The \vmRet\ instruction at the end of the finally case simply returns as if it
 was a function call and execution halts as the program counter now points to
 \vmHalt.
 
-\begin{figure}[t]
+\begin{figure}[htb]
     \centering
-    \scalebox{.45}{
-        \subimport{../figures/}{impl-exception.tex}
-    }
-    \caption{An effect is performed but its continuation is not resumed.}
+    \includegraphics[height=.45\textheight]{../figures/impl-exception.pdf}
+
+    \caption{An effect is performed but its continuation is not resumed}
     \label{fig:shadecode-exception}
+\end{figure}
+%
+\begin{figure}[htb]
+    \centering
+    \includegraphics[height=.45\textheight]{../figures/impl-one-resume.pdf}
+    
+    \caption{An effect is performed and its continuation is resumed}
+    \label{fig:shadecode-one-resume}
 \end{figure}
 
 \autoref{fig:shadecode-exception} depicts a case when the effect has
@@ -563,14 +569,6 @@ control and only after that effect case is finished can the effect case handling
 \lstinline{Print "Try"} resume. This program returns the tuple
 \lstinline|("confused!", "Try not to be")|.
 
-\begin{figure}[t]
-    \centering
-    \scalebox{.55}{
-        \subimport{../figures/}{impl-one-resume.tex}
-    }
-    \caption{An effect is performed and its continuation is resumed.}
-    \label{fig:shadecode-one-resume}
-\end{figure}
  
 
 \autoref{fig:shadecode-two-resume} shows what happens when we take everything to
@@ -587,6 +585,13 @@ The blue \vmRett\ instructions are those of the value case's and they are only
 invoked ``at depth 4'' in the diagram.
 
 \begin{landscape}
+\begin{figure}[htb]
+    \centering
+    \includegraphics[width=\paperwidth]{../figures/impl-two-resume.pdf}
+    \caption[Implementation of multi-shot continuations]{Non-determinism: multi-shot continuations can be resumed more than once in Eff}
+    \label{fig:shadecode-two-resume}
+\end{figure}
+
 Continuations are highlighted with shades of orange. Because all continuations
 are invoked twice these must be cloned which can add a significant copy overhead.
 This is one way Eff differs from Multicore OCaml. Multicore OCaml only supports
@@ -598,14 +603,6 @@ programmer forgets about this then the program can crash. As Eff is different
 in this respect, the SHADE machine always keeps a clean copy of every
 continuation which can be cloned on demand when it is resumed.
 This is an inefficiency but is necessary for correctness.
-
-    \begin{figure}
-        \centering
-        \includegraphics[width=\paperwidth]{../figures/impl-two-resume.pdf}
-        \caption[Implementation of multi-shot continuations]{Non-determinism: multi-shot continuations can be resumed more than once in Eff}
-        \label{fig:shadecode-two-resume}
-    \end{figure}
-
 
 \end{landscape}
 
@@ -644,8 +641,7 @@ tests.
 \begin{minipage}{.5\textwidth}
 \lstinputlisting[basicstyle=\small\ttfamily,language=efflang, caption={[The beauties of OCaml]SHADE VM's pipeline}]{../code_examples/shade.ml}
 \end{minipage}
-\caption{Dependency graph of the modules residing in \texttt{lib} and the way
-they are used to build the SHADE VM pipeline}
+\caption[Dependency graph]{Dependency graph of the modules residing in \texttt{lib} and the way they are used to build the SHADE VM pipeline}
 \end{figure}
 
 \begin{table}[ht]
@@ -792,8 +788,7 @@ re-installed my computer.
 \begin{itemize}
 \item The design of a syntax-level CEK interpreter was described in this chapter.
 \item The design of the SHADE virtual machine which interprets \emph{linearised}
-byte code was explained.
-\item SHADEcode was introduced.
+byte code was explained and SHADEcode was introduced.
 \item The software engineering practices used to carry out the work were discussed.
 It was explained why I chose the different tools I used in respect of the
 requirements of my project.
