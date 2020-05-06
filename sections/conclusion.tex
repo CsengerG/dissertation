@@ -43,14 +43,15 @@ in the runtime system I designed.
 \paragraph{Optimisations}
 The fact that there are algebraic theories behind algebraic effects and their
 handlers allows us to prove certain compiler transformations correct by
-equational reasoning. This gives us the opportunity to take a set of effect
-equations (for instance, the equation $\mathtt{assign}(x,y); \mathtt{assign}(x,z) =
-\mathtt{assign}(x, z)$ would show that the first \texttt{assign} can be optimised
-away) and generate new optimisations (perhaps entirely new ones no-one has
-thought about yet or ones that are dependent on the semantics of some effects).
+equational reasoning. For instance, the following effect equation
+$$\mathtt{assign}(x,y); \mathtt{assign}(x,z) = \mathtt{assign}(x, z)$$
+shows that the first \texttt{assign} can be optimised away.
+This gives us the opportunity to take a set of effect
+equations and generate new optimisations: perhaps entirely new ones no-one has
+thought about yet or ones that are dependent on the semantics of some effects.
 
-\paragraph{Type and effect systems}
-\cite{bauer2013effect} allow for even more optimisations
+\paragraph{Type and effect systems \cite{bauer2013effect}}
+allow for even more optimisations
 and the opportunity to parallelise independent parts of programs. As hardware is
 getting increasingly parallel such optimisations can help us to get the most out
 of our multicore machines.
@@ -76,7 +77,7 @@ in the network might be reduced.
 Alice and Bob are communicating. Alice sends a message $M_1$ to Bob and Bob
 replies with $M_2$. Based on the contents of $M_2$ Alice performs some kind of
 computation $c$ and replies with $M_3$. If $c$ can be realised as a continuation
-resumed with $M_2$ as its argument and given that shadows/continuations can be
+resumed with $M_2$ as its argument and given that shadows and continuations can be
 serialised using a convenient byte code representation, would it make sense to
 \emph{package up a decision as a continuation} and attach it to the original
 message $M_1$? This would eliminate the need to exchange $M_2$ and $M_3$
@@ -92,11 +93,11 @@ control operators.
 
 At the beginning of the project I got a bit carried away with syntactic sugar
 and trying to implement a lot of features of the language properly. This proved
-to be counterproductive and I had to abandon these efforts. If I had to do this
+to be counterproductive and I had to abandon these efforts. If I had to start the project
 again I would make the development even more iterative than it was: I would
 design a smaller minimal viable product first, build a very minimal but working
 (and tested!) pipeline and then iterate more on improvements. This was my
-strategy when developing, but I could do it better the next time.
+original strategy when developing, but I could do it better the next time.
 
 \paragraph{Closing thoughts}
 

@@ -31,9 +31,9 @@ At the end of this chapter a proof of concept web server is described. This is
 more of a qualitative evaluation and is supposed to show what can be done 
 with effect handlers in the real-world.
 
-\paragraph{Evaluation strategy and technical details.}
+\paragraph{Evaluation strategy and technical details}
 
-I will run multiple benchmarks each of which uses effect handlers in a different
+I run multiple benchmarks each of which uses effect handlers in a different
 way. Each benchmark is run 10 times and on the plots the arithmetic average of
 the execution times is reported (the standard deviation is displayed as error
 bars). Data was collected using GNU's \verb|time| command. During the measurements
@@ -46,9 +46,9 @@ Core i7-8565U CPU, 16GB of RAM using a single thread. The operating system in
 use was a 64bit Ubuntu 18.04.4 LTS, Linux kernel version \verb|5.3.0-46-generic|.
 
 Eff was compiled from its official GitHub repository at the time where the top
-commit had SHA1 \verb|796900d|.
+commit had SHA1 \verb|796900d|%
 \footnote{The official repository is
-\url{https://github.com/matijapretnar/eff/} at the time of writing.}
+\url{https://github.com/matijapretnar/eff/} at the time of writing.}.
 The version of Multicore OCaml used in the benchmarks was obtained by OPAM, the
 identifier of the OPAM switch was \verb|4.06.1+multicore|.
 
@@ -98,7 +98,7 @@ time complexity for performing and catching $N$ exceptions which suggests that
 my implementation does not contain bugs or inefficiencies that accumulate
 as more effects are performed in a program.
 
-\section{State and I/O}
+\section{State}
 
 The state benchmark implements an integer state which gets incremented every
 time an \verb|Incr| effect is performed. The handler of the \verb|Incr| effect
@@ -110,23 +110,19 @@ performing effects and resuming continuations will dominate the execution time
 and that we are measuring what we want.
 
 \begin{figure}
-\begin{subfigure}{.5\textwidth}
     \centering
-    \subcaptionbox{The CEK interpreter performs better than Eff but worse than the interpreter of Multicore OCaml}
-    [7cm][c]
-    {\includegraphics[width=\linewidth]{eval_plots/interp_state.png}}
-    \label{fig:state-interpreters}
-\end{subfigure}
-\begin{subfigure}{.5\textwidth}
-    \centering
-    \subcaptionbox{SHADE VM's performance is still head-to-head with Multicore OCaml}
-    [9cm][c]
-    {\includegraphics[width=\linewidth]{eval_plots/comp_state.png}}
-    \label{fig:state-bytecode}
-\end{subfigure}
+    \includegraphics[width=.8\linewidth]{eval_plots/interp_state.png}
 
-\caption{State benchmarks}
-\label{fig:state-benchmarks}
+    \caption{The CEK interpreter performs better than Eff but worse than the interpreter of Multicore OCaml}
+    \label{fig:state-interpreters}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=.7\linewidth]{eval_plots/comp_state.png}
+
+    \caption{SHADE VM's performance is still head-to-head with Multicore OCaml}
+    \label{fig:state-bytecode}
 \end{figure}
 
 The results are displayed on \autoref{fig:state-interpreters} and
@@ -144,7 +140,7 @@ like $\mathcal{O}(N^2)$ for instance).
 
 \section{Non-determinism -- Solving the N-queens problem}
 
-The $N$-queens
+The $N$-queens%
 \footnote{The N-queens problem is concerned with finding the positions of $N$
 queens on an $N \times N$ chessboard such that no two queens attack each other.}
 benchmark is a backtracking program which resumes continuations more than once.
@@ -162,14 +158,14 @@ $N > 14$.
 
 \begin{figure}
     \centering
-    \includegraphics[width=.8\linewidth]{eval_plots/extra_cloning.png}
+    \includegraphics[height=.3\textheight]{eval_plots/extra_cloning.png}
     \caption[Correlation between extra cloning and memory usage]{Investigating the effect of cloning on performance and memory usage}
     \label{fig:extra-copying}
 \end{figure}
 
 The performance of SHADE VM remains acceptable, although worse than the VM of
 Multicore OCaml as \autoref{fig:n-queens} shows.
-
+%
 The reason why Multicore OCaml performs so much better than SHADE VM was
 already mentioned briefly in the Implementation chapter. Multicore OCaml implements
 \emph{one-shot continuations} and relies on the user to specify when a continuation
@@ -205,8 +201,8 @@ as the papers often do not mention what strategy they use.
 
 An even more subtle point is that $N$ matters too. One must not fall in the pitfall
 of comparing the results for cases with different sizes (\autoref{fig:extra-copying}
-reveals for instance that the $N=10$ case is actually ``easier'' than the $N=8$
-case) as $N$ does not represent the complexity of the problem, it is merely the
+reveals for instance that the $N=17$ case is actually ``easier'' than the $N=16$
+case; so is $N=10$ easier than $N=8$) as $N$ does not represent the complexity of the problem, it is merely the
 identifier of a big search space. Interestingly, the $N=8$ and $N=10$ cases are
 nearly always reported in papers whereas the $N=17$ is consistently left out as
 it is an obvious outlier.
@@ -260,26 +256,27 @@ As effect handlers can simulate state it is possible to implement thread
 scheduling with handlers too. The web server thus can be started with something
 like \lstinline{with thread_scheduler handle start_server ()}.
 %
-Based on the work of Dolan et al. \autoref{dolan2017concurrent} I claimed in
+Based on the work of Dolan et al.\ \cite{dolan2017concurrent} I claimed in
 the Introduction that effect handlers give flexibility to programmers to
 implement their own concurrency models which suits their application the most
 while they reduce the complexity of runtime systems. This is a justification of
 that claim (it is actually a simplified experiment from their paper). We see
 that \lstinline|thread_scheduler| could implement any kind of scheduling policy by
-handling the \lstinline|Yield| and \lstinline|Spawn| effects appropriately. The fact that
+handling the \lstinline|Yield| and \lstinline|Spawn| effects appropriately (find
+the scheduler used in this evaluation in Appendix \ref{code-snippets}). The fact that
 one can implement a toy webserver using one's own runtime system written from
-scratch in less than a year justifies the second claim (the cited paper is a
+scratch as a Part II project justifies the second claim (the cited paper is a
 result of the collaboration of 6 people).
 
 I load tested this web server with the \lstinline|wrk2| load testing tool
 \cite{wrk2-website} using 4 threads and gradually increasing the number of
 connections until the p90 time fell below the 5s threshold (this happened at
 around 100 connections as the red numbers indicate this on
-\autoref{fig:hello-online-world}.
+\autoref{fig:hello-online-world}).
 
 \begin{figure}[htb]
     \centering
-    \includegraphics[width=.8\linewidth]{eval_plots/webserver.png}
+    \includegraphics[height=.3\textheight]{eval_plots/webserver.png}
     \caption[Load testing a toy webserver]{Although the performance of the webserver is not at all impressive,
     it is my own runtime system that implements it and it can still handle 100
     connections with a p90 time of 5 seconds with a throughput of 25 requests
@@ -294,7 +291,8 @@ The following sums up this chapter and reports its findings.
 compared to Eff and Multicore OCaml.
 \item My CEK interpreter was 20x quicker on the exception benchmarks and 10x
 quicker on the state benchmarks than the Eff interpreter. However, it was also
-15x slower on both the exception and state benchmarks than the OCaml interpreter.
+15x slower on both the exception and state benchmarks than the OCaml interpreter
+(the precise measurements results can be found in Appendix \autoref{raw-data}).
 \item My SHADE VM was consistently quicker than all the interpreters and
 performed well on the exception (SHADE is 2\% slower) and state benchmarks
 (SHADE is 17\% quicker) against the VM of Multicore OCaml. However,
