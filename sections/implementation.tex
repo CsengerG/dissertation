@@ -623,7 +623,7 @@ I knew that my evaluation will potentially involve measurements against
 Multicore OCaml's virtual machine and that it will be convenient to obtain and
 switch between different OCaml switches using \lstinline|opam|.
 
-\subsection{Repository structure}
+\subsection{Repository overview}
 
 The repository of my OCaml implementation is structured as a typical OCaml
 package. The \verb|bin| directory contains the entry points of the executables
@@ -633,17 +633,20 @@ tests.
 
 \begin{figure}[h]
     \centering
-\begin{minipage}{.5\textwidth}
-    \includegraphics[height=18em]{../figures/dependency-graph.pdf}
-\end{minipage}%
-\begin{minipage}{.5\textwidth}
-\lstinputlisting[basicstyle=\small\ttfamily,language=efflang, caption={[The beauties of OCaml]SHADE VM's pipeline}]{../code_examples/shade.ml}
-\end{minipage}
-\caption[Dependency graph]{Dependency graph of the modules residing in \texttt{lib} and the way they are used to build the SHADE VM pipeline}
+    \captionsetup{width=.9\linewidth}
+
+    \begin{minipage}{.5\textwidth}
+        \includegraphics[height=18em]{../figures/dependency-graph.pdf}
+    \end{minipage}%
+    \begin{minipage}{.5\textwidth}
+    \lstinputlisting[basicstyle=\small\ttfamily,language=efflang, caption={[The beauties of OCaml]SHADE VM's pipeline}]{../code_examples/shade.ml}
+    \end{minipage}
+
+    \caption[Dependency graph]{\small Dependency graph of the modules residing in \texttt{lib} and the way they are used to build the SHADE VM pipeline. The project's main components are marked with different colours and shared modules are denoted with white.}
 \end{figure}
 
-\begin{table}[ht]
-    \small
+\begin{table}[htb]
+    \footnotesize
     \centering
     {\renewcommand{\arraystretch}{1.3}
     \rowcolors{2}{gray!17}{white}
@@ -655,16 +658,22 @@ tests.
         Specifies Eff syntax trees. The \verb|ocamllex| and the Menhir parser
         generator uses this module to generate a parser for Eff. &
         132 \\
-    \textbf{Grammar} &
-        blah &
-        X \\
+    \textbf{Grammar (.mly)} &
+        Contains the grammar for the syntax of Eff. This is an \verb|ocamlyacc| file. &
+        227 \\
+    \textbf{Grammar\_utils} &
+        Contains the implementation of simple helper functions aiding the parsing process. &
+        10 \\
+    \textbf{Lexer (.mll)} &
+        Contains a set of regular expressions used to generate a lexical analyser.
+        This is an \verb|ocamllex| file. &
+        117 \\
     \textbf{Parser} &
-        blah &
-        X \\
+        Uses \textbf{Lexer} and \textbf{Grammar} to implement a parser. &
+        6 \\
     \textbf{Preprocess} &
         Implements preprocessing functionalities on ASTs. At this stage all
-        identifiers are given unique integer De Bruijn indices
-        and some syntactic sugars are removed.  &
+        identifiers are given unique integer De Bruijn indices and syntactic sugar is removed.  &
         343 \\
     \textbf{Translate} &
         Implements various translation functionalities. Erases the distinctions
