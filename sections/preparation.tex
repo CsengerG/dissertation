@@ -196,7 +196,7 @@ Fahrenheit every time we want to display it on some user interface.
 \begin{figure}
   \begin{minipage}{.5\textwidth}
     \lstinputlisting[
-    caption={Handler without finally},
+    caption={Using a handler without finally},
     label=handler-without-fin,
     language=efflang]
     {../code_examples/celsius_fahrenheit.eff}
@@ -718,7 +718,7 @@ Initialisation:
 $$ t \to \cek{t, \{\}, nil} $$
 %
 Transition rules:
-$$ \cek{x, E, (y.t, E') :: K} \to \cek{E(x), E, K} $$
+$$ \cek{x, E, K} \to \cek{E(x), E, K} $$
 $$ \cek{v, E, (y.t, E') :: K} \to \cek{t, E'[y \mapsto v], K} \quad (*)$$
 $$ \cek{(\lambda y. t_1)\ t_2, E, K} \to \cek{t_2, E, (y.t_1, E) :: K} $$
 $$ \cek{t_1 + t_2, E, K} \to \cek{\mathtt{add}(t_1, t_2), E, K} $$
@@ -728,7 +728,6 @@ $$ \cek{\mathtt{CONT1}(x, \mathtt{op}, t_2), E, K} \to \cek{t_2, E, (y.\mathtt{C
 $$ \cek{\mathtt{CONT2}(x, \mathtt{op}, y), E, K} \to \cek{v, E, K} \text{ where } v = \mathtt{op}(x, y) $$
 %
 Termination:
-$$ \cek{x, E, nil} \to E(x) $$
 $$ \cek{v, E, nil} \to v $$
 \end{myfigure}
 
@@ -895,15 +894,13 @@ Third, my success criterion was a correct working implementation of a compiler,
 so tests were crucial to demonstrate that success criteria were fulfilled.
 
 \section{Summary}
-This section summed up the theoretical background which was needed to complete
-this project. It also shows the preparation I undertook in the software
-engineering aspects.
+This chapter summarised the theoretical background needed to complete the project.
+It also shows the preparation I undertook in the software engineering aspects.
 
 \begin{itemize}
 \item Eff was introduced in a brief tutorial.
-\item It was explained how continuations represent arbitrary program points
-        in the execution of a program. Therefore they can be used to implement
-        advanced control flow.
+\item I explained how continuations represent arbitrary program points in the
+execution of a program and how they can be used to implement advanced control flow.
 \item \emph{Core Eff} was formally introduced.
 
 \item Two abstract machines (CEK and SECD machines) were introduced.

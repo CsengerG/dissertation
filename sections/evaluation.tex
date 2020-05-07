@@ -63,8 +63,7 @@ resumable at all).
 \begin{figure}[htb]
     \centering
     \includegraphics[width=.9\linewidth]{eval_plots/interp_exception.pdf}
-    \caption[Exception benchmark with interpreters]{The CEK interpreter performs better than Eff but worse than
-    Multicore OCaml}
+    \caption[Exception benchmark (interpreters)]{The CEK interpreter performs better than Eff but worse than Multicore OCaml}
     \label{fig:exception-interpreters}
 \end{figure}
 
@@ -81,7 +80,7 @@ as we increase the number of exceptions.
 \begin{figure}[htb]
     \centering
     \includegraphics[width=.8\linewidth]{eval_plots/comp_exception.pdf}
-    \caption[Exception benchmark with compilers]{The peformance of SHADE is comparable to Multicore OCaml's}
+    \caption[Exception benchmark (compilers)]{The peformance of SHADE is comparable to Multicore OCaml's}
     \label{fig:exception-bytecode}
 \end{figure}
 
@@ -111,17 +110,16 @@ and that we are measuring what we want.
 
 \begin{figure}
     \centering
+    \captionsetup{width=.8\linewidth}
     \includegraphics[width=.8\linewidth]{eval_plots/interp_state.pdf}
-
-    \caption{The CEK interpreter performs better than Eff but worse than the interpreter of Multicore OCaml}
+    \caption[State benchmark (interpreters)]{\small The CEK interpreter performs better than Eff but worse than the interpreter of Multicore OCaml}
     \label{fig:state-interpreters}
 \end{figure}
 
 \begin{figure}
     \centering
     \includegraphics[width=.7\linewidth]{eval_plots/comp_state.pdf}
-
-    \caption{SHADE VM's performance is still head-to-head with Multicore OCaml}
+    \caption[State benchmark (compilers)]{\small SHADE VM's performance is still head-to-head with Multicore OCaml}
     \label{fig:state-bytecode}
 \end{figure}
 
@@ -150,9 +148,9 @@ $N > 14$.
 
 \begin{figure}
     \centering
+    \captionsetup{width=.8\linewidth}
     \includegraphics[width=.9\linewidth]{eval_plots/comp_queens.pdf}
-    \caption[N-queens benchmark]{SHADE VM loses against Multicore OCaml here but is still more
-    performant than the Eff interpreter}
+    \caption[N-queens benchmark]{\small SHADE VM loses against Multicore OCaml here but is still more performant than the Eff interpreter}
     \label{fig:n-queens}
 \end{figure}
 
@@ -171,7 +169,7 @@ already mentioned briefly in the Implementation chapter. Multicore OCaml impleme
 \emph{one-shot continuations} and relies on the user to specify when a continuation
 should be cloned.
 
-\mylisting{caml}
+\mylisting{efflang}
 {[Explicit continuation cloning in Multicore OCaml]Cloning continuations must be done explicitly in Multicore OCaml}
 {lst:multicaml-cloning}
 {../code_examples/multicaml_cloning.ml}
@@ -262,8 +260,8 @@ implement their own concurrency models which suits their application the most
 while they reduce the complexity of runtime systems. This is a justification of
 that claim (it is actually a simplified experiment from their paper). We see
 that \lstinline|thread_scheduler| could implement any kind of scheduling policy by
-handling the \lstinline|Yield| and \lstinline|Spawn| effects appropriately (find
-the scheduler used in this evaluation in Appendix \ref{code-snippets}). The fact that
+handling the \lstinline|Yield| and \lstinline|Spawn| effects appropriately
+(the scheduler used in this evaluation can be found in \cite{eff-website}). The fact that
 one can implement a toy webserver using one's own runtime system written from
 scratch as a Part II project justifies the second claim (the cited paper is a
 result of the collaboration of 6 people).
@@ -276,8 +274,9 @@ around 100 connections as the red numbers indicate this on
 
 \begin{figure}[htb]
     \centering
+    \captionsetup{width=.9\linewidth}
     \includegraphics[height=.3\textheight]{eval_plots/webserver.pdf}
-    \caption[Load testing a toy webserver]{Although the performance of the webserver is not at all impressive,
+    \caption[Load testing a toy webserver]{\small Although the performance of the webserver is not at all impressive,
     it is my own runtime system that implements it and it can still handle 100
     connections with a p90 time of 5 seconds with a throughput of 25 requests
     per second.}

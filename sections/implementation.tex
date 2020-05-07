@@ -23,9 +23,9 @@
 \begin{document}
 
 This chapter is concerned with the implementation of a CEK interpreter, the
-design of a byte code for Eff (SHADEcode), a virtual machine capable of
-interpreting this \emph{linearised} byte code (SHADE VM) and a compiler to this byte
-code.
+design of a bytecode for Eff (SHADEcode), a virtual machine capable of
+interpreting this \emph{linearised} bytecode (SHADE VM) and a compiler to this
+bytecode.
 
 The chapter is split into two sections: the first part is concerned with the
 \emph{theory implementation} of the CEK and SHADE machines while the second part
@@ -81,12 +81,10 @@ much more efficient (we will unwind handlers and not continuations one by one).
 {lst:cek-structure-types}
 {../code_examples/cek_structure.ml}
 
-I will call such a per handler K stack a \emph{hlosure frame}. Hlosure frames will be the
+I will call such a per handler $K$ stack a \emph{hlosure frame}. Hlosure frames will be the
 new entries in the $K$ stack of the CEK machine. They consist of a hlosure and
-a \emph{continuation stack} as can be seen in
-\autoref{lst:parameterised handlers} (see the types \lstinline|cek_k| and \lstinline|cek_hlosure_frame| to understand the structure of this new CEK machine).
-
-%  LINE NUMBERS
+a \emph{continuation stack} as can be seen in \autoref{lst:cek-structure-types}
+(see the types \lstinline|cek_k| and \lstinline|cek_hlosure_frame| to understand the structure of this new CEK machine).
 
 \subsection{CEK abstract machine}
 
@@ -105,7 +103,9 @@ form $(x.c, \gamma)$. Hlosures are written as $\mathcal{H}(h, \gamma)$ and the
 runtime representation of recursive functions $\effRec f\ x = c$ happens with
 recursive closures $\mathcal{R}(f, x.c, \gamma)$ which differ from normal
 closures in that they also include the name of the function represented.
-The continuation stack in hlosure frames is written as $\mathcal{C}$.
+The continuation stack in hlosure frames is written as $\mathcal{C}$. I also
+write $h \downarrow \mathtt{eff}$ if handler $h$ handles effect $\mathtt{eff}$
+and $h \uparrow \mathtt{eff}$ otherwise.
 
 \subsubsection{Function and continuation application}
 
@@ -355,7 +355,7 @@ the $K$ component of the CEK machines needed to be unwound.
 \begin{myfigure}[1]{t}{Dump unwinding in SHADE}{fig:shade-stack-unwind}
     $$ \shade{A, \underbrace{(pc, E, H, S)}_d, D, \kappa }_\text{unwind}^{id} \text{ and } H \uparrow id \to \begin{cases}
         \text{Runtime exception} & \text{if } D = [] \\
-    \shade{A, d, D', \kappa @ [d]}_\text{unwind}^{id} & \text{if } D = d' :: D' \end{cases} $$
+    \shade{A, d', D', \kappa\ @\ [d]}_\text{unwind}^{id} & \text{if } D = d' :: D' \end{cases} $$
 
     $$ \shade{A, (pc, E, \hlosure(h, \gamma), S), D, \kappa}_\text{unwind}^{id} \to
         \shade{A, (L_{\text{effcase}(h, id)}, \gamma[x \mapsto A, k \mapsto \kappa] ), D} \text{ if } h \downarrow id $$
@@ -659,14 +659,15 @@ tests.
         generator uses this module to generate a parser for Eff. &
         132 \\
     \textbf{Grammar (.mly)} &
-        Contains the grammar for the syntax of Eff. This is an \verb|ocamlyacc| file. &
+        Contains the grammar for the syntax of Eff. This is an \verb|ocamlyacc|
+        file written by me. &
         227 \\
     \textbf{Grammar\_utils} &
         Contains the implementation of simple helper functions aiding the parsing process. &
         10 \\
     \textbf{Lexer (.mll)} &
         Contains a set of regular expressions used to generate a lexical analyser.
-        This is an \verb|ocamllex| file. &
+        This is an \verb|ocamllex| file written by me. &
         117 \\
     \textbf{Parser} &
         Uses \textbf{Lexer} and \textbf{Grammar} to implement a parser. &
