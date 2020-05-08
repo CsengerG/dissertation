@@ -8,10 +8,10 @@
 \begin{document}
 
 The project was a success. My success criterion was to implement a 
-syntax-level interpreter for Eff, to design a low-level byte code for Eff,
+syntax-level interpreter for Eff, to design a low-level bytecode for Eff,
 to implement a compiler which can transform Eff programs into a linearised
 representation and finally to implement a virtual machine which is capable of
-interpreting the designed byte code. Furthermore, the above components had to be
+interpreting the designed bytecode. Furthermore, the above components had to be
 reasonably efficient when compared to existing solutions.
 
 The work described above was carried out and all components were successfully
@@ -63,7 +63,7 @@ on Github for other programming language enthusiasts.
 \paragraph{Part II project}
 My implementation was concerned with only the core
 features of Eff. There would be countless ways to improve the compiler or the
-virtual machine. The rules of SHADE VM are simple enough that a byte code interpreter
+virtual machine. The rules of SHADE VM are simple enough that a bytecode interpreter
 for SHADEcode should not be too hard to implement in a low-level language such as C.
 However, this would have to involve designing a custom garbage collector for SHADE
 which might prove interesting.
@@ -78,7 +78,7 @@ Alice and Bob are communicating. Alice sends a message $M_1$ to Bob and Bob
 replies with $M_2$. Based on the contents of $M_2$ Alice performs some kind of
 computation $c$ and replies with $M_3$. If $c$ can be realised as a continuation
 resumed with $M_2$ as its argument and given that shadows and continuations can be
-serialised using a convenient byte code representation, would it make sense to
+serialised using a convenient bytecode representation, would it make sense to
 \emph{package up a decision as a continuation} and attach it to the original
 message $M_1$? This would eliminate the need to exchange $M_2$ and $M_3$
 over the network as Bob could resume the continuation using $M_1$ and obtain

@@ -25,7 +25,7 @@ and my SHADE VM with existing solutions implementing algebraic effect handlers.
 The comparison is split into two parts: to evaluate the performance of the
 CEK interpreter I compare against the Eff interpreter and against the interpreter
 of Multicore OCaml. The SHADE virtual machine is compared to Multicore OCaml's
-byte code interpreter.
+bytecode interpreter.
 
 At the end of this chapter a proof of concept web server is described. This is
 more of a qualitative evaluation and is supposed to show what can be done 
@@ -73,7 +73,7 @@ the CEK interpreter in this benchmark. However, we can see on
 comparable to Multicore OCaml's VM even though the
 execution time for SHADE includes the compilation time to SHADEcode,
 but the times for Multicore OCaml do not include compilation. As I did not
-implement serialization for my byte code Eff programs were recompiled every time
+implement serialization for my bytecode Eff programs were recompiled every time
 a SHADE benchmark was run. However, this extra time is less and less significant
 as we increase the number of exceptions.
 
@@ -84,7 +84,7 @@ as we increase the number of exceptions.
     \label{fig:exception-bytecode}
 \end{figure}
 
-Note that as the byte code solutions are vastly more efficient than their
+Note that as the bytecode solutions are vastly more efficient than their
 interpreter counterparts they are compared with a larger number of exceptions.
 It takes around 63 seconds for the Eff interpreter to evaluate the benchmark
 with 5000 exceptions, whereas this takes only 3.5 seconds for the CEK

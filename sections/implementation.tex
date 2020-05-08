@@ -220,13 +220,13 @@ which shows how to interpret terms of the form $\effLet x = c_1 \effIn c_2$.
 \label{sec:shade-machine}
 
 The SHADE virtual machine is an SECD-like virtual machine in that it has a dump
-component, however, it interprets linearised byte code (SHADEcode, which is described later in
+component, however, it interprets linearised bytecode (SHADEcode, which is described later in
 \autoref{tab:shade-bytecode}) rather than the source terms of a language. The
 name is an anagram from the initials of the main components of the machine: 
 \emph{accumulator} (A), \emph{dump} (D), \emph{environment} (E),
 \emph{hlosure} (H) and \emph{stack} (S). The rest of this section is concerned
 with a description of this machine using its transition rules.
-\Cref{sec:shade-illustration} will give an overview of how the byte code
+\Cref{sec:shade-illustration} will give an overview of how the bytecode
 implements the different aspects of the Eff language.
 
 \paragraph{Configuration}
@@ -266,7 +266,7 @@ to those of the Caml Virtual Machine \cite{caml-vm}. I will not give formal
 transition rules for these here. \autoref{tab:shade-bytecode} includes all
 SHADE-specific instructions and explains their purpose in prose.
 
-The SHADE machine is initialised by loading a program compiled to byte code
+The SHADE machine is initialised by loading a program compiled to bytecode
 and initialising $D$ to a list containing an \emph{empty shadow} with the
 default handler $H_{def}$. The default handler is responsible for handling
 effects which rise to the toplevel%
@@ -445,11 +445,11 @@ Hence we must use the accumulator.
     %\vmListTail &
     %    Load the tail of a list to A. &
     %    \verb|A := A.tail| \\
-    \vmMakeClosure{$L$}{$n$} &
+    \vmMakeClosure{$L$}{$N$} &
         Form an environment of A and the top $n-1$ elements of S and create a
         closure with this environment of location L. &
         \begin{tabular}[t]{@{}l@{}}
-            \verb|E = [A, S[0:N]];| \\
+            \verb|E = [A, S[0:N-1]];| \\
             \verb|S.pop(N-1);| \\
             \verb|A := closure(L, E)|
         \end{tabular} \\
@@ -689,14 +689,14 @@ tests.
         403 \\
     \textbf{Ir} &
         Specification of an intermediate representation close to \emph{A-normal
-        form}. The \verb|Compile| module generates SHADE byte code from this
+        form}. The \verb|Compile| module generates SHADE bytecode from this
         representation. &
         77 \\
     \textbf{Freevars} &
         Implements analysis of free variables on the IR. &
         87 \\
     \textbf{Compile} &
-        Implements the compilation from IR to SHADE byte code. &
+        Implements the compilation from IR to SHADE bytecode. &
         434 \\
     \textbf{Shade\_types} &
         Contains the specification of the SHADE machine. &
@@ -801,7 +801,7 @@ re-installed my computer.
 \begin{itemize}
 \item The design of a syntax-level CEK interpreter was described in this chapter.
 \item The design of the SHADE virtual machine which interprets \emph{linearised}
-byte code was explained and SHADEcode was introduced.
+bytecode was explained and SHADEcode was introduced.
 \item The software engineering practices used to carry out the work were discussed.
 It was explained why I chose the different tools I used in respect of the
 requirements of my project.

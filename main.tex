@@ -21,6 +21,7 @@
 \usepackage{import}
 \usepackage{amsmath}
 \usepackage{cleveref}
+\usepackage[nottoc]{tocbibind}
 
 % Chapter formatting
 \usepackage{titlesec, blindtext, color}
@@ -77,7 +78,7 @@ Hereby, I would like to say thanks to:
 Candidate number & 2375C \\
 Project title & Compiling algebraic effect handlers \\
 Examination & Computer Science Tripos -- Part II, 2020 \\
-Word Count & 11044%
+Word Count & 11033%
 \footnote{Obtained using \url{https://app.uio.no/ifi/texcount/}} \\
 Lines of Code & 6158%
 \footnote{Obtained using Visual Studio Code's \href{https://marketplace.visualstudio.com/items?itemName=uctakeoff.vscode-counter}{VS Code Counter} extension} \\
@@ -89,17 +90,17 @@ Supervisor & Professor Alan Mycroft \\
 \paragraph{Original aims of the Project}
 
 The project had four core aims: to write an interpreter for Eff, to design a
-byte code for Eff, to write a compiler from Eff to this byte code and to
-implement a virtual machine interpreting the byte code. Additional goals were
+bytecode for Eff, to write a compiler from Eff to this bytecode and to
+implement a virtual machine interpreting the bytecode. Additional goals were
 to implement various optimisations for Eff, such as tail resumption optimisation
 or minimising the copy overhead from the use of continuations.
 
 \paragraph{Work completed}
 
-A syntax-level Eff interpreter was implemented. A byte code for Eff (SHADEcode)
+A syntax-level Eff interpreter was implemented. A bytecode for Eff (SHADEcode)
 was designed. A compiler from Eff to SHADEcode was implemented as well as a
 virtual machine (SHADE) interpreting SHADEcode. As far as I know, SHADE and
-SHADEcode are the first virtual machine and byte code designed
+SHADEcode are the first virtual machine and bytecode designed
 \emph{specifically} for Eff. In the Evaluation chapter I compare the performance
 of my Eff interpreter with the current official Eff interpreter and the
 performance of the SHADE virtual machine with the performance of Multicore
